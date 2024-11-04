@@ -1,0 +1,192 @@
+{
+  "theme": {
+    "mode": "dark",
+    "dark": "Tokyo Night",
+    "light": "Tokyo Night Light"
+  },
+  "vim_mode": true,
+  "base_keymap": "VSCode",
+  "preferred_line_length": 120,
+  "tab_size": 2,
+  "hard_tabs": false,
+  "buffer_font_family": "0xProto Nerd Font",
+  "buffer_font_size": 14,
+  "buffer_font_features": {
+    "calt": true
+  },
+  "buffer_line_height": "comfortable",
+  "ui_font_family": "0xProto Nerd Font",
+  "ui_font_size": 14,
+  "ui_font_features": {
+    "calt": true
+  },
+  "show_whitespaces": "selection",
+  "show_wrap_guides": true,
+  "wrap_guides": [120],
+  "relative_line_numbers": false,
+  "cursor_blink": false,
+  "scroll_beyond_last_line": "one_page",
+  "hover_popover_enabled": true,
+  "show_inline_completions": false,
+  "use_autoclose": false,
+  "bracket_pairing": "always",
+  "autosave": {
+    "after_delay": {
+      "milliseconds": 1000
+    }
+  },
+  "format_on_save": "on",
+  "remove_trailing_whitespace_on_save": true,
+  "ensure_final_newline_on_save": true,
+  "terminal": {
+    "dock": "bottom",
+    "font_family": "0xProto Nerd Font",
+    "font_size": 14,
+    "working_directory": "current_project_directory",
+    "shell": {
+      "program": "zsh"
+    },
+    "env": {
+      "TERM": "xterm-256color"
+    },
+    "copy_on_select": true,
+    "option_as_meta": false,
+    "line_height": "comfortable",
+    "max_scroll_history_lines": 10000,
+    "blinking": "terminal_controlled",
+    "toolbar": {
+      "breadcrumbs": true
+    },
+    "background_color": "#1a1b26",
+    "foreground_color": "#c0caf5"
+  },
+  "project_panel": {
+    "dock": "right",
+    "git_status": true,
+    "default_width": 280,
+    "file_icons": true,
+    "folder_icons": true,
+    "indent_size": 20,
+    "auto_reveal_entries": true
+  },
+  "minimap": {
+    "enabled": true,
+    "size": 100,
+    "show_git_diff": true
+  },
+  "tab_bar": {
+    "show": true,
+    "show_nav_history_buttons": true
+  },
+  "tabs": {
+    "git_status": true,
+    "close_position": "right",
+    "file_icons": true,
+    "show_close_button": "hover"
+  },
+  "quick_open": {
+    "filter_ignore": [
+      ".git",
+      "node_modules",
+      "venv",
+      "__pycache__",
+      "*.pyc",
+      "dist",
+      "build",
+      "target",
+      ".next",
+      "coverage",
+      ".vscode",
+      ".idea",
+      ".DS_Store",
+      "*.log",
+      "tmp",
+      ".cache"
+    ],
+    "workspace_history_size": 50
+  },
+  "git": {
+    "git_gutter": "tracked_files",
+    "inline_blame": {
+      "enabled": true,
+      "delay_ms": 300
+    }
+  },
+  "features": {
+    "copilot": false
+  },
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false
+  },
+  "formatter": "auto",
+  "languages": {
+    "*": {
+      "formatter": "auto"
+    },
+    "JavaScript": {
+      "formatter": "prettier"
+    },
+    "TypeScript": {
+      "formatter": "prettier",
+      "language_server": {
+        "initialization_options": {
+          "preferences": {
+            "importModuleSpecifierPreference": "relative",
+            "quotePreference": "single",
+            "organizeImports": true,
+            "semicolons": "remove"
+          }
+        }
+      }
+    },
+    "Python": {
+      "formatter": {
+        "external": {
+          "command": "ruff",
+          "arguments": ["format", "--stdin-filename", "{buffer_path}", "-"]
+        }
+      },
+      "language_server": {
+        "command": "pylsp",
+        "initialization_options": {
+          "plugins": {
+            "pylsp_mypy": {
+              "enabled": true,
+              "live_mode": true,
+              "strict": true
+            },
+            "pylsp_black": {
+              "enabled": true,
+              "line_length": 120
+            },
+            "pyls_isort": {
+              "enabled": true,
+              "profile": "black"
+            }
+          }
+        }
+      }
+    },
+    "Go": {
+      "formatter": "language_server",
+      "language_server": {
+        "command": "gopls",
+        "initialization_options": {
+          "usePlaceholders": true,
+          "completionDocumentation": true,
+          "completeUnimported": true,
+          "deepCompletion": true,
+          "matcher": "fuzzy"
+        }
+      }
+    },
+    "Nix": {
+      "formatter": "language_server",
+      "language_server": {
+        "command": "nixfmt",
+        "arguments": ["{buffer_path}"]
+      }
+    }
+  }
+}

@@ -1,0 +1,58 @@
+# Font configuration
+font-family = 0xProto Nerd Font
+font-size = 14
+
+# Window appearance
+window-decoration = false
+macos-titlebar-style = hidden
+window-padding-x = 8
+window-padding-y = 8
+
+# Theme colors (Tokyo Night)
+background = #1a1b26
+foreground = #c0caf5
+
+# Transparency and blur
+background-opacity = 1.00
+background-blur-radius = 0
+
+# Cursor configuration
+cursor-style = block
+cursor-style-blink = false
+cursor-color = #c0caf5
+
+# Shell integration
+shell-integration = detect
+shell-integration-features = no-cursor,no-sudo,title
+
+# Performance settings
+window-vsync = true
+mouse-hide-while-typing = true
+
+# Base colors (Tokyo Night)
+palette = 0=#1a1b26
+palette = 1=#f7768e
+palette = 2=#9ece6a
+palette = 3=#e0af68
+palette = 4=#7aa2f7
+palette = 5=#bb9af7
+palette = 6=#7dcfff
+palette = 7=#a9b1d6
+palette = 8=#414868
+palette = 9=#f7768e
+palette = 10=#9ece6a
+palette = 11=#e0af68
+palette = 12=#7aa2f7
+palette = 13=#bb9af7
+palette = 14=#7dcfff
+palette = 15=#c0caf5
+
+# Selection behavior
+selection-foreground = #1a1b26
+selection-background = #7aa2f7
+copy-on-select = false
+
+# Window behavior
+quit-after-last-window-closed = true
+window-inherit-working-directory = true
+window-padding-color = background
