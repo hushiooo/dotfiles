@@ -12,7 +12,6 @@
 
     configFile = {
       "ghostty/config".source = ./config/ghostty/config;
-      # "zed/settings.json".source = ./config/zed/settings.json;
     };
   };
 
@@ -25,6 +24,8 @@
       "$HOME/.local/bin"
       "$HOME/.cargo/bin"
       "$HOME/go/bin"
+      "/opt/homebrew/bin"
+      "/opt/homebrew/sbin"
     ];
 
     sessionVariables = {
@@ -45,7 +46,7 @@
       defaultCacheTtl = 31536000; # 1 year
       maxCacheTtl = 31536000;
       enableSshSupport = true;
-      pinentryPackage = pkgs.pinentry_mac;
+      pinentry.package = pkgs.pinentry_mac;
     };
   };
 

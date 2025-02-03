@@ -20,6 +20,7 @@
     telescope-fzf-native-nvim
     which-key-nvim
     plenary-nvim
+    nvim-spectre
 
     # Editor enhancements
     comment-nvim
@@ -36,6 +37,13 @@
     cmp-path
     cmp_luasnip
     luasnip
+
+    # Debugging
+    nvim-dap
+    nvim-dap-python
+    nvim-dap-ui
+    nvim-dap-virtual-text
+    telescope-dap-nvim
 
     # Syntax highlighting and parsing
     (nvim-treesitter.withPlugins (
@@ -64,6 +72,7 @@
         gitignore
         regex
         vim
+        hcl
       ]
     ))
   ];
@@ -85,6 +94,9 @@
     set tabstop=4       " Tab width
     set scrolloff=10    " Keep cursor away from screen edges
     set sidescrolloff=10
+
+    " JSON files should use 2 spaces
+    autocmd FileType json setlocal shiftwidth=2 tabstop=2
 
     " UI settings
     set signcolumn=yes  " Always show sign column
@@ -126,6 +138,9 @@
     nnoremap <leader>w :w<CR>
     nnoremap <leader>q :q<CR>
 
+    " Go back to previous buffer
+    nnoremap <leader>b <C-^>
+
     " Undo/Redo
     nnoremap U <C-r>
     nnoremap <leader>u u
@@ -140,6 +155,7 @@
     nnoremap <leader>h :noh<CR>
     nnoremap k gk
     nnoremap j gj
+    nnoremap ° (
   '';
 
   # Lua configuration for plugins
@@ -163,6 +179,9 @@
     })
 
     vim.cmd([[colorscheme tokyonight]])
+
+    -- Hide deprecation warning
+    vim.deprecate = function() end
 
     -- UI Customization
     vim.opt.fillchars = {
@@ -359,6 +378,8 @@
           previewer = false,
           prompt_title = "Find Buffers",
           results_title = "Buffers",
+          sort_mru = true,
+          ignore_current_buffer = true,
         },
         help_tags = {
           theme = "dropdown",
@@ -378,6 +399,94 @@
 
     -- Load Telescope extensions
     telescope.load_extension("fzf")
+    telescope.load_extension("dap")
+
+    -- Spectre
+    require('spectre').setup({
+      color_devicons = true,
+      open_cmd = 'vnew',
+      live_update = true,
+      line_sep_start = '┌───────────────────────────────────────────────',
+      result_padding = '│ ',
+      line_sep = '└───────────────────────────────────────────────',
+      highlight = {
+        ui = "String",
+        search = "DiffChange",
+        replace = "DiffDelete",
+      },
+      mapping = {
+        ['toggle_line'] = {
+          map = "dd",
+          cmd = "<cmd>lua require('spectre').toggle_line()<CR>",
+          desc = "toggle current item"
+        },
+        ['enter_file'] = {
+          map = "<CR>",
+          cmd = "<cmd>lua require('spectre.actions').select_entry()<CR>",
+          desc = "go to file"
+        },
+        ['send_to_qf'] = {
+          map = "Q",
+          cmd = "<cmd>lua require('spectre.actions').send_to_qf()<CR>",
+          desc = "send all items to quickfix"
+        },
+        ['replace_cmd'] = {
+          map = "<leader>R",
+          cmd = "<cmd>lua require('spectre.actions').replace_cmd()<CR>",
+          desc = "input replace command"
+        },
+        ['show_option_menu'] = {
+          map = "<leader>o",
+          cmd = "<cmd>lua require('spectre').toggle_options()<CR>",
+          desc = "toggle options"
+        },
+        ['run_current_replace'] = {
+          map = "<leader>rc",
+          cmd = "<cmd>lua require('spectre.actions').run_current_replace()<CR>",
+          desc = "replace current line"
+        },
+        ['run_replace'] = {
+          map = "<leader>ra",
+          cmd = "<cmd>lua require('spectre.actions').run_replace()<CR>",
+          desc = "replace all"
+        },
+        ['change_view_mode'] = {
+          map = "<leader>v",
+          cmd = "<cmd>lua require('spectre').change_view()<CR>",
+          desc = "change result view mode"
+        },
+        ['toggle_ignore_case'] = {
+          map = "<leader>ic",
+          cmd = "<cmd>lua require('spectre').change_options('ignore-case')<CR>",
+          desc = "toggle ignore case"
+        },
+        ['toggle_ignore_hidden'] = {
+          map = "<leader>ih",
+          cmd = "<cmd>lua require('spectre').change_options('hidden')<CR>",
+          desc = "toggle hidden files"
+        },
+      },
+    })
+
+    -- Open Spectre in full project mode
+    vim.keymap.set("n", "<leader>sr", function()
+      require("spectre").open()
+    end, { desc = "Search and replace in project" })
+
+    -- Search current word under cursor
+    vim.keymap.set("n", "<leader>sw", function()
+      require("spectre").open_visual({ select_word = true })
+    end, { desc = "Search word under cursor" })
+
+    -- Visual mode: search selection
+    vim.keymap.set("v", "<leader>sw", function()
+      require("spectre").open_visual()
+    end, { desc = "Search selected text" })
+
+    -- Open for current file only
+    vim.keymap.set("n", "<leader>sf", function()
+      require("spectre").open_file_search({ select_word = true })
+    end, { desc = "Search current file" })
 
     -- Status Line Configuration
     require('lualine').setup({
@@ -421,7 +530,7 @@
         lualine_x = {
           {
             function()
-              local buf_clients = vim.lsp.get_active_clients({ bufnr = 0 })
+              local buf_clients = vim.lsp.get_clients({ bufnr = 0 })
               if #buf_clients == 0 then
                 return "  No LSP"
               end
@@ -602,16 +711,12 @@
         "pyright",
         "ts_ls",
         "lua_ls",
-        "html",
-        "cssls",
-        "jsonls",
         "gopls",
         "clangd",
-        "bashls",
-        "marksman",
-        "dockerls",
-        "yamlls",
         "rust_analyzer",
+        "yamlls",
+        "tflint",
+        "jsonls",
       },
       automatic_installation = true,
     })
@@ -619,48 +724,34 @@
     local capabilities = require("cmp_nvim_lsp").default_capabilities()
     local lspconfig = require("lspconfig")
 
+    -- Common LSP settings
+    local common_config = {
+      capabilities = capabilities,
+    }
+
+    -- Server specific configurations
     local servers = {
       ruff = {
         settings = {
           args = { "--ignore=E501" },
-          organizeImports = true,
-          fixAll = true,
-          lint = {
-            args = { "--select=E,F,W,I" },
-          },
         },
-        on_attach = function(client)
-          client.server_capabilities.documentFormattingProvider = true
-          client.server_capabilities.documentRangeFormattingProvider = true
-        end,
       },
       pyright = {
         settings = {
           python = {
             analysis = {
-              autoSearchPaths = true,
-              useLibraryCodeForTypes = true,
+              typeCheckingMode = "off",
               diagnosticMode = "workspace",
             },
           },
         },
-        on_attach = function(client)
-          client.server_capabilities.documentFormattingProvider = false
-        end,
       },
-      ts_ls = {
-        on_attach = function(client)
-          client.server_capabilities.documentFormattingProvider = false
-        end,
-      },
+      ts_ls = {},
       lua_ls = {
         settings = {
           Lua = {
             diagnostics = { globals = { "vim" } },
-            workspace = {
-              library = vim.api.nvim_get_runtime_file("", true),
-              checkThirdParty = false,
-            },
+            workspace = { checkThirdParty = false },
             telemetry = { enable = false },
           },
         },
@@ -679,36 +770,51 @@
           "clangd",
           "--background-index",
           "--clang-tidy",
-          "--header-insertion=iwyu",
           "--completion-style=detailed",
-          "--function-arg-placeholders",
         },
       },
       rust_analyzer = {
         settings = {
           ["rust-analyzer"] = {
-            checkOnSave = {
-              command = "clippy",
-            },
+            checkOnSave = { command = "clippy" },
           },
         },
       },
-      nixd = {}
+      yamlls = {
+        settings = {
+          yaml = {
+            schemaStore = { enable = true },
+            validate = true,
+            format = { enable = true },
+          },
+        },
+      },
+      tflint = {
+        settings = {
+          tflint = { enable = true },
+        },
+      },
+      jsonls = {
+        settings = {
+          json = {
+            format = { 
+              enable = true,
+            }
+          }
+        }
+      },
+      nixd = {},
     }
 
     -- Set up LSP servers
-    for server, config in pairs(servers) do
-      config.capabilities = capabilities
-      lspconfig[server].setup(config)
+    for server_name, server_config in pairs(servers) do
+      local config = vim.tbl_deep_extend("force", common_config, server_config)
+      lspconfig[server_name].setup(config)
     end
 
     -- Diagnostic configuration
     vim.diagnostic.config({
-      virtual_text = {
-        prefix = "●",
-        spacing = 2,
-        severity = { min = vim.diagnostic.severity.WARN },
-      },
+      virtual_text = false,
       float = {
         border = "rounded",
         source = "always",
@@ -717,7 +823,7 @@
         style = "minimal",
       },
       signs = true,
-      underline = true,
+      underline = false,
       update_in_insert = false,
       severity_sort = true,
     })
@@ -882,6 +988,139 @@
         { name = "buffer" },
       },
     })
+
+    -- Debugging
+
+    local dap = require("dap")
+    local dapui = require("dapui")
+
+    dapui.setup({
+      layouts = {
+        {
+          elements = {
+            { id = "repl", size = 0.30 },
+            { id = "breakpoints", size = 0.20 },
+            { id = "stacks", size = 0.25 },
+            { id = "watches", size = 0.25 },
+          },
+          size = 50,
+          position = "left",
+        },
+        {
+          elements = {
+            { id = "scopes", size = 1.0 },
+          },
+          size = 15,
+          position = "bottom",
+        },
+      },
+      controls = {
+        enabled = true,
+        element = "scopes",
+        icons = {
+          pause = "⏸",
+          play = "▶",
+          step_into = "↘",
+          step_over = "⏭",
+          step_out = "↩",
+          step_back = "⏪",
+          run_last = "🔁",
+          terminate = "🛑",
+        },
+      },
+      floating = {
+        max_height = 0.4,
+        max_width = 0.5,
+        border = "rounded",
+        mappings = {
+          close = { "q", "<Esc>" },
+        },
+      },
+      render = {
+        indent = 2,
+        max_type_length = nil,
+      },
+    })
+
+    dap.listeners.after.event_initialized["dapui_config"] = function()
+      dapui.open()
+    end
+    dap.listeners.before.event_terminated["dapui_config"] = function()
+      dapui.close()
+    end
+    dap.listeners.before.event_exited["dapui_config"] = function()
+      dapui.close()
+    end
+
+    dap.adapters.python = {
+      type = "executable",
+      command = "uv",
+      args = { "run", "python", "-m", "debugpy.adapter" },
+    }
+
+    dap.configurations.python = {
+      {
+        type = "python",
+        request = "launch",
+        name = "Debug current test file",
+        module = "pytest",
+        args = function()
+          local file = vim.fn.expand("%:p")
+          local cwd = vim.fn.getcwd()
+          -- Get relative path to ./api/ directory
+          local rel = vim.fn.fnamemodify(file, ":.:s?^api/??")
+          return { "--dist", "loadscope", rel }
+        end,
+        justMyCode = false,
+        console = "integratedTerminal",
+        cwd = "api",
+      },
+    }
+
+    -- Visual indicators
+    vim.fn.sign_define("DapBreakpoint", { text = "🔴", texthl = "DiagnosticError", linehl = "", numhl = "" })
+    vim.fn.sign_define("DapBreakpointCondition", { text = "🟡", texthl = "DiagnosticWarn", linehl = "", numhl = "" })
+    vim.fn.sign_define("DapLogPoint", { text = "🔵", texthl = "DiagnosticInfo", linehl = "", numhl = "" })
+    vim.fn.sign_define("DapStopped", { text = "👉", texthl = "DiagnosticInfo", linehl = "CursorLine", numhl = "" })
+
+    -- Keybindings
+    vim.keymap.set("n", "<leader>dd", function()
+      dap.continue()
+    end, { desc = "Start debugger" })
+
+    vim.keymap.set("n", "<leader>dbp", function()
+      require("telescope").extensions.dap.list_breakpoints()
+    end, { desc = "List DAP breakpoints" })
+
+    vim.keymap.set("n", "<leader>db", function()
+      dap.toggle_breakpoint()
+    end, { desc = "Toggle breakpoint" })
+
+    vim.keymap.set("n", "<leader>dB", function()
+      local cond = vim.fn.input("Breakpoint condition: ")
+      require("dap").set_breakpoint(cond)
+    end, { desc = "Set conditional breakpoint" })
+
+    vim.keymap.set("n", "<leader>du", function()
+      require("dapui").toggle()
+    end, { desc = "Toggle DAP UI" })
+
+    vim.keymap.set("n", "<leader>dv", function()
+      require("dap.ui.widgets").hover()
+    end, { desc = "Hover variable under cursor" })
+
+    vim.keymap.set("v", "<leader>dv", function()
+      require("dap.ui.widgets").visual_hover()
+    end, { desc = "Hover selected variable" })
+
+    vim.keymap.set("n", "<leader>dO", dap.step_over, { desc = "Step over" })
+    vim.keymap.set("n", "<leader>di", dap.step_into, { desc = "Step into" })
+    vim.keymap.set("n", "<leader>do", dap.step_out, { desc = "Step out" })
+    vim.keymap.set("n", "<leader>dq", function()
+      dap.terminate()
+      dapui.close()
+    end, { desc = "Stop debugging" })
+
 
     -- Additional plugin keymaps
 

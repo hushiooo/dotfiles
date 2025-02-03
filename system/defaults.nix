@@ -7,7 +7,7 @@
         mru-spaces = false;
         magnification = false;
         launchanim = false;
-        minimize-to-application = false;
+        minimize-to-application = true;
         orientation = "left";
         show-process-indicators = false;
         show-recents = false;
@@ -46,6 +46,7 @@
         NSTableViewDefaultSizeMode = 2;
         PMPrintingExpandedStateForPrint = true;
         PMPrintingExpandedStateForPrint2 = true;
+        NSAutomaticSpellingCorrectionEnabled = false;
       };
 
       finder = {
