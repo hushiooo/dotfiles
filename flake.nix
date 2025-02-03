@@ -1,14 +1,14 @@
 {
-  description = "My work laptop nix-darwin system flake";
+  description = "My personal nix-darwin system flake";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-25.05-darwin";
     nix-darwin = {
-      url = "github:LnL7/nix-darwin";
+      url = "github:LnL7/nix-darwin/nix-darwin-25.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager = {
-      url = "github:nix-community/home-manager";
+      url = "github:nix-community/home-manager/release-25.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -21,11 +21,11 @@
       ...
     }:
     let
-      username = "joad.goutal";
+      username = "hushio";
       system = "aarch64-darwin";
     in
     {
-      darwinConfigurations.mbp-joad = nix-darwin.lib.darwinSystem {
+      darwinConfigurations.hushio = nix-darwin.lib.darwinSystem {
         inherit system;
         modules = [
           ./system/packages.nix
@@ -36,12 +36,13 @@
             system = {
               configurationRevision = self.rev or self.dirtyRev or null;
               stateVersion = 5;
+              primaryUser = username;
             };
 
             nix = {
               settings = {
                 experimental-features = "nix-command flakes";
-                trusted-users = [ "joad.goutal" ];
+                trusted-users = [ username ];
                 sandbox = false;
                 max-jobs = "auto";
                 cores = 0;
@@ -51,17 +52,15 @@
                 automatic = true;
                 options = "--delete-older-than 30d";
               };
-
-              useDaemon = true;
             };
 
-            services.nix-daemon.enable = true;
+            nixpkgs.config.allowUnfree = true;
           }
           {
             networking = {
-              hostName = "mbp-joad";
-              localHostName = "mbp-joad";
-              computerName = "mbp-joad";
+              hostName = "hushio";
+              localHostName = "hushio";
+              computerName = "huhshio";
             };
 
             users.users.${username}.home = "/Users/${username}";

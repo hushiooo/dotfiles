@@ -3,12 +3,6 @@
   enable = true;
   lfs.enable = true;
   userName = "hushiooo";
-  userEmail = "hushio@proton.me";
-  signing = {
-    key = "hushio@proton.me";
-    signByDefault = true;
-  };
-
   ignores = [
     ".DS_Store"
     ".envrc"
@@ -56,6 +50,11 @@
     };
     credential = {
       helper = "osxkeychain";
+    };
+    url = {
+      "git@github.com:" = {
+        insteadOf = "https://github.com/";
+      };
     };
   };
 }

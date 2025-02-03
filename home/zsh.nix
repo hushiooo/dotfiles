@@ -3,10 +3,13 @@
   enable = true;
   autosuggestion.enable = true;
   enableCompletion = true;
+  envExtra = ''
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  '';
 
   shellAliases = {
     mtop = "sudo mactop --interval 500 --color cyan";
-    rebuild = "darwin-rebuild switch --flake . --show-trace";
+    rebuild = "darwin-rebuild switch --flake .";
     update = "nix flake update";
 
     # Tools
@@ -68,7 +71,7 @@
     path = "${config.xdg.stateHome}/zsh/history";
   };
 
-  initExtraFirst = ''
+  initContent = ''
     # Additional autoloads
     autoload -Uz url-quote-magic
     zle -N self-insert url-quote-magic
@@ -77,9 +80,7 @@
 
     source ${pkgs.zsh-history-substring-search}/share/zsh-history-substring-search/zsh-history-substring-search.zsh
     source ${pkgs.zsh-syntax-highlighting}/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-  '';
 
-  initExtra = ''
     # Additional useful options
     setopt AUTO_RESUME          # Treat single word simple commands without redirection as candidates for resumption of an existing job
     setopt NOTIFY               # Report status of background jobs immediately

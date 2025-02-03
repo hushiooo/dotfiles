@@ -2,6 +2,7 @@
 {
   environment.systemPackages = with pkgs; [
     bun
+    dbmate
     cmake
     coreutils
     curl
@@ -13,11 +14,16 @@
     hexyl
     jq
     lua
+    lazydocker
     mactop
     nixd
     nodejs_22
     postgresql_16
+    pre-commit
     python313
+    python313Packages.debugpy
+    python313Packages.pytest
+    ruff
     rustup
     sqlc
     tldr

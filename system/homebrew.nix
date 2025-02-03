@@ -12,11 +12,11 @@
       "ghostty"
       "google-chrome"
       "hiddenbar"
+      "obsidian"
       "postico"
       "proton-pass"
       "protonvpn"
       "raycast"
-      # "zed"
     ];
     onActivation.cleanup = "zap";
   };
