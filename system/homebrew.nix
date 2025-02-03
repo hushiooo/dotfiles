@@ -6,7 +6,15 @@
       brewfile = true;
       autoUpdate = true;
     };
-    brews = [ ];
+    taps = [
+      "stoikio/tools"
+    ];
+    brews = [
+      "gh"
+      "stoikio/tools/stoik-auth"
+      "stoikio/tools/stoik-dlq-redrive"
+      "stoikio/tools/stoik-external-scan"
+    ];
     casks = [
       "docker"
       "ghostty"
@@ -16,7 +24,8 @@
       "proton-pass"
       "protonvpn"
       "raycast"
-      # "zed"
+      "zed"
+      "iterm2"
     ];
     onActivation.cleanup = "zap";
   };

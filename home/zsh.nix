@@ -3,6 +3,9 @@
   enable = true;
   autosuggestion.enable = true;
   enableCompletion = true;
+  envExtra = ''
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  '';
 
   shellAliases = {
     mtop = "sudo mactop --interval 500 --color cyan";

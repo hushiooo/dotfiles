@@ -1,17 +1,20 @@
 # System Configuration
 
 This repository contains my system configuration files.
+
 I use Nix to manage my environment in a declarative and reproducible way.
 
 ## Initial Setup
-
-Reset your machine from scratch and do not use FileVault disk encryption.
 
 ### 1. Prerequisites
 
 ```bash
 # Install xcode cli tools
 xcode-select --install
+
+# Install rosetta
+
+sudo softwareupdate --install-rosetta --agree-to-license
 
 # Install homebrew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -34,14 +37,14 @@ nix-shell -p git --run 'git clone https://github.com/hushiooo/dotfiles.git ~/dot
 ```bash
 nix run nix-darwin \
   --extra-experimental-features 'nix-command flakes' \
-  -- switch --flake . --show-trace
+  -- switch --flake .#${FLAKE_NAME} --show-trace
 ```
 
 ### 5. Configure SSH and GPG (Optional)
 
 ```bash
 # 1. Generate SSH key
-ssh-keygen -t ed25519 -C "hushio@proton.me"
+ssh-keygen -t ed25519 -C "joad.goutal@stoik.io"
 eval "$(ssh-agent)"
 ssh-add --apple-use-keychain ~/.ssh/id_ed25519
 pbcopy < ~/.ssh/id_ed25519.pub
@@ -51,7 +54,7 @@ pbcopy < ~/.ssh/id_ed25519.pub
 # 2. Generate GPG key
 gpg --full-generate-key # Choose RSA 4096 + no expiration
 gpg --list-secret-keys --keyid-format=long # >> sec rsa4096/YOUR_KEY_ID
-gpg --armor --export hushio@proton.me | pbcopy
+gpg --armor --export joad.goutal@stoik.io | pbcopy
 
 # → Paste in GitHub Settings → GPG Keys
 
@@ -69,7 +72,7 @@ Make sure the changes are at least added to the git worktree.
 
 ```bash
 # Rebuild system with latest changes
-darwin-rebuild switch --flake .
+darwin-rebuild switch --flake .#${FLAKE_NAME}
 
 # Update flake dependencies
 nix flake update

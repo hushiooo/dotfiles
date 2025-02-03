@@ -64,6 +64,7 @@
         gitignore
         regex
         vim
+        hcl
       ]
     ))
   ];
@@ -85,6 +86,9 @@
     set tabstop=4       " Tab width
     set scrolloff=10    " Keep cursor away from screen edges
     set sidescrolloff=10
+
+    " JSON files should use 2 spaces
+    autocmd FileType json setlocal shiftwidth=2 tabstop=2
 
     " UI settings
     set signcolumn=yes  " Always show sign column
@@ -126,6 +130,9 @@
     nnoremap <leader>w :w<CR>
     nnoremap <leader>q :q<CR>
 
+    " Go back to previous buffer
+    nnoremap <leader>b <C-^>
+
     " Undo/Redo
     nnoremap U <C-r>
     nnoremap <leader>u u
@@ -140,6 +147,7 @@
     nnoremap <leader>h :noh<CR>
     nnoremap k gk
     nnoremap j gj
+    nnoremap ° (
   '';
 
   # Lua configuration for plugins
@@ -359,6 +367,8 @@
           previewer = false,
           prompt_title = "Find Buffers",
           results_title = "Buffers",
+          sort_mru = true,
+          ignore_current_buffer = true,
         },
         help_tags = {
           theme = "dropdown",
@@ -602,16 +612,12 @@
         "pyright",
         "ts_ls",
         "lua_ls",
-        "html",
-        "cssls",
-        "jsonls",
         "gopls",
         "clangd",
-        "bashls",
-        "marksman",
-        "dockerls",
-        "yamlls",
         "rust_analyzer",
+        "yamlls",
+        "tflint",
+        "jsonls",
       },
       automatic_installation = true,
     })
@@ -619,48 +625,25 @@
     local capabilities = require("cmp_nvim_lsp").default_capabilities()
     local lspconfig = require("lspconfig")
 
+    -- Common LSP settings
+    local common_config = {
+      capabilities = capabilities,
+    }
+
+    -- Server specific configurations
     local servers = {
       ruff = {
         settings = {
           args = { "--ignore=E501" },
-          organizeImports = true,
-          fixAll = true,
-          lint = {
-            args = { "--select=E,F,W,I" },
-          },
         },
-        on_attach = function(client)
-          client.server_capabilities.documentFormattingProvider = true
-          client.server_capabilities.documentRangeFormattingProvider = true
-        end,
       },
-      pyright = {
-        settings = {
-          python = {
-            analysis = {
-              autoSearchPaths = true,
-              useLibraryCodeForTypes = true,
-              diagnosticMode = "workspace",
-            },
-          },
-        },
-        on_attach = function(client)
-          client.server_capabilities.documentFormattingProvider = false
-        end,
-      },
-      ts_ls = {
-        on_attach = function(client)
-          client.server_capabilities.documentFormattingProvider = false
-        end,
-      },
+      pyright = {},
+      ts_ls = {},
       lua_ls = {
         settings = {
           Lua = {
             diagnostics = { globals = { "vim" } },
-            workspace = {
-              library = vim.api.nvim_get_runtime_file("", true),
-              checkThirdParty = false,
-            },
+            workspace = { checkThirdParty = false },
             telemetry = { enable = false },
           },
         },
@@ -679,36 +662,51 @@
           "clangd",
           "--background-index",
           "--clang-tidy",
-          "--header-insertion=iwyu",
           "--completion-style=detailed",
-          "--function-arg-placeholders",
         },
       },
       rust_analyzer = {
         settings = {
           ["rust-analyzer"] = {
-            checkOnSave = {
-              command = "clippy",
-            },
+            checkOnSave = { command = "clippy" },
           },
         },
       },
-      nixd = {}
+      yamlls = {
+        settings = {
+          yaml = {
+            schemaStore = { enable = true },
+            validate = true,
+            format = { enable = true },
+          },
+        },
+      },
+      tflint = {
+        settings = {
+          tflint = { enable = true },
+        },
+      },
+      jsonls = {
+        settings = {
+          json = {
+            format = { 
+              enable = true,
+            }
+          }
+        }
+      },
+      nixd = {},
     }
 
     -- Set up LSP servers
-    for server, config in pairs(servers) do
-      config.capabilities = capabilities
-      lspconfig[server].setup(config)
+    for server_name, server_config in pairs(servers) do
+      local config = vim.tbl_deep_extend("force", common_config, server_config)
+      lspconfig[server_name].setup(config)
     end
 
     -- Diagnostic configuration
     vim.diagnostic.config({
-      virtual_text = {
-        prefix = "●",
-        spacing = 2,
-        severity = { min = vim.diagnostic.severity.WARN },
-      },
+      virtual_text = false,
       float = {
         border = "rounded",
         source = "always",
@@ -717,7 +715,7 @@
         style = "minimal",
       },
       signs = true,
-      underline = true,
+      underline = false,
       update_in_insert = false,
       severity_sort = true,
     })

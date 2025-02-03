@@ -12,7 +12,7 @@
 
     configFile = {
       "ghostty/config".source = ./config/ghostty/config;
-      # "zed/settings.json".source = ./config/zed/settings.json;
+      "zed/settings.json".source = ./config/zed/settings.json;
     };
   };
 
@@ -25,6 +25,8 @@
       "$HOME/.local/bin"
       "$HOME/.cargo/bin"
       "$HOME/go/bin"
+      "/opt/homebrew/bin"
+      "/opt/homebrew/sbin"
     ];
 
     sessionVariables = {

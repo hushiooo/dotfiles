@@ -3,9 +3,9 @@
   enable = true;
   lfs.enable = true;
   userName = "hushiooo";
-  userEmail = "hushio@proton.me";
+  userEmail = "joad.goutal@stoik.io";
   signing = {
-    key = "hushio@proton.me";
+    key = "joad.goutal@stoik.io";
     signByDefault = true;
   };
 
@@ -56,6 +56,11 @@
     };
     credential = {
       helper = "osxkeychain";
+    };
+    url = {
+      "git@github.com:" = {
+        insteadOf = "https://github.com/";
+      };
     };
   };
 }

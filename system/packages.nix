@@ -8,13 +8,13 @@
     delta
     fd
     gcc
-    gh
     go
     hexyl
     jq
     lua
     mactop
     nixd
+    nixfmt-rfc-style
     nodejs_22
     postgresql_16
     python313
@@ -23,8 +23,21 @@
     tldr
     tree
     tree-sitter
-    uv
     wget
+    poetry
+    ruff
+    earthly
+    pre-commit
+    dbmate
+    terraform
+    terragrunt
+    tflint
+    sops
+    go-task
+    tailscale
+    gum
+    awscli2
+    aws-iam-authenticator
   ];
 
   fonts.packages = with pkgs; [
