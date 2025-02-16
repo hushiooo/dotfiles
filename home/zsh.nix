@@ -47,6 +47,10 @@
     cp = "cp -i";
     mv = "mv -i";
     rm = "rm -i";
+
+    # Others
+    httpc = "cd ~/dev/httpc && python main.py";
+    tester = "poetry run pytest -vv -n 4 --dist loadscope";
   };
 
   plugins = [

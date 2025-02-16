@@ -51,11 +51,7 @@
                 automatic = true;
                 options = "--delete-older-than 30d";
               };
-
-              useDaemon = true;
             };
-
-            services.nix-daemon.enable = true;
 
             nixpkgs.config.allowUnfree = true;
           }

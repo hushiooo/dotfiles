@@ -10,6 +10,8 @@
       "stoikio/tools"
     ];
     brews = [
+      "aws-iam-authenticator"
+      "awscli"
       "gh"
       "stoikio/tools/stoik-auth"
       "stoikio/tools/stoik-dlq-redrive"
@@ -20,6 +22,7 @@
       "ghostty"
       "google-chrome"
       "hiddenbar"
+      "obsidian"
       "postico"
       "proton-pass"
       "protonvpn"

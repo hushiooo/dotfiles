@@ -25,6 +25,7 @@
     tree-sitter
     wget
     poetry
+    uv
     ruff
     earthly
     pre-commit
@@ -36,8 +37,6 @@
     go-task
     tailscale
     gum
-    awscli2
-    aws-iam-authenticator
   ];
 
   fonts.packages = with pkgs; [
