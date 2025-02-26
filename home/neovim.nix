@@ -637,7 +637,19 @@
           args = { "--ignore=E501" },
         },
       },
-      pyright = {},
+      pyright = {
+        settings = {
+          python = {
+            analysis = {
+              typeCheckingMode = "basic",
+              diagnosticMode = "workspace",
+              diagnosticSeverityOverrides = {
+                reportCallIssue = "none",
+              },
+            },
+          },
+        },
+      },
       ts_ls = {},
       lua_ls = {
         settings = {

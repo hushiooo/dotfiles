@@ -11,6 +11,7 @@
     go
     hexyl
     jq
+    lazydocker
     lua
     mactop
     nixd

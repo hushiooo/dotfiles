@@ -22,13 +22,12 @@
       "ghostty"
       "google-chrome"
       "hiddenbar"
+      "iterm2"
       "obsidian"
       "postico"
       "proton-pass"
       "protonvpn"
       "raycast"
-      "zed"
-      "iterm2"
     ];
     onActivation.cleanup = "zap";
   };
