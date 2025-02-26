@@ -48,9 +48,10 @@
     mv = "mv -i";
     rm = "rm -i";
 
-    # Others
+    # Misc
     httpc = "cd ~/dev/httpc && python main.py";
     tester = "poetry run pytest -vv -n 4 --dist loadscope";
+    tf_clean = "rm -rfv **/.terragrunt-cache/";
   };
 
   plugins = [

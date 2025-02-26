@@ -13,10 +13,9 @@ I use Nix to manage my environment in a declarative and reproducible way.
 xcode-select --install
 
 # Install rosetta
-
 sudo softwareupdate --install-rosetta --agree-to-license
 
-# Install homebrew
+# Install homebrew (necessary for some casks)
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
@@ -44,7 +43,7 @@ nix run nix-darwin \
 
 ```bash
 # 1. Generate SSH key
-ssh-keygen -t ed25519 -C "joad.goutal@stoik.io"
+ssh-keygen -t ed25519 -C "YOUR_EMAIL"
 eval "$(ssh-agent)"
 ssh-add --apple-use-keychain ~/.ssh/id_ed25519
 pbcopy < ~/.ssh/id_ed25519.pub
@@ -54,7 +53,7 @@ pbcopy < ~/.ssh/id_ed25519.pub
 # 2. Generate GPG key
 gpg --full-generate-key # Choose RSA 4096 + no expiration
 gpg --list-secret-keys --keyid-format=long # >> sec rsa4096/YOUR_KEY_ID
-gpg --armor --export joad.goutal@stoik.io | pbcopy
+gpg --armor --export YOUR_EMAIL | pbcopy
 
 # → Paste in GitHub Settings → GPG Keys
 
