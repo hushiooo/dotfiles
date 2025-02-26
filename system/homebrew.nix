@@ -27,8 +27,6 @@
       "proton-pass"
       "protonvpn"
       "raycast"
-      "zed"
-      "iterm2"
     ];
     onActivation.cleanup = "zap";
   };

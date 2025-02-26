@@ -12,7 +12,6 @@
 
     configFile = {
       "ghostty/config".source = ./config/ghostty/config;
-      "zed/settings.json".source = ./config/zed/settings.json;
     };
   };
 
