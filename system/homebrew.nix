@@ -22,7 +22,6 @@
       "ghostty"
       "google-chrome"
       "hiddenbar"
-      "iterm2"
       "obsidian"
       "postico"
       "proton-pass"
