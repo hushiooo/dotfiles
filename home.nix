@@ -44,7 +44,7 @@
       defaultCacheTtl = 31536000; # 1 year
       maxCacheTtl = 31536000;
       enableSshSupport = true;
-      pinentryPackage = pkgs.pinentry_mac;
+      pinentry.package = pkgs.pinentry_mac;
     };
   };
 
