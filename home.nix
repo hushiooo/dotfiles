@@ -12,6 +12,7 @@
 
     configFile = {
       "ghostty/config".source = ./config/ghostty/config;
+      "nvim".source = ./config/nvim;
     };
   };
 

@@ -1,14 +1,21 @@
 { pkgs, ... }:
 {
   environment.systemPackages = with pkgs; [
+    aws-iam-authenticator
+    awscli2
     bun
     cmake
     coreutils
     curl
+    dbmate
     delta
+    earthly
     fd
     gcc
+    gh
     go
+    go-task
+    gum
     hexyl
     jq
     lazydocker
@@ -17,28 +24,24 @@
     nixd
     nixfmt-rfc-style
     nodejs_22
+    poetry
     postgresql_16
+    pre-commit
     python313
     python313Packages.debugpy
-    rustup
-    sqlc
-    tldr
-    tree
-    tree-sitter
-    wget
-    poetry
-    uv
     ruff
-    earthly
-    pre-commit
-    dbmate
+    rustup
+    sops
+    sqlc
+    tailscale
     terraform
     terragrunt
     tflint
-    sops
-    go-task
-    tailscale
-    gum
+    tldr
+    tree
+    tree-sitter
+    uv
+    wget
   ];
 
   fonts.packages = with pkgs; [
