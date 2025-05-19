@@ -9,7 +9,6 @@
 
   shellAliases = {
     mtop = "sudo mactop --interval 500 --color cyan";
-    rebuild = "darwin-rebuild switch --flake . --show-trace";
     update = "nix flake update";
 
     # Tools

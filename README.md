@@ -71,7 +71,7 @@ Make sure the changes are at least added to the git worktree.
 
 ```bash
 # Rebuild system with latest changes
-darwin-rebuild switch --flake .#${FLAKE_NAME}
+sudo darwin-rebuild switch --flake . --show-trace
 
 # Update flake dependencies
 nix flake update

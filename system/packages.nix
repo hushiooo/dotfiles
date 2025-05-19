@@ -29,6 +29,7 @@
     pre-commit
     python313
     python313Packages.debugpy
+    python313Packages.pytest
     ruff
     rustup
     sops

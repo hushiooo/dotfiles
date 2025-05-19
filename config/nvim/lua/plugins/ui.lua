@@ -75,6 +75,25 @@ require("noice").setup({
     },
 })
 
+-- Git signs (visual indicators and blame)
+require("gitsigns").setup({
+    signs = {
+        add          = { text = "│" },
+        change       = { text = "│" },
+        delete       = { text = "_" },
+        topdelete    = { text = "‾" },
+        changedelete = { text = "~" },
+        untracked    = { text = "┆" },
+    },
+    current_line_blame = true,
+    current_line_blame_opts = {
+        virt_text = true,
+        virt_text_pos = "eol",
+        ignore_whitespace = true,
+        delay = 1000,
+    },
+})
+
 -- Notify
 require("notify").setup({
     background_colour = "#24283b",
@@ -134,3 +153,6 @@ require("dressing").setup({
 vim.keymap.set("n", "<leader>mn", ":Noice<CR>", { desc = "Show notification history" })
 vim.keymap.set("n", "<leader>ml", ":Noice last<CR>", { desc = "Show last notification" })
 vim.keymap.set("n", "<leader>md", ":Noice dismiss<CR>", { desc = "Dismiss notifications" })
+
+vim.keymap.set("n", "<leader>gb", ":Gitsigns toggle_current_line_blame<CR>", { desc = "Toggle git blame" })
+vim.keymap.set("n", "<leader>gp", ":Gitsigns preview_hunk<CR>", { desc = "Preview git hunk" })

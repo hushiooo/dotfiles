@@ -52,8 +52,12 @@ setup_lsp("pyright", {
     settings = {
         python = {
             analysis = {
-                typeCheckingMode = "off",
+                typeCheckingMode = "basic",
                 diagnosticMode = "workspace",
+                diagnosticSeverityOverrides = {
+                    reportOptionalMemberAccess = "none",
+                    reportArgumentType = "none",
+                },
             },
         },
     },
