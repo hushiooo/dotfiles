@@ -1,5 +1,3 @@
--- plugins/spectre.lua
-
 require("spectre").setup({
     color_devicons = true,
     open_cmd = "vnew",
@@ -11,6 +9,9 @@ require("spectre").setup({
         ui = "String",
         search = "DiffChange",
         replace = "DiffDelete",
+    },
+    default = {
+        regex = false,
     },
     mapping = {
         ['toggle_line'] = {
@@ -66,7 +67,6 @@ require("spectre").setup({
     },
 })
 
--- Global Spectre entry points
 vim.keymap.set("n", "<leader>sr", function()
     require("spectre").open()
 end, { desc = "Search and replace in project" })

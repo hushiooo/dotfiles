@@ -21,7 +21,6 @@
     lazydocker
     lua
     mactop
-    nixd
     nixfmt-rfc-style
     nodejs_22
     poetry
