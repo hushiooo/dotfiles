@@ -27,8 +27,6 @@
     gitsigns-nvim
 
     # LSP and completion
-    mason-nvim
-    mason-lspconfig-nvim
     nvim-lspconfig
     nvim-cmp
     cmp-nvim-lsp
@@ -77,6 +75,24 @@
         hcl
       ]
     ))
+  ];
+
+  extraPackages = with pkgs; [
+    # LSPs
+    nodePackages.typescript-language-server
+    pyright
+    lua-language-server
+    gopls
+    clang-tools
+    rust-analyzer
+    bash-language-server
+    dockerfile-language-server-nodejs
+    yaml-language-server
+    vscode-langservers-extracted
+    marksman
+    nil
+    tflint
+    ruff
   ];
 
   extraConfig = "";

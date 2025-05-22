@@ -16,12 +16,12 @@
     go
     go-task
     gum
+    gnused
     hexyl
     jq
     lazydocker
     lua
     mactop
-    nixd
     nixfmt-rfc-style
     nodejs_22
     poetry

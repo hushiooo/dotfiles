@@ -1,39 +1,6 @@
-local capabilities = require("cmp_nvim_lsp").default_capabilities()
 local lspconfig = require("lspconfig")
+local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
-
-require("mason").setup({
-    ui = {
-        border = "rounded",
-        icons = {
-            package_installed = "✓",
-            package_pending = "➜",
-            package_uninstalled = "✗",
-        },
-    },
-})
-
-require("mason-lspconfig").setup({
-    ensure_installed = {
-        "ruff",
-        "pyright",
-        "ts_ls",
-        "lua_ls",
-        "html",
-        "cssls",
-        "jsonls",
-        "gopls",
-        "clangd",
-        "bashls",
-        "marksman",
-        "dockerls",
-        "yamlls",
-        "rust_analyzer",
-    },
-    automatic_installation = true,
-})
-
--- Common capabilities
 local function setup_lsp(server, config)
     config = vim.tbl_deep_extend("force", {
         capabilities = capabilities,
@@ -41,29 +8,17 @@ local function setup_lsp(server, config)
     lspconfig[server].setup(config)
 end
 
--- LSP servers setup
-setup_lsp("ruff", {
-    settings = {
-        args = { "--ignore=E501" },
-    },
-})
-
 setup_lsp("pyright", {
     settings = {
         python = {
             analysis = {
-                typeCheckingMode = "basic",
+                typeCheckingMode = "off",
                 diagnosticMode = "workspace",
-                diagnosticSeverityOverrides = {
-                    reportOptionalMemberAccess = "none",
-                    reportArgumentType = "none",
-                },
             },
         },
     },
 })
 
-setup_lsp("tsserver", {})
 setup_lsp("lua_ls", {
     settings = {
         Lua = {
@@ -111,7 +66,6 @@ setup_lsp("yamlls", {
     },
 })
 
-setup_lsp("tflint", {})
 setup_lsp("jsonls", {
     settings = {
         json = {
@@ -120,9 +74,29 @@ setup_lsp("jsonls", {
     },
 })
 
-setup_lsp("nixd", {})
+setup_lsp("nil_ls", {
+    settings = {
+        ['nil'] = {
+            formatting = {
+                command = { "nixfmt" },
+            },
+        },
+    },
+})
 
--- Diagnostics
+for _, server in ipairs({
+    "ts_ls",
+    "html",
+    "cssls",
+    "bashls",
+    "dockerls",
+    "marksman",
+    "tflint",
+    "ruff",
+}) do
+    setup_lsp(server)
+end
+
 vim.diagnostic.config({
     virtual_text = false,
     float = {
@@ -138,7 +112,6 @@ vim.diagnostic.config({
     severity_sort = true,
 })
 
--- Diagnostic signs
 for type, icon in pairs({
     Error = " ",
     Warn  = " ",
@@ -149,7 +122,6 @@ for type, icon in pairs({
     vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
 end
 
--- LSP keymaps on attach
 vim.api.nvim_create_autocmd("LspAttach", {
     group = vim.api.nvim_create_augroup("UserLspConfig", {}),
     callback = function(ev)
