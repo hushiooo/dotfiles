@@ -25,7 +25,7 @@
       system = "aarch64-darwin";
     in
     {
-      darwinConfigurations.hushio = nix-darwin.lib.darwinSystem {
+      darwinConfigurations.prime = nix-darwin.lib.darwinSystem {
         inherit system;
         modules = [
           ./system/packages.nix
@@ -58,9 +58,9 @@
           }
           {
             networking = {
-              hostName = "hushio";
-              localHostName = "hushio";
-              computerName = "huhshio";
+              hostName = "prime";
+              localHostName = "prime";
+              computerName = "prime";
             };
 
             users.users.${username}.home = "/Users/${username}";
