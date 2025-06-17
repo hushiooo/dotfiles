@@ -4,7 +4,7 @@
   enableBashIntegration = true;
   enableZshIntegration = true;
   settings = {
-    manager = {
+    mgr = {
       show_hidden = false;
       show_symlink = true;
       sort_sensitive = false;
