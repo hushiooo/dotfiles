@@ -84,6 +84,16 @@ setup_lsp("nil_ls", {
     },
 })
 
+setup_lsp("bashls", {
+    on_attach = function(client, bufnr)
+        local filename = vim.api.nvim_buf_get_name(bufnr)
+        if filename:match("%.env$") then
+            client.stop()
+            return
+        end
+    end,
+})
+
 for _, server in ipairs({
     "ts_ls",
     "html",
