@@ -27,6 +27,7 @@
     poetry
     postgresql_16
     pre-commit
+    pyrefly
     python313
     python313Packages.debugpy
     python313Packages.pytest
