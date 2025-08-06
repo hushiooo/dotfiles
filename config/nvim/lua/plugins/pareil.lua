@@ -1,0 +1,1 @@
+require("pareil").setup({})
