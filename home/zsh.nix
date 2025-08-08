@@ -52,7 +52,6 @@
     httpc = "cd ~/dev/httpc && python main.py";
     tester = "uv run pytest -vv -n 4 --dist loadscope";
     tf_clean = "rm -rfv **/.terragrunt-cache/";
-    pareil = "~/dev/pareil";
   };
 
   plugins = [

@@ -1,4 +1,5 @@
 { pkgs, ... }:
+
 {
   enable = true;
   defaultEditor = true;
@@ -10,7 +11,6 @@
     tokyonight-nvim
     lualine-nvim
     nvim-web-devicons
-    noice-nvim
     nvim-notify
     dressing-nvim
 
@@ -19,7 +19,6 @@
     telescope-nvim
     telescope-fzf-native-nvim
     which-key-nvim
-    plenary-nvim
 
     # Editing enhancements
     comment-nvim
@@ -44,6 +43,9 @@
 
     # Search & Replace
     nvim-spectre
+
+    # Utils
+    plenary-nvim
 
     # Syntax highlighting
     (nvim-treesitter.withPlugins (
@@ -94,7 +96,4 @@
     tflint
     ruff
   ];
-
-  extraConfig = "";
-  extraLuaConfig = "";
 }

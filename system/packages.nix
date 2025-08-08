@@ -1,8 +1,6 @@
 { pkgs, ... }:
 {
   environment.systemPackages = with pkgs; [
-    aws-iam-authenticator
-    awscli2
     bun
     cmake
     coreutils

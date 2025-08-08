@@ -27,8 +27,4 @@ end
 
 vim.api.nvim_create_user_command("PareilsDiff", M.open, {})
 
-vim.keymap.set("n", "<leader>pd", function()
-    require("pareil").open()
-end, { desc = "Pareils diff (popup)", silent = true })
-
 return M

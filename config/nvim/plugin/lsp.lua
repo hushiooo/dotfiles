@@ -12,7 +12,7 @@ setup_lsp("pyright", {
     settings = {
         python = {
             analysis = {
-                typeCheckingMode = "off",
+                typeCheckingMode = "basic",
                 diagnosticMode = "workspace",
             },
         },

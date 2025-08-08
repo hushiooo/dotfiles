@@ -77,6 +77,12 @@ sudo darwin-rebuild switch --flake . --show-trace
 nix flake update
 ```
 
+## Useful commands
+
+```bash
+nix-collect-garbage -d
+```
+
 ## Repository Structure
 
 ```bash

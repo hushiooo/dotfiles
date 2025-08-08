@@ -13,6 +13,8 @@
       "stoikio/tools/stoik-auth"
       "stoikio/tools/stoik-dlq-redrive"
       "stoikio/tools/stoik-external-scan"
+      "awscli"
+      "aws-iam-authenticator"
     ];
     casks = [
       "docker"
