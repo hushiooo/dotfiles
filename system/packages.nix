@@ -17,6 +17,8 @@
     gnused
     hexyl
     jq
+    yq-go
+    sqlfluff
     lazydocker
     lua
     mactop
