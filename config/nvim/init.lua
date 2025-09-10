@@ -66,10 +66,11 @@ vim.api.nvim_create_autocmd("FileType", {
 -- ========================
 
 -- Window navigation
-map("n", "<C-h>", "<C-w>h")
-map("n", "<C-j>", "<C-w>j")
-map("n", "<C-k>", "<C-w>k")
-map("n", "<C-l>", "<C-w>l")
+map("n", "<leader>ah", "<C-w>h")
+map("n", "<leader>aj", "<C-w>j")
+map("n", "<leader>ak", "<C-w>k")
+map("n", "<leader>al", "<C-w>l")
+map("n", "<leader>aa", "<C-w>w", { desc = "Window: next (cycle)" })
 
 -- File operations
 map("n", "<leader>w", "<cmd>w<CR>")
@@ -93,3 +94,33 @@ map("n", "U", "<C-r>")
 
 -- Prevent yanked text from being replaced during visual paste
 map("v", "p", '"_dP', { noremap = true, silent = true })
+
+-- Cycle between windows
+
+
+-- ========================
+-- Quickfix Keymaps
+-- ========================
+
+vim.api.nvim_create_autocmd("FileType", {
+    pattern = "TelescopePrompt",
+    callback = function(args)
+        local actions = require("telescope.actions")
+        local opts = { buffer = args.buf, silent = true, nowait = true }
+
+        vim.keymap.set({ "i", "n" }, "<leader>mq", function()
+            actions.smart_send_to_qflist(args.buf)
+        end, vim.tbl_extend("force", opts, { desc = "Marked → quickfix (replace)" }))
+
+        vim.keymap.set({ "i", "n" }, "<leader>mQ", function()
+            actions.smart_add_to_qflist(args.buf)
+        end, vim.tbl_extend("force", opts, { desc = "Marked → quickfix (append)" }))
+    end,
+})
+
+map("n", "<leader>qo", "<cmd>copen<CR>", { desc = "Quickfix: open" })
+
+map("n", "<leader>qC", function()
+    vim.fn.setqflist({}, "r")
+    vim.notify("Quickfix list cleared", vim.log.levels.INFO)
+end, { desc = "Quickfix: clear list" })

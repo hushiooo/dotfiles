@@ -15,6 +15,7 @@
       "stoikio/tools/stoik-external-scan"
       "awscli"
       "aws-iam-authenticator"
+      "poppler"
     ];
     casks = [
       "docker"
