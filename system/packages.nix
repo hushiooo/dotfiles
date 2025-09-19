@@ -21,6 +21,7 @@
     sqlfluff
     lazydocker
     lua
+    localstack
     mactop
     nixfmt-rfc-style
     nodejs_22
@@ -33,6 +34,7 @@
     python313Packages.pytest
     ruff
     rustup
+    rabbitmq-server
     sops
     sqlc
     tailscale
