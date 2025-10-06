@@ -120,7 +120,7 @@ vim.api.nvim_create_autocmd("FileType", {
 
 map("n", "<leader>qo", "<cmd>copen<CR>", { desc = "Quickfix: open" })
 
-map("n", "<leader>qC", function()
+map("n", "<leader>cq", function()
     vim.fn.setqflist({}, "r")
     vim.notify("Quickfix list cleared", vim.log.levels.INFO)
 end, { desc = "Quickfix: clear list" })

@@ -2,22 +2,9 @@ local lspconfig = require("lspconfig")
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
 local function setup_lsp(server, config)
-    config = vim.tbl_deep_extend("force", {
-        capabilities = capabilities,
-    }, config or {})
+    config = vim.tbl_deep_extend("force", { capabilities = capabilities }, config or {})
     lspconfig[server].setup(config)
 end
-
-setup_lsp("pyright", {
-    settings = {
-        python = {
-            analysis = {
-                typeCheckingMode = "basic",
-                diagnosticMode = "workspace",
-            },
-        },
-    },
-})
 
 setup_lsp("lua_ls", {
     settings = {
@@ -40,12 +27,7 @@ setup_lsp("gopls", {
 })
 
 setup_lsp("clangd", {
-    cmd = {
-        "clangd",
-        "--background-index",
-        "--clang-tidy",
-        "--completion-style=detailed",
-    },
+    cmd = { "clangd", "--background-index", "--clang-tidy", "--completion-style=detailed" },
 })
 
 setup_lsp("rust_analyzer", {
@@ -76,10 +58,8 @@ setup_lsp("jsonls", {
 
 setup_lsp("nil_ls", {
     settings = {
-        ['nil'] = {
-            formatting = {
-                command = { "nixfmt" },
-            },
+        ["nil"] = {
+            formatting = { command = { "nixfmt" } },
         },
     },
 })
@@ -94,15 +74,46 @@ setup_lsp("bashls", {
     end,
 })
 
+setup_lsp("ruff", {
+    init_options = {
+        settings = {
+            fixAll = true,
+            organizeImports = true,
+            showSyntaxErrors = true,
+            lineLength = 88,
+            logLevel = "warn",
+        },
+    },
+})
+
+vim.lsp.config("ty", {
+    init_options = {
+        logLevel = "warn",
+    },
+    settings = {
+        ty = {
+            diagnosticMode = "workspace",
+            inlayHints = {
+                variableTypes = true,
+                callArgumentNames = true,
+            },
+            experimental = {
+                rename = true,
+                autoImport = true,
+            },
+        },
+    },
+})
+
+vim.lsp.enable("ty")
+
 for _, server in ipairs({
     "ts_ls",
     "html",
     "cssls",
-    "bashls",
     "dockerls",
     "marksman",
     "tflint",
-    "ruff",
 }) do
     setup_lsp(server)
 end
@@ -124,9 +135,9 @@ vim.diagnostic.config({
 
 for type, icon in pairs({
     Error = " ",
-    Warn  = " ",
-    Hint  = "󰌵 ",
-    Info  = " ",
+    Warn = " ",
+    Hint = "󰌵 ",
+    Info = " ",
 }) do
     local hl = "DiagnosticSign" .. type
     vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
@@ -136,7 +147,6 @@ vim.api.nvim_create_autocmd("LspAttach", {
     group = vim.api.nvim_create_augroup("UserLspConfig", {}),
     callback = function(ev)
         local opts = { buffer = ev.buf }
-
         vim.keymap.set("n", "gD", vim.lsp.buf.declaration, opts)
         vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
         vim.keymap.set("n", "gi", vim.lsp.buf.implementation, opts)
@@ -145,11 +155,13 @@ vim.api.nvim_create_autocmd("LspAttach", {
         vim.keymap.set("n", "<C-k>", vim.lsp.buf.signature_help, opts)
         vim.keymap.set("n", "<leader>cr", vim.lsp.buf.rename, opts)
         vim.keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, opts)
-        vim.keymap.set("n", "<leader>cf", function()
-            vim.lsp.buf.format({ async = true })
-        end, opts)
+        vim.keymap.set("n", "<leader>cf", function() vim.lsp.buf.format({ async = true }) end, opts)
         vim.keymap.set("n", "<leader>cs", vim.lsp.buf.workspace_symbol, opts)
         vim.keymap.set("n", "<leader>ct", vim.lsp.buf.type_definition, opts)
+        local client = vim.lsp.get_client_by_id(ev.data.client_id)
+        if client and client.server_capabilities.inlayHintProvider then
+            pcall(vim.lsp.inlay_hint, ev.buf, true)
+        end
     end,
 })
 
