@@ -26,6 +26,7 @@
     nixfmt-rfc-style
     nodejs_22
     opencode
+    cursor-cli
     poetry
     postgresql_16
     pre-commit

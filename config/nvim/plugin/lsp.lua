@@ -6,6 +6,7 @@ local function setup_lsp(server, config)
     lspconfig[server].setup(config)
 end
 
+-- Lua
 setup_lsp("lua_ls", {
     settings = {
         Lua = {
@@ -16,6 +17,7 @@ setup_lsp("lua_ls", {
     },
 })
 
+-- Go
 setup_lsp("gopls", {
     settings = {
         gopls = {
@@ -26,10 +28,12 @@ setup_lsp("gopls", {
     },
 })
 
+-- C/C++
 setup_lsp("clangd", {
     cmd = { "clangd", "--background-index", "--clang-tidy", "--completion-style=detailed" },
 })
 
+-- Rust
 setup_lsp("rust_analyzer", {
     settings = {
         ["rust-analyzer"] = {
@@ -38,86 +42,74 @@ setup_lsp("rust_analyzer", {
     },
 })
 
+-- YAML
 setup_lsp("yamlls", {
     settings = {
-        yaml = {
-            schemaStore = { enable = true },
-            validate = true,
-            format = { enable = true },
-        },
+        yaml = { schemaStore = { enable = true }, validate = true, format = { enable = true } },
     },
 })
 
+-- JSON
 setup_lsp("jsonls", {
-    settings = {
-        json = {
-            format = { enable = true },
-        },
-    },
+    settings = { json = { format = { enable = true } } },
 })
 
-setup_lsp("nil_ls", {
+-- Nix
+setup_lsp("nixd", {
     settings = {
-        ["nil"] = {
+        nixd = {
             formatting = { command = { "nixfmt" } },
+            nixpkgs = { expr = "(import <nixpkgs> {})" },
+            options = {
+                nixos = { expr = "(import <nixpkgs/nixos> { configuration = {}; }).options" },
+            },
         },
     },
 })
 
+-- Bash
 setup_lsp("bashls", {
-    on_attach = function(client, bufnr)
+    on_attach = function(_, bufnr)
         local filename = vim.api.nvim_buf_get_name(bufnr)
         if filename:match("%.env$") then
-            client.stop()
-            return
+            -- disable LSP for .env files
+            vim.schedule(function()
+                local clients = vim.lsp.get_clients({ bufnr = bufnr })
+                for _, c in ipairs(clients) do
+                    if c.name == "bashls" then c.stop() end
+                end
+            end)
         end
     end,
 })
 
+-- Python
 setup_lsp("ruff", {
     init_options = {
         settings = {
+            configurationPreference = "filesystemFirst",
             fixAll = true,
             organizeImports = true,
             showSyntaxErrors = true,
-            lineLength = 88,
+            lineLength = 100,
             logLevel = "warn",
         },
     },
 })
 
-vim.lsp.config("ty", {
-    init_options = {
-        logLevel = "warn",
-    },
-    settings = {
-        ty = {
-            diagnosticMode = "workspace",
-            inlayHints = {
-                variableTypes = true,
-                callArgumentNames = true,
-            },
-            experimental = {
-                rename = true,
-                autoImport = true,
-            },
-        },
-    },
-})
-
-vim.lsp.enable("ty")
-
+-- Others
 for _, server in ipairs({
     "ts_ls",
     "html",
     "cssls",
     "dockerls",
     "marksman",
-    "tflint",
+    "terraformls",
 }) do
     setup_lsp(server)
 end
 
+-- Diagnostics UI
 vim.diagnostic.config({
     virtual_text = false,
     float = {
@@ -135,14 +127,15 @@ vim.diagnostic.config({
 
 for type, icon in pairs({
     Error = " ",
-    Warn = " ",
-    Hint = "󰌵 ",
-    Info = " ",
+    Warn  = " ",
+    Hint  = "󰌵 ",
+    Info  = " ",
 }) do
     local hl = "DiagnosticSign" .. type
     vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
 end
 
+-- Keymaps
 vim.api.nvim_create_autocmd("LspAttach", {
     group = vim.api.nvim_create_augroup("UserLspConfig", {}),
     callback = function(ev)
@@ -158,12 +151,10 @@ vim.api.nvim_create_autocmd("LspAttach", {
         vim.keymap.set("n", "<leader>cf", function() vim.lsp.buf.format({ async = true }) end, opts)
         vim.keymap.set("n", "<leader>cs", vim.lsp.buf.workspace_symbol, opts)
         vim.keymap.set("n", "<leader>ct", vim.lsp.buf.type_definition, opts)
+
         local client = vim.lsp.get_client_by_id(ev.data.client_id)
         if client and client.server_capabilities.inlayHintProvider then
             pcall(vim.lsp.inlay_hint, ev.buf, true)
         end
     end,
 })
-
-vim.keymap.set("n", "<leader>cd", vim.diagnostic.open_float, { desc = "Show diagnostics in float" })
-vim.keymap.set("n", "<leader>cq", vim.diagnostic.setloclist, { desc = "Diagnostics to loclist" })

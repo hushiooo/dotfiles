@@ -1,5 +1,4 @@
 { pkgs, ... }:
-
 {
   enable = true;
   defaultEditor = true;
@@ -46,6 +45,7 @@
 
     # Utils
     plenary-nvim
+    nvim-lint
 
     # Syntax highlighting
     (nvim-treesitter.withPlugins (
@@ -82,18 +82,21 @@
   extraPackages = with pkgs; [
     # LSPs
     nodePackages.typescript-language-server
-    pyright
     lua-language-server
     gopls
     clang-tools
     rust-analyzer
     bash-language-server
-    dockerfile-language-server-nodejs
+    dockerfile-language-server
     yaml-language-server
     vscode-langservers-extracted
     marksman
-    nil
-    tflint
+    nixd
+    terraform-ls
     ruff
+    uv
+    stylua
+    shfmt
+    nixfmt-rfc-style
   ];
 }

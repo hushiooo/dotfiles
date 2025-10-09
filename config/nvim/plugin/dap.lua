@@ -39,13 +39,9 @@ dapui.setup({
         max_height = 0.4,
         max_width = 0.5,
         border = "rounded",
-        mappings = {
-            close = { "q", "<Esc>" },
-        },
+        mappings = { close = { "q", "<Esc>" } },
     },
-    render = {
-        indent = 2,
-    },
+    render = { indent = 2 },
 })
 
 dap.adapters.python = {
@@ -76,7 +72,7 @@ dap.listeners.after.event_initialized["dapui_config"] = function() dapui.open() 
 dap.listeners.before.event_terminated["dapui_config"] = function() dapui.close() end
 dap.listeners.before.event_exited["dapui_config"] = function() dapui.close() end
 
--- Sign definitions
+-- Signs
 vim.fn.sign_define("DapBreakpoint", { text = "🔴", texthl = "DiagnosticError" })
 vim.fn.sign_define("DapBreakpointCondition", { text = "🟡", texthl = "DiagnosticWarn" })
 vim.fn.sign_define("DapLogPoint", { text = "🔵", texthl = "DiagnosticInfo" })
@@ -92,16 +88,13 @@ vim.keymap.set("n", "<leader>dB", function()
     dap.set_breakpoint(vim.fn.input("Breakpoint condition: "))
 end, { desc = "Set conditional breakpoint" })
 vim.keymap.set("n", "<leader>du", dapui.toggle, { desc = "Toggle DAP UI" })
-vim.keymap.set("n", "<leader>dv", function()
-    require("dap.ui.widgets").hover()
-end, { desc = "Hover variable under cursor" })
-vim.keymap.set("v", "<leader>dv", function()
-    require("dap.ui.widgets").visual_hover()
-end, { desc = "Hover selected variable" })
+vim.keymap.set("n", "<leader>dv", function() require("dap.ui.widgets").hover() end,
+    { desc = "Hover variable under cursor" })
+vim.keymap.set("v", "<leader>dv", function() require("dap.ui.widgets").visual_hover() end,
+    { desc = "Hover selected variable" })
 vim.keymap.set("n", "<leader>dO", dap.step_over, { desc = "Step over" })
 vim.keymap.set("n", "<leader>di", dap.step_into, { desc = "Step into" })
 vim.keymap.set("n", "<leader>do", dap.step_out, { desc = "Step out" })
 vim.keymap.set("n", "<leader>dq", function()
-    dap.terminate()
-    dapui.close()
+    dap.terminate(); dapui.close()
 end, { desc = "Stop debugging" })

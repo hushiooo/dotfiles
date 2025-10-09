@@ -2,23 +2,18 @@
 {
   enable = true;
 
-  extraConfig = ''
-    # Security
-    Protocol 2
-    HashKnownHosts yes
-    PasswordAuthentication no
-    ChallengeResponseAuthentication no
-    PubkeyAuthentication yes
-    IdentitiesOnly yes
+  enableDefaultConfig = false;
 
-    # Performance and reliability
+  extraConfig = ''
+    HashKnownHosts yes
+    PubkeyAuthentication yes
+    KbdInteractiveAuthentication no
+    PasswordAuthentication no
     Compression yes
     TCPKeepAlive yes
     ServerAliveInterval 60
     ServerAliveCountMax 2
     ConnectTimeout 30
-
-    # Control Master for connection reuse
     ControlMaster auto
     ControlPath ~/.ssh/control-%C
     ControlPersist 3600
@@ -28,7 +23,7 @@
     "github.com" = {
       hostname = "github.com";
       user = "git";
-      identityFile = "~/.ssh/id_ed25519";
+      identityFile = [ "~/.ssh/id_ed25519" ];
       extraOptions = {
         PreferredAuthentications = "publickey";
       };

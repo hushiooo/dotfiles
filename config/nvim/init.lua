@@ -95,9 +95,6 @@ map("n", "U", "<C-r>")
 -- Prevent yanked text from being replaced during visual paste
 map("v", "p", '"_dP', { noremap = true, silent = true })
 
--- Cycle between windows
-
-
 -- ========================
 -- Quickfix Keymaps
 -- ========================

@@ -8,7 +8,6 @@
   baseIndex = 1;
   escapeTime = 0;
 
-  # Custom key bindings
   prefix = "C-a";
   keyMode = "vi";
   customPaneNavigationAndResize = true;
