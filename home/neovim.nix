@@ -93,8 +93,9 @@
     marksman
     nixd
     terraform-ls
+    pyright
     ruff
-    uv
+    ty
     stylua
     shfmt
     nixfmt-rfc-style

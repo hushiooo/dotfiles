@@ -18,7 +18,7 @@
       "poppler"
     ];
     casks = [
-      "docker"
+      "docker-desktop"
       "ghostty"
       "google-chrome"
       "hiddenbar"
