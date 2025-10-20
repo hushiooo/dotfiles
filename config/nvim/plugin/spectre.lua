@@ -1,7 +1,12 @@
-require("spectre").setup({
+local spectre = require("spectre")
+local actions = require("spectre.actions")
+local map = vim.keymap.set
+local separator = string.rep("─", 46)
+
+spectre.setup({
     color_devicons = true,
     open_cmd = "vnew",
-    live_update = true,
+    live_update = false,
     is_open_target_win = true,
     is_insert_mode = false,
     default = {
@@ -42,21 +47,14 @@ require("spectre").setup({
         ["sed"] = {
             cmd = "sed",
             args = { "-i" },
-            options = {
-                ["ignore-case"] = {
-                    value = "--ignore-case",
-                    icon = "[I]",
-                    desc = "ignore case",
-                },
-            },
         },
     },
-    line_sep_start = "┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-    result_padding = "┃ ",
-    line_sep = "┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+    line_sep_start = "╭" .. separator,
+    result_padding = "│ ",
+    line_sep = "╰" .. separator,
     highlight = {
-        ui = "String",
-        search = "Search",
+        ui = "CursorLine",
+        search = "IncSearch",
         replace = "DiffText",
     },
     view = {
@@ -67,81 +65,43 @@ require("spectre").setup({
         show_replace = true,
     },
     mapping = {
-        ["toggle_line"] = {
-            map = "dd",
-            cmd = "<cmd>lua require('spectre').toggle_line()<CR>",
-            desc = "toggle current item",
-        },
-        ["enter_file"] = {
-            map = "<CR>",
-            cmd = "<cmd>lua require('spectre.actions').select_entry()<CR>",
-            desc = "go to file",
-        },
-        ["send_to_qf"] = {
-            map = "Q",
-            cmd = "<cmd>lua require('spectre.actions').send_to_qf()<CR>",
-            desc = "send all items to quickfix",
-        },
-        ["replace_cmd"] = {
-            map = "<leader>R",
-            cmd = "<cmd>lua require('spectre.actions').replace_cmd()<CR>",
-            desc = "input replace command",
-        },
-        ["show_option_menu"] = {
-            map = "<leader>o",
-            cmd = "<cmd>lua require('spectre').toggle_options()<CR>",
-            desc = "toggle options",
-        },
-        ["run_current_replace"] = {
-            map = "<leader>rc",
-            cmd = "<cmd>lua require('spectre.actions').run_current_replace()<CR>",
-            desc = "replace current line",
-        },
-        ["run_replace"] = {
-            map = "<leader>ra",
-            cmd = "<cmd>lua require('spectre.actions').run_replace()<CR>",
-            desc = "replace all",
-        },
-        ["change_view_mode"] = {
-            map = "<leader>v",
-            cmd = "<cmd>lua require('spectre').change_view()<CR>",
-            desc = "change result view mode",
-        },
+        ["toggle_line"] = { map = "dd", cmd = spectre.toggle_line, desc = "Toggle current item" },
+        ["enter_file"] = { map = "<CR>", cmd = actions.select_entry, desc = "Go to file" },
+        ["send_to_qf"] = { map = "Q", cmd = actions.send_to_qf, desc = "Send results to quickfix" },
+        ["replace_cmd"] = { map = "cr", cmd = actions.replace_cmd, desc = "Input replace command" },
+        ["show_option_menu"] = { map = "go", cmd = spectre.toggle_options, desc = "Toggle options" },
+        ["run_current_replace"] = { map = "gr", cmd = actions.run_current_replace, desc = "Replace current line" },
+        ["run_replace"] = { map = "gR", cmd = actions.run_replace, desc = "Replace all" },
+        ["change_view_mode"] = { map = "gv", cmd = spectre.change_view, desc = "Change result view mode" },
         ["toggle_ignore_case"] = {
-            map = "<leader>ic",
-            cmd = "<cmd>lua require('spectre').change_options('ignore-case')<CR>",
-            desc = "toggle ignore case",
+            map = "ti",
+            cmd = function() spectre.change_options("ignore-case") end,
+            desc = "Toggle ignore case",
         },
         ["toggle_ignore_hidden"] = {
-            map = "<leader>ih",
-            cmd = "<cmd>lua require('spectre').change_options('hidden')<CR>",
-            desc = "toggle hidden files",
+            map = "th",
+            cmd = function() spectre.change_options("hidden") end,
+            desc = "Toggle hidden files",
         },
         ["toggle_regex"] = {
-            map = "<leader>rx",
-            cmd = "<cmd>lua require('spectre').change_options('regex')<CR>",
-            desc = "toggle regex mode",
+            map = "tr",
+            cmd = function() spectre.change_options("regex") end,
+            desc = "Toggle regex mode",
         },
         ["toggle_word_match"] = {
-            map = "<leader>rw",
-            cmd = "<cmd>lua require('spectre').change_options('word')<CR>",
-            desc = "toggle whole word match",
+            map = "tw",
+            cmd = function() spectre.change_options("word") end,
+            desc = "Toggle whole word match",
         },
     },
 })
 
-vim.keymap.set("n", "<leader>sr", function()
-    require("spectre").open()
-end, { desc = "Search and replace in project" })
-
-vim.keymap.set("n", "<leader>sw", function()
-    require("spectre").open_visual({ select_word = true })
-end, { desc = "Search word under cursor" })
-
-vim.keymap.set("v", "<leader>sw", function()
-    require("spectre").open_visual()
-end, { desc = "Search selected text" })
-
-vim.keymap.set("n", "<leader>sf", function()
-    require("spectre").open_file_search({ select_word = true })
-end, { desc = "Search current file" })
+map("n", "<leader>sr", spectre.open, { desc = "Search and replace (project)", silent = true })
+map("n", "<leader>sw", function()
+    spectre.open_visual({ select_word = true })
+end, { desc = "Search word under cursor", silent = true })
+map("v", "<leader>sw", spectre.open_visual, { desc = "Search selected text", silent = true })
+map("n", "<leader>sf", function()
+    spectre.open_file_search({ select_word = true })
+end, { desc = "Search current file", silent = true })
+map("n", "<leader>sS", spectre.open_file_search, { desc = "Search current file (prompt)", silent = true })

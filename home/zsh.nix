@@ -14,7 +14,6 @@
     # Tools
     cat = "bat";
     grep = "rg";
-    sed = "gsed";
     find = "fd";
     ls = "eza";
     la = "eza -a";

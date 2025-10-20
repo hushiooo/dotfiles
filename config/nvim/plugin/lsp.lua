@@ -1,9 +1,23 @@
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
+local sev = vim.diagnostic.severity
+local border = "rounded"
+local map = vim.keymap.set
+local has_telescope, telescope_builtin = pcall(require, "telescope.builtin")
 
 local function setup(server, config)
     vim.lsp.config(server, vim.tbl_deep_extend("force", { capabilities = capabilities }, config or {}))
     vim.lsp.enable(server)
 end
+
+vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, {
+    border = border,
+    title = "Hover",
+})
+
+vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, {
+    border = border,
+    close_events = { "CursorMoved", "BufHidden", "InsertCharPre" },
+})
 
 -- Lua
 setup("lua_ls", {
@@ -94,34 +108,20 @@ setup("ruff", {
         },
     },
 })
-
-setup("pyright", {
+vim.lsp.config("ty", {
     settings = {
-        python = {
-            analysis = {
-                typeCheckingMode = "off",
-                diagnosticMode = "openFilesOnly",
-                autoImportCompletions = true,
-                useLibraryCodeForTypes = true,
+        ty = {
+            disableLanguageServices = false,
+            diagnosticMode = 'workspace',
+            experimental = {
+                autoImport = true,
             },
         },
     },
-    on_attach = function(client)
-        -- disable all diagnostics from Pyright
-        client.handlers["textDocument/publishDiagnostics"] = function() end
-    end,
+
 })
 
-vim.lsp.config('ty', {
-    settings = {
-        ty = {
-            disableLanguageServices = true,
-            diagnosticMode = 'workspace',
-        },
-    },
-})
-
-vim.lsp.enable('ty')
+vim.lsp.enable("ty")
 
 
 
@@ -137,67 +137,79 @@ for _, server in ipairs({
     setup(server)
 end
 
--- Diagnostics UI
+
 vim.diagnostic.config({
     virtual_text = false,
     float = {
-        border = "rounded",
-        source = "always",
+        border = border,
+        source = "if_many",
         header = "",
         prefix = "",
         style = "minimal",
+        focusable = false,
     },
-    signs = true,
+    signs = {
+        text = {
+            [sev.ERROR] = " ",
+            [sev.WARN]  = " ",
+            [sev.HINT]  = "󰌵 ",
+            [sev.INFO]  = " ",
+        },
+        numhl = {
+            [sev.ERROR] = "DiagnosticSignError",
+            [sev.WARN]  = "DiagnosticSignWarn",
+            [sev.HINT]  = "DiagnosticSignHint",
+            [sev.INFO]  = "DiagnosticSignInfo",
+        },
+    },
     underline = false,
     update_in_insert = false,
     severity_sort = true,
 })
 
-for type, icon in pairs({
-    Error = " ",
-    Warn  = " ",
-    Hint  = "󰌵 ",
-    Info  = " ",
-}) do
-    local hl = "DiagnosticSign" .. type
-    vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
-end
-
 -- Keymaps
 vim.api.nvim_create_autocmd("LspAttach", {
     group = vim.api.nvim_create_augroup("UserLspConfig", {}),
     callback = function(ev)
-        local opts =
-        { buffer = ev.buf }
-        vim.keymap
-            .set("n", "gD", vim.lsp.buf.declaration,
-                opts)
-        vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
-        vim.keymap.set("n", "gi", vim.lsp.buf.implementation, opts)
-        vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
-        vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
-        vim
-            .keymap.set("n", "<C-k>", vim.lsp.buf.signature_help, opts)
-        vim.keymap.set("n", "<leader>cr", vim.lsp.buf.rename, opts)
-        vim.keymap
-            .set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, opts)
-        vim.keymap
-            .set("n", "<leader>cf",
-                function() vim.lsp.buf.format({ async = true }) end, opts)
-        vim
-            .keymap.set("n", "<leader>cs", vim.lsp.buf.workspace_symbol, opts)
-        vim
-            .keymap.set("n", "<leader>ct", vim.lsp.buf.type_definition, opts)
-        vim.keymap.set(
-            "n", "<leader>cd", vim.diagnostic.open_float,
-            { desc = "Show diagnostics in float", silent = true })
+        local opts = { buffer = ev.buf, silent = true }
+        map("n", "gD", vim.lsp.buf.declaration, opts)
+        map("n", "gd", vim.lsp.buf.definition, opts)
+        map("n", "gi", vim.lsp.buf.implementation, opts)
+        map("n", "gr", vim.lsp.buf.references, opts)
+        map("n", "K", vim.lsp.buf.hover, opts)
+        map("n", "<C-k>", vim.lsp.buf.signature_help, opts)
+        map("n", "<leader>cr", vim.lsp.buf.rename, opts)
+        map({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, opts)
+        map("n", "<leader>cf", function() vim.lsp.buf.format({ async = true }) end, opts)
+        map("n", "<leader>cs", vim.lsp.buf.workspace_symbol, opts)
+        map("n", "<leader>ct", vim.lsp.buf.type_definition, opts)
+        map("n", "<leader>cd", vim.diagnostic.open_float, { buffer = ev.buf, desc = "Show diagnostics", silent = true })
 
-        local client =
-            vim.lsp.get_client_by_id(ev.data.client_id)
-        if client and
-            client.server_capabilities.inlayHintProvider then
-            pcall(
-                vim.lsp.inlay_hint, ev.buf, true)
+        local client = vim.lsp.get_client_by_id(ev.data.client_id)
+        if client and client.server_capabilities.inlayHintProvider then
+            pcall(vim.lsp.inlay_hint, ev.buf, true)
         end
     end,
 })
+
+local function open_diagnostics(scope)
+    if has_telescope then
+        if scope == "workspace" then
+            telescope_builtin.diagnostics()
+        else
+            telescope_builtin.diagnostics({ bufnr = 0 })
+        end
+        return
+    end
+
+    if scope == "workspace" then
+        vim.diagnostic.setqflist()
+        vim.cmd("copen")
+    else
+        vim.diagnostic.setloclist(0)
+        vim.cmd("lopen")
+    end
+end
+
+map("n", "<leader>xd", function() open_diagnostics("buffer") end, { desc = "Diagnostics (buffer)" })
+map("n", "<leader>xD", function() open_diagnostics("workspace") end, { desc = "Diagnostics (workspace)" })

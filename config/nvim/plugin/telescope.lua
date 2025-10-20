@@ -1,46 +1,79 @@
 local telescope = require("telescope")
 local actions = require("telescope.actions")
+local layout_actions = require("telescope.actions.layout")
 
 telescope.setup({
     defaults = {
-        prompt_prefix = "   ",
-        selection_caret = "  ",
-        entry_prefix = "   ",
+        prompt_prefix = "   ",
+        selection_caret = "❯ ",
+        entry_prefix = "  ",
+        multi_icon = " ",
         initial_mode = "insert",
+        dynamic_preview_title = true,
         selection_strategy = "reset",
         sorting_strategy = "ascending",
-        layout_strategy = "horizontal",
+        layout_strategy = "flex",
         layout_config = {
             horizontal = {
                 prompt_position = "top",
-                preview_width = 0.55,
-                results_width = 0.8,
+                preview_width = 0.58,
             },
             vertical = {
                 mirror = false,
-                preview_height = 0.5,
+                preview_height = 0.45,
             },
-            width = 0.87,
-            height = 0.80,
+            width = 0.9,
+            height = 0.82,
             preview_cutoff = 120,
         },
-        path_display = { "truncate" },
         winblend = 0,
         border = true,
-        borderchars = { "─", "│", "─", "│", "┌", "┐", "┘", "└" },
+        borderchars = {
+            prompt = { "─", "│", "─", "│", "┌", "┐", "┘", "└" },
+            results = { "─", "│", "─", "│", "├", "┤", "┘", "└" },
+            preview = { "─", "│", "─", "│", "┌", "┐", "┘", "└" },
+        },
         color_devicons = true,
         file_ignore_patterns = {
             "node_modules",
-            ".git/",
+            "%.git/",
+            "%.lock",
             "%.sqlite3",
             "%.ipynb",
-            "vendor/*",
+            "vendor/",
             "%.jpg",
             "%.jpeg",
             "%.png",
             "%.svg",
+            "%.webp",
             "%.otf",
             "%.ttf",
+        },
+        vimgrep_arguments = {
+            "rg",
+            "--color=never",
+            "--no-heading",
+            "--with-filename",
+            "--line-number",
+            "--column",
+            "--smart-case",
+            "--trim",
+        },
+        mappings = {
+            i = {
+                ["<C-j>"] = actions.move_selection_next,
+                ["<C-k>"] = actions.move_selection_previous,
+                ["<C-d>"] = actions.delete_buffer,
+                ["<C-q>"] = actions.smart_send_to_qflist + actions.open_qflist,
+                ["<M-p>"] = layout_actions.toggle_preview,
+                ["<C-c>"] = actions.close,
+                ["<Esc>"] = false,
+            },
+            n = {
+                ["q"] = actions.close,
+                ["<M-p>"] = layout_actions.toggle_preview,
+                ["dd"] = actions.delete_buffer,
+            },
         },
     },
     pickers = {
@@ -48,36 +81,51 @@ telescope.setup({
             theme = "dropdown",
             previewer = false,
             hidden = true,
-            fuzzy = true,
-            prompt_title = "Find Files",
-            results_title = "Files",
+            follow = true,
+            prompt_title = "Files",
+            results_title = false,
+            path_display = { "truncate" },
         },
         live_grep = {
+            prompt_title = "Grep",
+            results_title = false,
             layout_strategy = "horizontal",
             layout_config = {
                 width = 0.95,
                 height = 0.95,
-                preview_width = 0.6,
-                horizontal = {
-                    preview_width = 0.6,
-                    results_width = 0.4,
-                },
+                preview_width = 0.65,
             },
-            prompt_title = "Live Grep",
-            results_title = "Matches",
         },
         buffers = {
             theme = "dropdown",
             previewer = false,
-            prompt_title = "Find Buffers",
-            results_title = "Buffers",
+            prompt_title = "Buffers",
+            results_title = false,
+            sort_lastused = true,
             sort_mru = true,
             ignore_current_buffer = true,
+            mappings = {
+                i = { ["<C-d>"] = actions.delete_buffer },
+                n = { ["dd"] = actions.delete_buffer },
+            },
         },
         help_tags = {
             theme = "dropdown",
-            prompt_title = "Help Tags",
-            results_title = "Results",
+            prompt_title = "Help",
+            results_title = false,
+        },
+        oldfiles = {
+            prompt_title = "Recent",
+            results_title = false,
+            only_cwd = true,
+            previewer = true,
+            layout_strategy = "horizontal",
+            layout_config = {
+                width = 0.92,
+                height = 0.85,
+                preview_width = 0.55,
+            },
+            path_display = { "truncate" },
         },
     },
     extensions = {
@@ -100,3 +148,5 @@ vim.keymap.set("n", "<leader>ff", builtin.find_files, { desc = "Find files" })
 vim.keymap.set("n", "<leader>fg", builtin.live_grep, { desc = "Live grep" })
 vim.keymap.set("n", "<leader>fb", builtin.buffers, { desc = "Find buffers" })
 vim.keymap.set("n", "<leader>fh", builtin.help_tags, { desc = "Help tags" })
+vim.keymap.set("n", "<leader>fr", builtin.oldfiles, { desc = "Recent files" })
+vim.keymap.set("n", "<leader>fs", builtin.grep_string, { desc = "Search word under cursor" })

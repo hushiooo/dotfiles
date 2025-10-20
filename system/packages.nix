@@ -1,52 +1,48 @@
 { pkgs, ... }:
 {
   environment.systemPackages = with pkgs; [
-    bun
-    cmake
     coreutils
     curl
-    codex
-    checkov
-    dbmate
-    delta
-    earthly
     fd
-    gcc
-    gh
-    go
-    go-task
-    gum
-    gnused
-    hexyl
     jq
     yq-go
-    sqlfluff
-    lazydocker
-    lua
-    localstack
-    mactop
-    nixfmt-rfc-style
+    tree
+    wget
+    delta
+    hexyl
+    tldr
+    gum
+    ty
+    bun
     nodejs_22
-    postgresql_16
-    pre-commit
-    python313
-    python313Packages.debugpy
-    python313Packages.pytest
-    ruff
+    go
+    go-task
     rustup
-    rabbitmq-server
-    sops
-    sqlc
-    tailscale
+    lua
+    python314
+    gcc
+    cmake
     terraform
     terragrunt
     tflint
-    tldr
-    tree
+    checkov
+    sops
+    localstack
+    tailscale
+    dbmate
+    sqlc
+    sqlfluff
+    rabbitmq-server
+    postgresql_16
+    earthly
+    pre-commit
+    gh
+    lazydocker
+    nixfmt-rfc-style
+    codex
+    mactop
     tree-sitter
-    ty
     uv
-    wget
   ];
 
   fonts.packages = with pkgs; [

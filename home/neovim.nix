@@ -93,7 +93,6 @@
     marksman
     nixd
     terraform-ls
-    pyright
     ruff
     ty
     stylua

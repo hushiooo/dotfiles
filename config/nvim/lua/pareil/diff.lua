@@ -1,5 +1,10 @@
 local ui = require("pareil.ui")
 
+local DEFAULT_DIFF_OPTS = {
+    result_type = "unified",
+    ctxlen = 3,
+}
+
 ---@param file1 string
 ---@param file2 string
 ---@param config table
@@ -17,13 +22,17 @@ local function show(file1, file2, config)
         return
     end
 
+    if type(vim.diff) ~= "function" then
+        vim.notify("❌ vim.diff is unavailable in this Neovim version.", vim.log.levels.ERROR)
+        return
+    end
+
     local str1 = table.concat(content1, "\n")
     local str2 = table.concat(content2, "\n")
 
-    local diff_lines = vim.diff(str1, str2, {
-        result_type = "unified",
-        ctxlen = 3,
-    })
+    local diff_opts = vim.tbl_deep_extend("force", {}, DEFAULT_DIFF_OPTS, (config and config.diff) or {})
+
+    local diff_lines = vim.diff(str1, str2, diff_opts)
 
     if not diff_lines or diff_lines == "" then
         vim.notify("✅ No differences found.", vim.log.levels.INFO)

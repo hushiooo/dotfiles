@@ -2,8 +2,6 @@
 {
   enable = true;
   lfs.enable = true;
-  userName = "hushiooo";
-  userEmail = "joad.goutal@stoik.io";
   signing = {
     key = "joad.goutal@stoik.io";
     signByDefault = true;
@@ -34,7 +32,11 @@
     ".bloop/"
   ];
 
-  extraConfig = {
+  settings = {
+    user = {
+      name = "hushiooo";
+      email = "joad.goutal@stoik.io";
+    };
     pull = {
       rebase = true;
     };

@@ -1,39 +1,78 @@
+local function tree_on_attach(bufnr)
+    local api = require("nvim-tree.api")
+    api.config.mappings.default_on_attach(bufnr)
+
+    local function opts(desc)
+        return { desc = "nvim-tree: " .. desc, buffer = bufnr, noremap = true, silent = true, nowait = true }
+    end
+
+    local map = vim.keymap.set
+    map("n", "o", api.node.open.edit, opts("Open"))
+    map("n", "O", api.node.open.no_window_picker, opts("Open (no picker)"))
+    map("n", "P", api.node.navigate.parent_close, opts("Parent close"))
+    map("n", "<leader>rn", api.fs.rename_sub, opts("Rename keep extension"))
+    map("n", "yy", api.fs.copy.node, opts("Copy"))
+    map("n", "yn", api.fs.copy.filename, opts("Copy Name"))
+    map("n", "cc", api.fs.copy.absolute_path, opts("Copy Absolute Path"))
+    map("n", "x", api.fs.cut, opts("Cut"))
+    map("n", "p", api.fs.paste, opts("Paste"))
+    map("n", "dd", api.fs.remove, opts("Delete"))
+    map("n", "R", api.tree.reload, opts("Refresh"))
+end
+
 require("nvim-tree").setup({
-    sort = { sorter = "case_sensitive" },
+    sort = { sorter = "case_sensitive", folders_first = true },
+    hijack_cursor = true,
+    respect_buf_cwd = true,
+    sync_root_with_cwd = true,
+    reload_on_bufenter = true,
+    update_focused_file = {
+        enable = true,
+        debounce_delay = 100,
+        update_root = false,
+        ignore_list = {},
+    },
     view = {
         width = 50,
         side = "right",
-        signcolumn = "yes",
+        signcolumn = "no",
         number = false,
         relativenumber = false,
+        preserve_window_proportions = true,
     },
     renderer = {
         group_empty = true,
+        root_folder_label = false,
+        highlight_git = false,
+        highlight_diagnostics = true,
+        highlight_opened_files = "none",
+        indent_width = 2,
         indent_markers = {
             enable = true,
-            inline_arrows = true,
+            inline_arrows = false,
             icons = {
-                corner = "└",
+                corner = "╰",
                 edge = "│",
                 item = "│",
                 none = " ",
             },
         },
         icons = {
+            padding = "  ",
             show = {
                 file = true,
                 folder = true,
-                folder_arrow = true,
+                folder_arrow = false,
                 git = false,
             },
             glyphs = {
-                default = " ",
-                symlink = "",
+                default = "󰈚",
+                symlink = "",
+                bookmark = "",
+                modified = "●",
                 folder = {
-                    arrow_closed = "",
-                    arrow_open = "",
-                    default = "",
-                    open = "",
+                    default = "",
+                    open = "",
                     empty = "",
                     empty_open = "",
                     symlink = "",
@@ -43,47 +82,57 @@ require("nvim-tree").setup({
                     unstaged = "",
                     staged = "",
                     unmerged = "",
-                    renamed = "➜",
+                    renamed = "",
                     untracked = "",
                     deleted = "",
                     ignored = "◌",
                 },
             },
         },
-        highlight_git = true,
+    },
+    diagnostics = {
+        enable = true,
+        show_on_dirs = false,
+        show_on_open_dirs = true,
+        debounce_delay = 100,
+        icons = {
+            hint = "󰌵",
+            info = "",
+            warning = "",
+            error = "",
+        },
     },
     git = {
         enable = true,
-        ignore = false,
+        ignore = true,
         timeout = 400,
     },
     filters = {
-        dotfiles = false,
-        custom = {},
+        dotfiles = true,
+        custom = { "^.git$", "node_modules", "__pycache__" },
     },
-    on_attach = function(bufnr)
-        local api = require("nvim-tree.api")
-        local function opts(desc)
-            return { desc = "nvim-tree: " .. desc, buffer = bufnr, noremap = true, silent = true, nowait = true }
-        end
-
-        local map = vim.keymap.set
-        map("n", "<CR>", api.node.open.edit, opts("Open"))
-        map("n", "o", api.node.open.edit, opts("Open"))
-        map("n", "<2-LeftMouse>", api.node.open.edit, opts("Open"))
-        map("n", "dd", api.fs.remove, opts("Delete"))
-        map("n", "D", api.fs.trash, opts("Trash"))
-        map("n", "yy", api.fs.copy.node, opts("Copy"))
-        map("n", "yn", api.fs.copy.filename, opts("Copy Name"))
-        map("n", "cc", api.fs.copy.absolute_path, opts("Copy Absolute Path"))
-        map("n", "a", api.fs.create, opts("Create File/Folder"))
-        map("n", "r", api.fs.rename, opts("Rename"))
-        map("n", "x", api.fs.cut, opts("Cut"))
-        map("n", "p", api.fs.paste, opts("Paste"))
-        map("n", "R", api.tree.reload, opts("Refresh"))
-    end,
+    actions = {
+        open_file = {
+            resize_window = true,
+            window_picker = {
+                enable = true,
+                chars = "AOEUIDHTNS",
+            },
+        },
+        file_popup = {
+            open_win_config = {
+                border = "rounded",
+            },
+        },
+    },
+    on_attach = tree_on_attach,
 })
 
 -- Keymaps
-vim.keymap.set("n", "<leader>e", ":NvimTreeToggle<CR>", { desc = "Toggle nvim-tree", silent = true })
-vim.keymap.set("n", "<leader>o", ":NvimTreeFocus<CR>", { desc = "Focus nvim-tree", silent = true })
+local tree_api = require("nvim-tree.api")
+vim.keymap.set("n", "<leader>e", function()
+    tree_api.tree.toggle({ focus = true })
+end, { desc = "Toggle nvim-tree", silent = true })
+vim.keymap.set("n", "<leader>o", function()
+    tree_api.tree.focus()
+end, { desc = "Focus nvim-tree", silent = true })
