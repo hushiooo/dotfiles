@@ -2,6 +2,7 @@ local spectre = require("spectre")
 local actions = require("spectre.actions")
 local map = vim.keymap.set
 local separator = string.rep("─", 46)
+local is_macos = vim.loop.os_uname().sysname == "Darwin"
 
 spectre.setup({
     color_devicons = true,
@@ -46,7 +47,8 @@ spectre.setup({
     replace_engine = {
         ["sed"] = {
             cmd = "sed",
-            args = { "-i" },
+            -- BSD sed (macOS) needs an empty backup suffix argument
+            args = is_macos and { "-i", "" } or { "-i" },
         },
     },
     line_sep_start = "╭" .. separator,
@@ -65,32 +67,64 @@ spectre.setup({
         show_replace = true,
     },
     mapping = {
-        ["toggle_line"] = { map = "dd", cmd = spectre.toggle_line, desc = "Toggle current item" },
-        ["enter_file"] = { map = "<CR>", cmd = actions.select_entry, desc = "Go to file" },
-        ["send_to_qf"] = { map = "Q", cmd = actions.send_to_qf, desc = "Send results to quickfix" },
-        ["replace_cmd"] = { map = "cr", cmd = actions.replace_cmd, desc = "Input replace command" },
-        ["show_option_menu"] = { map = "go", cmd = spectre.toggle_options, desc = "Toggle options" },
-        ["run_current_replace"] = { map = "gr", cmd = actions.run_current_replace, desc = "Replace current line" },
-        ["run_replace"] = { map = "gR", cmd = actions.run_replace, desc = "Replace all" },
-        ["change_view_mode"] = { map = "gv", cmd = spectre.change_view, desc = "Change result view mode" },
+        ["toggle_line"] = {
+            map = "dd",
+            cmd = "<cmd>lua require('spectre').toggle_line()<CR>",
+            desc = "Toggle current item",
+        },
+        ["enter_file"] = {
+            map = "<CR>",
+            cmd = "<cmd>lua require('spectre.actions').select_entry()<CR>",
+            desc = "Go to file",
+        },
+        ["send_to_qf"] = {
+            map = "Q",
+            cmd = "<cmd>lua require('spectre.actions').send_to_qf()<CR>",
+            desc = "Send results to quickfix",
+        },
+        ["replace_cmd"] = {
+            map = "cr",
+            cmd = "<cmd>lua require('spectre.actions').replace_cmd()<CR>",
+            desc = "Input replace command",
+        },
+        ["show_option_menu"] = {
+            map = "go",
+            cmd = "<cmd>lua require('spectre').toggle_options()<CR>",
+            desc = "Toggle options",
+        },
+        ["run_current_replace"] = {
+            map = "gr",
+            cmd = "<cmd>lua require('spectre.actions').run_current_replace()<CR>",
+            desc = "Replace current line",
+        },
+        ["run_replace"] = {
+            map = "gR",
+            cmd = "<cmd>lua require('spectre.actions').run_replace()<CR>",
+            desc = "Replace all",
+        },
+        ["change_view_mode"] = {
+            map = "gv",
+            cmd = "<cmd>lua require('spectre').change_view()<CR>",
+            desc = "Change result view mode",
+        },
         ["toggle_ignore_case"] = {
             map = "ti",
-            cmd = function() spectre.change_options("ignore-case") end,
+            cmd = "<cmd>lua require('spectre').change_options('ignore-case')<CR>",
             desc = "Toggle ignore case",
         },
         ["toggle_ignore_hidden"] = {
             map = "th",
-            cmd = function() spectre.change_options("hidden") end,
+            cmd = "<cmd>lua require('spectre').change_options('hidden')<CR>",
             desc = "Toggle hidden files",
         },
         ["toggle_regex"] = {
             map = "tr",
-            cmd = function() spectre.change_options("regex") end,
+            cmd = "<cmd>lua require('spectre').change_options('regex')<CR>",
             desc = "Toggle regex mode",
         },
         ["toggle_word_match"] = {
             map = "tw",
-            cmd = function() spectre.change_options("word") end,
+            cmd = "<cmd>lua require('spectre').change_options('word')<CR>",
             desc = "Toggle whole word match",
         },
     },

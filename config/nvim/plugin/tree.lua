@@ -108,7 +108,7 @@ require("nvim-tree").setup({
         timeout = 400,
     },
     filters = {
-        dotfiles = true,
+        dotfiles = false,
         custom = { "^.git$", "node_modules", "__pycache__" },
     },
     actions = {
