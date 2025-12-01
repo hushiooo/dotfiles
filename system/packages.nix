@@ -1,6 +1,7 @@
 { pkgs, ... }:
 {
   environment.systemPackages = with pkgs; [
+    bottom
     coreutils
     curl
     fd
@@ -40,7 +41,6 @@
     lazydocker
     nixfmt-rfc-style
     codex
-    mactop
     tree-sitter
     uv
   ];

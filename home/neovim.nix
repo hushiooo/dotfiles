@@ -41,7 +41,7 @@
     telescope-dap-nvim
 
     # Search & Replace
-    nvim-spectre
+    # nvim-spectre
 
     # Utils
     plenary-nvim

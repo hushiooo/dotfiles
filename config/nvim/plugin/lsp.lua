@@ -108,22 +108,16 @@ setup("ruff", {
         },
     },
 })
-vim.lsp.config("ty", {
+setup("ty", {
     settings = {
         ty = {
-            disableLanguageServices = false,
             diagnosticMode = 'workspace',
             experimental = {
                 autoImport = true,
             },
         },
     },
-
 })
-
-vim.lsp.enable("ty")
-
-
 
 -- Web & misc servers
 for _, server in ipairs({

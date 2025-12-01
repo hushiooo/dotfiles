@@ -1,141 +1,141 @@
-local spectre = require("spectre")
-local actions = require("spectre.actions")
-local map = vim.keymap.set
-local separator = string.rep("─", 46)
-local is_macos = vim.loop.os_uname().sysname == "Darwin"
-
-spectre.setup({
-    color_devicons = true,
-    open_cmd = "vnew",
-    live_update = false,
-    is_open_target_win = true,
-    is_insert_mode = false,
-    default = {
-        find = {
-            cmd = "rg",
-            options = { "ignore-case" },
-        },
-        replace = {
-            cmd = "sed",
-        },
-    },
-    find_engine = {
-        ["rg"] = {
-            cmd = "rg",
-            args = {
-                "--color=never",
-                "--no-heading",
-                "--with-filename",
-                "--line-number",
-                "--column",
-                "--fixed-strings",
-            },
-            options = {
-                ["ignore-case"] = {
-                    value = "--ignore-case",
-                    icon = "[I]",
-                    desc = "ignore case",
-                },
-                ["hidden"] = {
-                    value = "--hidden",
-                    desc = "search hidden files",
-                    icon = "[H]",
-                },
-            },
-        },
-    },
-    replace_engine = {
-        ["sed"] = {
-            cmd = "sed",
-            -- BSD sed (macOS) needs an empty backup suffix argument
-            args = is_macos and { "-i", "" } or { "-i" },
-        },
-    },
-    line_sep_start = "╭" .. separator,
-    result_padding = "│ ",
-    line_sep = "╰" .. separator,
-    highlight = {
-        ui = "CursorLine",
-        search = "IncSearch",
-        replace = "DiffText",
-    },
-    view = {
-        cmd = "vsplit",
-        layout = "vertical",
-        show_line = true,
-        show_result = true,
-        show_replace = true,
-    },
-    mapping = {
-        ["toggle_line"] = {
-            map = "dd",
-            cmd = "<cmd>lua require('spectre').toggle_line()<CR>",
-            desc = "Toggle current item",
-        },
-        ["enter_file"] = {
-            map = "<CR>",
-            cmd = "<cmd>lua require('spectre.actions').select_entry()<CR>",
-            desc = "Go to file",
-        },
-        ["send_to_qf"] = {
-            map = "Q",
-            cmd = "<cmd>lua require('spectre.actions').send_to_qf()<CR>",
-            desc = "Send results to quickfix",
-        },
-        ["replace_cmd"] = {
-            map = "cr",
-            cmd = "<cmd>lua require('spectre.actions').replace_cmd()<CR>",
-            desc = "Input replace command",
-        },
-        ["show_option_menu"] = {
-            map = "go",
-            cmd = "<cmd>lua require('spectre').toggle_options()<CR>",
-            desc = "Toggle options",
-        },
-        ["run_current_replace"] = {
-            map = "gr",
-            cmd = "<cmd>lua require('spectre.actions').run_current_replace()<CR>",
-            desc = "Replace current line",
-        },
-        ["run_replace"] = {
-            map = "gR",
-            cmd = "<cmd>lua require('spectre.actions').run_replace()<CR>",
-            desc = "Replace all",
-        },
-        ["change_view_mode"] = {
-            map = "gv",
-            cmd = "<cmd>lua require('spectre').change_view()<CR>",
-            desc = "Change result view mode",
-        },
-        ["toggle_ignore_case"] = {
-            map = "ti",
-            cmd = "<cmd>lua require('spectre').change_options('ignore-case')<CR>",
-            desc = "Toggle ignore case",
-        },
-        ["toggle_ignore_hidden"] = {
-            map = "th",
-            cmd = "<cmd>lua require('spectre').change_options('hidden')<CR>",
-            desc = "Toggle hidden files",
-        },
-        ["toggle_regex"] = {
-            map = "tr",
-            cmd = "<cmd>lua require('spectre').change_options('regex')<CR>",
-            desc = "Toggle regex mode",
-        },
-        ["toggle_word_match"] = {
-            map = "tw",
-            cmd = "<cmd>lua require('spectre').change_options('word')<CR>",
-            desc = "Toggle whole word match",
-        },
-    },
-})
-
-map("n", "<leader>sr", spectre.open, { desc = "Search and replace (project)", silent = true })
-map("n", "<leader>sw", function()
-    spectre.open_visual({ select_word = true })
-end, { desc = "Search word under cursor", silent = true })
-map("v", "<leader>sw", spectre.open_visual, { desc = "Search selected text", silent = true })
-map("n", "<leader>sf", function()
-    spectre.open_file_search({ select_word = true })
-end, { desc = "Search current file", silent = true })
-map("n", "<leader>sS", spectre.open_file_search, { desc = "Search current file (prompt)", silent = true })
+-- local spectre = require("spectre")
+-- local actions = require("spectre.actions")
+-- local map = vim.keymap.set
+-- local separator = string.rep("─", 46)
+-- local is_macos = vim.loop.os_uname().sysname == "Darwin"
+--
+-- spectre.setup({
+--     color_devicons = true,
+--     open_cmd = "vnew",
+--     live_update = false,
+--     is_open_target_win = true,
+--     is_insert_mode = false,
+--     default = {
+--         find = {
+--             cmd = "rg",
+--             options = { "ignore-case" },
+--         },
+--         replace = {
+--             cmd = "sed",
+--         },
+--     },
+--     find_engine = {
+--         ["rg"] = {
+--             cmd = "rg",
+--             args = {
+--                 "--color=never",
+--                 "--no-heading",
+--                 "--with-filename",
+--                 "--line-number",
+--                 "--column",
+--                 "--fixed-strings",
+--             },
+--             options = {
+--                 ["ignore-case"] = {
+--                     value = "--ignore-case",
+--                     icon = "[I]",
+--                     desc = "ignore case",
+--                 },
+--                 ["hidden"] = {
+--                     value = "--hidden",
+--                     desc = "search hidden files",
+--                     icon = "[H]",
+--                 },
+--             },
+--         },
+--     },
+--     replace_engine = {
+--         ["sed"] = {
+--             cmd = "sed",
+--             -- BSD sed (macOS) needs an empty backup suffix argument
+--             args = is_macos and { "-i", "" } or { "-i" },
+--         },
+--     },
+--     line_sep_start = "╭" .. separator,
+--     result_padding = "│ ",
+--     line_sep = "╰" .. separator,
+--     highlight = {
+--         ui = "CursorLine",
+--         search = "IncSearch",
+--         replace = "DiffText",
+--     },
+--     view = {
+--         cmd = "vsplit",
+--         layout = "vertical",
+--         show_line = true,
+--         show_result = true,
+--         show_replace = true,
+--     },
+--     mapping = {
+--         ["toggle_line"] = {
+--             map = "dd",
+--             cmd = "<cmd>lua require('spectre').toggle_line()<CR>",
+--             desc = "Toggle current item",
+--         },
+--         ["enter_file"] = {
+--             map = "<CR>",
+--             cmd = "<cmd>lua require('spectre.actions').select_entry()<CR>",
+--             desc = "Go to file",
+--         },
+--         ["send_to_qf"] = {
+--             map = "Q",
+--             cmd = "<cmd>lua require('spectre.actions').send_to_qf()<CR>",
+--             desc = "Send results to quickfix",
+--         },
+--         ["replace_cmd"] = {
+--             map = "cr",
+--             cmd = "<cmd>lua require('spectre.actions').replace_cmd()<CR>",
+--             desc = "Input replace command",
+--         },
+--         ["show_option_menu"] = {
+--             map = "go",
+--             cmd = "<cmd>lua require('spectre').toggle_options()<CR>",
+--             desc = "Toggle options",
+--         },
+--         ["run_current_replace"] = {
+--             map = "gr",
+--             cmd = "<cmd>lua require('spectre.actions').run_current_replace()<CR>",
+--             desc = "Replace current line",
+--         },
+--         ["run_replace"] = {
+--             map = "gR",
+--             cmd = "<cmd>lua require('spectre.actions').run_replace()<CR>",
+--             desc = "Replace all",
+--         },
+--         ["change_view_mode"] = {
+--             map = "gv",
+--             cmd = "<cmd>lua require('spectre').change_view()<CR>",
+--             desc = "Change result view mode",
+--         },
+--         ["toggle_ignore_case"] = {
+--             map = "ti",
+--             cmd = "<cmd>lua require('spectre').change_options('ignore-case')<CR>",
+--             desc = "Toggle ignore case",
+--         },
+--         ["toggle_ignore_hidden"] = {
+--             map = "th",
+--             cmd = "<cmd>lua require('spectre').change_options('hidden')<CR>",
+--             desc = "Toggle hidden files",
+--         },
+--         ["toggle_regex"] = {
+--             map = "tr",
+--             cmd = "<cmd>lua require('spectre').change_options('regex')<CR>",
+--             desc = "Toggle regex mode",
+--         },
+--         ["toggle_word_match"] = {
+--             map = "tw",
+--             cmd = "<cmd>lua require('spectre').change_options('word')<CR>",
+--             desc = "Toggle whole word match",
+--         },
+--     },
+-- })
+--
+-- map("n", "<leader>sr", spectre.open, { desc = "Search and replace (project)", silent = true })
+-- map("n", "<leader>sw", function()
+--     spectre.open_visual({ select_word = true })
+-- end, { desc = "Search word under cursor", silent = true })
+-- map("v", "<leader>sw", spectre.open_visual, { desc = "Search selected text", silent = true })
+-- map("n", "<leader>sf", function()
+--     spectre.open_file_search({ select_word = true })
+-- end, { desc = "Search current file", silent = true })
+-- map("n", "<leader>sS", spectre.open_file_search, { desc = "Search current file (prompt)", silent = true })

@@ -8,7 +8,7 @@
   '';
 
   shellAliases = {
-    mtop = "sudo mactop --interval 500 --color cyan";
+    # Nix
     update = "nix flake update";
 
     # Tools
@@ -19,6 +19,7 @@
     la = "eza -a";
     ll = "eza -alh";
     lt = "eza --tree";
+    devagent = "~/dev/scripts/dev-agent.sh";
 
     # Git
     g = "git";
