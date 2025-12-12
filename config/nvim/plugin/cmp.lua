@@ -1,6 +1,5 @@
 local cmp = require("cmp")
 local luasnip = require("luasnip")
-local unpack = table.unpack or unpack
 
 local kind_icons = {
     Text = "",
@@ -30,8 +29,14 @@ local kind_icons = {
     TypeParameter = "󰅲",
 }
 
+local tab_selected_once = false
+
+cmp.event:on("menu_opened", function() tab_selected_once = false end)
+cmp.event:on("menu_closed", function() tab_selected_once = false end)
+
 local function has_words_before()
-    local line, col = unpack(vim.api.nvim_win_get_cursor(0))
+    local cursor = vim.api.nvim_win_get_cursor(0)
+    local line, col = cursor[1], cursor[2]
     if col == 0 then return false end
     local text = vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1] or ""
     return text:sub(col, col):match("%s") == nil
@@ -42,7 +47,10 @@ cmp.setup({
         completeopt = "menu,menuone,noinsert",
         keyword_length = 1,
     },
-    preselect = cmp.PreselectMode.None,
+    preselect = cmp.PreselectMode.Item,
+    experimental = {
+        ghost_text = true,
+    },
     snippet = {
         expand = function(args) luasnip.lsp_expand(args.body) end,
     },
@@ -84,7 +92,15 @@ cmp.setup({
         ["<C-k>"] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Select }),
         ["<Tab>"] = cmp.mapping(function(fallback)
             if cmp.visible() then
-                cmp.select_next_item()
+                -- Start selection at the top of the menu instead of skipping to the second entry.
+                if cmp.get_selected_entry() == nil then
+                    cmp.select_next_item({ behavior = cmp.SelectBehavior.Select })
+                    tab_selected_once = true
+                elseif not tab_selected_once then
+                    tab_selected_once = true
+                else
+                    cmp.select_next_item()
+                end
             elseif luasnip.expand_or_jumpable() then
                 luasnip.expand_or_jump()
             elseif has_words_before() then
