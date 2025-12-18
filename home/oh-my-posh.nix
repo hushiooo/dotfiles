@@ -1,11 +1,10 @@
-{ ... }:
 {
   enable = true;
   enableZshIntegration = true;
   settings = {
     version = 2;
     final_space = true;
-    console_title_template = "{{ .Shell }} in {{ .Folder }}";
+    console_title_template = "{{ .Folder }} — {{ .Shell }}";
     blocks = [
       {
         type = "prompt";
@@ -17,9 +16,12 @@
             style = "plain";
             background = "transparent";
             foreground = "#7aa2f7";
-            template = "{{ .Path }}";
+            template = " {{ .Path }}";
             properties = {
-              style = "full";
+              style = "agnoster_short";
+              max_depth = 3;
+              folder_icon = "";
+              home_icon = "~";
             };
           }
           {
@@ -27,22 +29,52 @@
             style = "plain";
             foreground = "#a9b1d6";
             background = "transparent";
-            template = " {{ .HEAD }}{{ if or (.Working.Changed) (.Staging.Changed) }}*{{ end }} <#89ddff>{{ if gt .Behind 0 }}⇣{{ end }}{{ if gt .Ahead 0 }}⇡{{ end }}</>";
+            template = "  {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if .StashCount }}  {{ .StashCount }}{{ end }}";
             properties = {
               branch_icon = "";
-              commit_icon = "@";
+              commit_icon = "";
               fetch_status = true;
+              fetch_stash_count = true;
             };
+          }
+          {
+            type = "nix-shell";
+            style = "plain";
+            foreground = "#7ebae4";
+            background = "transparent";
+            template = " ";
           }
           {
             type = "python";
             style = "plain";
-            foreground = "#9ece6a";
+            foreground = "#ffdc7d";
             background = "transparent";
-            template = " ({{ .Venv }})";
+            template = "  {{ if .Venv }}{{ .Venv }}{{ end }}";
             properties = {
               display_virtual_env = true;
+              display_default = false;
             };
+          }
+          {
+            type = "go";
+            style = "plain";
+            foreground = "#7dcfff";
+            background = "transparent";
+            template = "  {{ .Full }}";
+          }
+          {
+            type = "rust";
+            style = "plain";
+            foreground = "#f7768e";
+            background = "transparent";
+            template = "  {{ .Full }}";
+          }
+          {
+            type = "node";
+            style = "plain";
+            foreground = "#9ece6a";
+            background = "transparent";
+            template = "  {{ .Full }}";
           }
         ];
       }
@@ -55,10 +87,18 @@
             style = "plain";
             foreground = "#e0af68";
             background = "transparent";
-            template = "{{ .FormattedMs }}";
+            template = " {{ .FormattedMs }}";
             properties = {
-              threshold = 1000;
+              threshold = 500;
+              style = "austin";
             };
+          }
+          {
+            type = "time";
+            style = "plain";
+            foreground = "#565f89";
+            background = "transparent";
+            template = " {{ .CurrentDate | date \"15:04\" }}";
           }
         ];
       }
@@ -89,9 +129,9 @@
       template = "❯ ";
     };
     secondary_prompt = {
-      foreground = "#bb9af7";
+      foreground = "#565f89";
       background = "transparent";
-      template = "❯❯ ";
+      template = "∙ ";
     };
   };
 }

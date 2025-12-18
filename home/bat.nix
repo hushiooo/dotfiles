@@ -1,12 +1,14 @@
-{ ... }:
 {
   enable = true;
   config = {
-    theme = "ansi";
-    style = "numbers,changes,header,grid,snip";
+    theme = "base16";
+    style = "numbers,changes,header-filename,grid";
     pager = "less -FR";
-    tabs = "4";
-    wrap = "never";
     italic-text = "always";
+    map-syntax = [
+      "*.jenkinsfile:Groovy"
+      "*.props:Java Properties"
+      ".ignore:Git Ignore"
+    ];
   };
 }

@@ -98,9 +98,25 @@ opt.foldcolumn = "0"
 opt.grepprg = "rg --vimgrep --smart-case --hidden --glob '!.git'"
 opt.grepformat = "%f:%l:%c:%m"
 
--- JSON: 2-space indentation override
+-- 2-space indentation override
 autocmd("FileType", {
     pattern = "json",
+    callback = function()
+        vim.opt_local.shiftwidth = 2
+        vim.opt_local.tabstop = 2
+    end,
+})
+
+autocmd("FileType", {
+    pattern = "ts",
+    callback = function()
+        vim.opt_local.shiftwidth = 2
+        vim.opt_local.tabstop = 2
+    end,
+})
+
+autocmd("FileType", {
+    pattern = "js",
     callback = function()
         vim.opt_local.shiftwidth = 2
         vim.opt_local.tabstop = 2

@@ -42,34 +42,6 @@ require("tokyonight").setup({
 })
 vim.cmd.colorscheme("tokyonight")
 
--- Notify
-local notify = require("notify")
-
-notify.setup({
-    background_colour = "#1a1b26",
-    fps = 30,
-    icons = {
-        DEBUG = " ",
-        ERROR = " ",
-        INFO = " ",
-        TRACE = "✎ ",
-        WARN = " ",
-    },
-    level = vim.log.levels.INFO,
-    minimum_width = 40,
-    max_width = function() return math.floor(vim.o.columns * 0.3) end,
-    max_height = function() return math.floor(vim.o.lines * 0.3) end,
-    timeout = 2500,
-    render = "minimal",
-    stages = "fade_in_slide_out",
-    top_down = false,
-    on_open = function(win)
-        vim.api.nvim_win_set_option(win, "winblend", 0)
-        vim.api.nvim_win_set_option(win, "winhighlight", "NormalFloat:NormalFloat,FloatBorder:FloatBorder")
-    end,
-})
-vim.notify = notify
-
 -- Dressing
 local function with_border(conf)
     conf.border = border
@@ -150,8 +122,3 @@ local map = vim.keymap.set
 -- Gitsigns
 map("n", "<leader>gb", function() gitsigns.toggle_current_line_blame() end, { desc = "Toggle git blame" })
 map("n", "<leader>gp", function() gitsigns.preview_hunk() end, { desc = "Preview git hunk" })
-
--- Clear notifications
-map("n", "<leader>md", function()
-    require("notify").dismiss({ silent = true, pending = true })
-end, { desc = "Dismiss notifications" })

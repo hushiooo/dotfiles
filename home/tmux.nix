@@ -4,42 +4,47 @@
   mouse = true;
   clock24 = true;
   shell = "${pkgs.zsh}/bin/zsh";
-  historyLimit = 102400;
+  historyLimit = 50000;
   baseIndex = 1;
   escapeTime = 0;
-
   prefix = "C-a";
   keyMode = "vi";
   customPaneNavigationAndResize = true;
+  terminal = "tmux-256color";
 
   extraConfig = ''
-    # Window Management
     set-option -g renumber-windows on
     setw -g pane-base-index 1
+    set-option -g focus-events on
+    set-option -g status-position top
+    set-option -g set-clipboard on
 
-    # Fix terminal colors
-    set-option -g default-terminal "screen-256color"
     set-option -a terminal-features 'xterm-256color:RGB'
+    set-option -g default-terminal "tmux-256color"
 
-    # Status bar position
-    set-option -g status-position top 
-
-    # Pane splits
     bind c new-window -c '#{pane_current_path}'
     bind ) split-window -h -c '#{pane_current_path}'
     bind - split-window -v -c '#{pane_current_path}'
-    bind b break-pane -d
+    bind | split-window -h -c '#{pane_current_path}'
+    bind _ split-window -v -c '#{pane_current_path}'
 
-    # Vim-like pane navigation
     bind h select-pane -L
     bind j select-pane -D
     bind k select-pane -U
     bind l select-pane -R
 
-    # Fast toggle between current and last-used window
-    bind-key C-a last-window
+    bind -r H resize-pane -L 5
+    bind -r J resize-pane -D 5
+    bind -r K resize-pane -U 5
+    bind -r L resize-pane -R 5
 
-    # Window selection (AZERTY layout)
+    bind-key C-a last-window
+    bind-key b break-pane -d
+    bind-key @ join-pane -s !
+    bind-key x kill-pane
+    bind-key X kill-window
+    bind-key r source-file ~/.config/tmux/tmux.conf \; display "Reloaded!"
+
     unbind &
     unbind é
     unbind \"
@@ -62,45 +67,44 @@
     bind ç select-window -t 9
     bind à select-window -t 10
 
-    # Easy clear history
-    bind-key L clear-history
+    bind-key -T copy-mode-vi v send-keys -X begin-selection
+    bind-key -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "pbcopy"
+    bind-key -T copy-mode-vi r send-keys -X rectangle-toggle
 
-    # Synchronize panes toggle
-    bind-key y set-window-option synchronize-panes\; display-message "synchronize mode toggled."
-
-    # Status bar
-    set -g status-style "bg=#24283b,fg=#a9b1d6"
-
-    # Left status
-    set -g status-left ""
-
-    # Window status
-    set -g window-status-format "#[fg=#a9b1d6,bg=#24283b] #I │ #W "
-    set -g window-status-current-format "#[fg=#24283b,bg=#7aa2f7,bold] #I │ #W "
-    set -g window-status-separator ""
-
-    # Right status
+    set -g status-style "bg=#1a1b26,fg=#a9b1d6"
+    set -g status-left-length 50
     set -g status-right-length 100
-    set -g status-right "#[fg=#a9b1d6,bg=#24283b] #[fg=#24283b,bg=#7aa2f7,bold] #S #[fg=#24283b,bg=#9ece6a,bold] %H:%M #[fg=#24283b,bg=#bb9af7,bold] %d-%m-%Y "
+    set -g status-left ""
+    set -g window-status-format "#[fg=#565f89,bg=#1a1b26] #I #W "
+    set -g window-status-current-format "#[fg=#1a1b26,bg=#7aa2f7,bold] #I #W "
+    set -g window-status-separator ""
+    set -g status-right "#[fg=#565f89]#(whoami)@#H #[fg=#1a1b26,bg=#7aa2f7,bold] #S #[bg=#9ece6a] %H:%M "
 
-    # Pane borders
-    set -g pane-border-style "fg=#7aa2f7"
+    set -g pane-border-style "fg=#3b4261"
     set -g pane-active-border-style "fg=#7aa2f7"
     set -g pane-border-lines heavy
 
-    # Message style
-    set -g message-style "fg=#7aa2f7,bg=#24283b,bold"
+    set -g message-style "fg=#7aa2f7,bg=#1a1b26,bold"
+    set -g message-command-style "fg=#7aa2f7,bg=#1a1b26"
   '';
 
   plugins = with pkgs; [
     {
       plugin = tmuxPlugins.vim-tmux-navigator;
       extraConfig = ''
-        # Smart pane switching with awareness of Vim splits
         bind -n C-h if -F "#{@pane_is_vim}" "send-keys C-h" "select-pane -L"
         bind -n C-j if -F "#{@pane_is_vim}" "send-keys C-j" "select-pane -D"
         bind -n C-k if -F "#{@pane_is_vim}" "send-keys C-k" "select-pane -U"
         bind -n C-l if -F "#{@pane_is_vim}" "send-keys C-l" "select-pane -R"
+        bind -n C-\\ if -F "#{@pane_is_vim}" "send-keys C-\\\\" "select-pane -l"
+      '';
+    }
+    {
+      plugin = tmuxPlugins.resurrect;
+      extraConfig = ''
+        set -g @resurrect-strategy-nvim 'session'
+        set -g @resurrect-capture-pane-contents 'on'
+        set -g @resurrect-dir '~/.local/share/tmux/resurrect'
       '';
     }
     {
@@ -110,26 +114,7 @@
         set -g @continuum-save-interval '15'
       '';
     }
-    {
-      plugin = tmuxPlugins.resurrect;
-      extraConfig = ''
-        set -g @resurrect-strategy-nvim 'session'
-        set -g @resurrect-capture-pane-contents 'on'
-        set -g @resurrect-save-shell-history 'on'
-      '';
-    }
-    {
-      plugin = tmuxPlugins.yank;
-      extraConfig = ''
-        set -g @yank_selection_mouse 'clipboard'
-      '';
-    }
-    {
-      plugin = tmuxPlugins.sensible;
-      extraConfig = ''
-        set -g default-command "$SHELL"
-      '';
-    }
-    tmuxPlugins.pain-control
+    tmuxPlugins.yank
+    tmuxPlugins.sensible
   ];
 }

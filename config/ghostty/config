@@ -1,35 +1,22 @@
-# Font configuration
 font-family = 0xProto Nerd Font
 font-size = 14
+font-thicken = true
+adjust-cell-height = 10%
 
-# Window appearance
 window-decoration = false
 macos-titlebar-style = hidden
-window-padding-x = 8
-window-padding-y = 8
+window-padding-x = 12
+window-padding-y = 12
+window-padding-balance = true
+window-padding-color = background
 
-# Theme colors (Tokyo Night)
 background = #1a1b26
 foreground = #c0caf5
-
-# Transparency and blur
-background-opacity = 1.00
-background-blur-radius = 0
-
-# Cursor configuration
-cursor-style = block
-cursor-style-blink = false
 cursor-color = #c0caf5
+cursor-text = #1a1b26
+selection-foreground = #1a1b26
+selection-background = #7aa2f7
 
-# Shell integration
-shell-integration = detect
-shell-integration-features = no-cursor,no-sudo,title
-
-# Performance settings
-window-vsync = true
-mouse-hide-while-typing = true
-
-# Base colors (Tokyo Night)
 palette = 0=#1a1b26
 palette = 1=#f7768e
 palette = 2=#9ece6a
@@ -47,12 +34,54 @@ palette = 13=#bb9af7
 palette = 14=#7dcfff
 palette = 15=#c0caf5
 
-# Selection behavior
-selection-foreground = #1a1b26
-selection-background = #7aa2f7
-copy-on-select = false
+cursor-style = block
+cursor-style-blink = false
+mouse-hide-while-typing = true
 
-# Window behavior
+scrollback-limit = 100000
+
+shell-integration = zsh
+shell-integration-features = no-cursor,sudo,title
+
+window-vsync = true
+
+copy-on-select = clipboard
+clipboard-read = allow
+clipboard-write = allow
+clipboard-paste-protection = false
+
 quit-after-last-window-closed = true
 window-inherit-working-directory = true
-window-padding-color = background
+macos-option-as-alt = true
+confirm-close-surface = false
+
+quick-terminal-position = top
+quick-terminal-screen = main
+quick-terminal-animation-duration = 0.1
+
+keybind = super+n=new_window
+keybind = super+t=new_tab
+keybind = super+w=close_surface
+keybind = super+shift+w=close_window
+keybind = super+1=goto_tab:1
+keybind = super+2=goto_tab:2
+keybind = super+3=goto_tab:3
+keybind = super+4=goto_tab:4
+keybind = super+5=goto_tab:5
+keybind = super+shift+left_bracket=previous_tab
+keybind = super+shift+right_bracket=next_tab
+keybind = super+d=new_split:right
+keybind = super+shift+d=new_split:down
+keybind = super+ctrl+h=goto_split:left
+keybind = super+ctrl+l=goto_split:right
+keybind = super+ctrl+k=goto_split:top
+keybind = super+ctrl+j=goto_split:bottom
+keybind = super+plus=increase_font_size:1
+keybind = super+minus=decrease_font_size:1
+keybind = super+0=reset_font_size
+keybind = super+k=clear_screen
+keybind = super+shift+c=copy_to_clipboard
+keybind = super+shift+v=paste_from_clipboard
+keybind = super+f=toggle_fullscreen
+keybind = super+,=open_config
+keybind = super+shift+comma=reload_config

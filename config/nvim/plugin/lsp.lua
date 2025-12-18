@@ -111,7 +111,7 @@ setup("ruff", {
 setup("ty", {
     settings = {
         ty = {
-            diagnosticMode = 'workspace',
+            diagnosticMode = "workspace",
             experimental = {
                 autoImport = true,
             },
