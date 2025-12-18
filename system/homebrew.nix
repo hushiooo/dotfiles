@@ -23,6 +23,7 @@
       "google-chrome"
       "hiddenbar"
       "obsidian"
+      "linear-linear"
       "postico"
       "proton-pass"
       "protonvpn"

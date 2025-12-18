@@ -41,6 +41,7 @@
     lazydocker
     nixfmt-rfc-style
     codex
+    cursor-cli
     tree-sitter
     uv
   ];
