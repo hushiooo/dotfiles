@@ -19,7 +19,7 @@
   home = {
     username = "joad.goutal";
     homeDirectory = "/Users/joad.goutal";
-    stateVersion = "23.11";
+    stateVersion = "26.05";
 
     sessionPath = [
       "$HOME/.local/bin"

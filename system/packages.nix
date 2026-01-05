@@ -15,7 +15,7 @@
     gum
     ty
     bun
-    nodejs_22
+    nodejs_24
     go
     go-task
     rustup

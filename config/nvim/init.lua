@@ -145,6 +145,12 @@ autocmd("VimResized", {
     desc = "Keep splits balanced after resize",
 })
 
+autocmd("FileType", {
+    group = general_group,
+    callback = function() pcall(vim.treesitter.start) end,
+    desc = "Enable treesitter highlighting",
+})
+
 autocmd("BufWritePre", {
     group = general_group,
     pattern = { "*.lua", "*.ts", "*.tsx", "*.js", "*.jsx", "*.json", "*.go", "*.rs", "*.py" },
