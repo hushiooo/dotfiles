@@ -1,0 +1,54 @@
+{ pkgs, ... }:
+{
+  environment.systemPackages = with pkgs; [
+    bottom
+    coreutils
+    curl
+    fd
+    jq
+    yq-go
+    tree
+    wget
+    delta
+    hexyl
+    tldr
+    gum
+    ty
+    bun
+    nodejs_24
+    go
+    go-task
+    google-cloud-sdk
+    rustup
+    lua
+    python314
+    gcc
+    cmake
+    terraform
+    terragrunt
+    tflint
+    checkov
+    opencode
+    sops
+    localstack
+    tailscale
+    dbmate
+    sqlc
+    sqlfluff
+    rabbitmq-server
+    postgresql_16
+    earthly
+    pre-commit
+    gh
+    lazydocker
+    nixfmt-rfc-style
+    codex
+    cursor-cli
+    tree-sitter
+    uv
+  ];
+
+  fonts.packages = with pkgs; [
+    nerd-fonts._0xproto
+  ];
+}
