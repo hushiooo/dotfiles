@@ -18,6 +18,7 @@
     nodejs_24
     go
     go-task
+    google-cloud-sdk
     rustup
     lua
     python314
@@ -27,6 +28,7 @@
     terragrunt
     tflint
     checkov
+    opencode
     sops
     localstack
     tailscale
