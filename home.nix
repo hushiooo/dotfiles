@@ -6,6 +6,10 @@
 {
   programs.home-manager.enable = true;
 
+  news.display = "silent";
+
+  manual.manpages.enable = false;
+
   xdg = {
     enable = true;
     configFile = {
@@ -15,49 +19,48 @@
   };
 
   home = {
-    username = "joad";
-    homeDirectory = "/Users/joad";
+    username = "joad.goutal";
+    homeDirectory = "/Users/joad.goutal";
     stateVersion = "26.05";
 
     packages = with pkgs; [
+      awscli2
+      bun
+      cmake
+      colima
       coreutils
       curl
-      wget
-      fd
-      jq
-      yq-go
-      tree
-      watch
-      entr
       delta
-      hexyl
       duf
-      dust
-      gum
-      tldr
-      man-pages
-      uv
-      bun
-      nodejs_24
-      go
-      rustup
-      lua
+      fd
       gcc
-      cmake
-      gnumake
       gh
+      gnumake
+      go
+      google-cloud-sdk
+      gum
+      hexyl
+      jq
+      jdk
       lazydocker
-      tree-sitter
-      httpie
-      jless
-      nixfmt-rfc-style
-      nil
+      lua
       nerd-fonts._0xproto
+      nodejs_24
+      opencode
+      orbstack
+      ruff
+      rustup
+      tailscale
+      tldr
+      ty
+      uv
+      wget
+      yq-go
     ];
 
     sessionPath = [
-      "$HOME/.local/bin"
       "$HOME/.cargo/bin"
+      "$HOME/.local/bin"
       "$HOME/go/bin"
       "/opt/homebrew/bin"
       "/opt/homebrew/sbin"
@@ -65,12 +68,11 @@
 
     sessionVariables = {
       EDITOR = "nvim";
-      VISUAL = "nvim";
+      HOMEBREW_NO_ANALYTICS = 1;
       LANG = "en_US.UTF-8";
       LC_ALL = "en_US.UTF-8";
-      HOMEBREW_NO_ANALYTICS = 1;
       MANPAGER = "sh -c 'col -bx | bat -l man -p'";
-      NIX_PATH = "nixpkgs=${pkgs.path}";
+      VISUAL = "nvim";
     };
 
     file.".local/bin/.keep".text = "";
@@ -80,28 +82,28 @@
   services.gpg-agent = {
     enable = true;
     defaultCacheTtl = 31536000;
-    maxCacheTtl = 31536000;
     enableSshSupport = true;
+    maxCacheTtl = 31536000;
     pinentry.package = pkgs.pinentry_mac;
   };
 
   programs = {
-    zsh = import ./home/zsh.nix { inherit config pkgs; };
-    oh-my-posh = import ./home/oh-my-posh.nix { };
-    direnv = import ./home/direnv.nix { };
-    zoxide = import ./home/zoxide.nix { };
-    fzf = import ./home/fzf.nix { };
-    eza = import ./home/eza.nix { };
-    yazi = import ./home/yazi.nix { };
+    bat = import ./home/bat.nix { inherit pkgs; };
+    bottom = import ./home/bottom.nix { inherit pkgs; };
+    direnv = import ./home/direnv.nix { inherit pkgs; };
+    eza = import ./home/eza.nix { inherit pkgs; };
+    fastfetch = import ./home/fastfetch.nix { inherit pkgs; };
+    fzf = import ./home/fzf.nix { inherit pkgs; };
+    git = import ./home/git.nix { inherit config pkgs; };
+    gpg = import ./home/gpg.nix { inherit config pkgs; };
+    lazygit = import ./home/lazygit.nix { inherit pkgs; };
     neovim = import ./home/neovim.nix { inherit pkgs; };
+    oh-my-posh = import ./home/oh-my-posh.nix { inherit pkgs; };
+    ripgrep = import ./home/ripgrep.nix { inherit pkgs; };
+    ssh = import ./home/ssh.nix { inherit config pkgs; };
     tmux = import ./home/tmux.nix { inherit pkgs; };
-    git = import ./home/git.nix { };
-    lazygit = import ./home/lazygit.nix { };
-    gpg = import ./home/gpg.nix { };
-    ssh = import ./home/ssh.nix { };
-    bat = import ./home/bat.nix { };
-    ripgrep = import ./home/ripgrep.nix { };
-    bottom = import ./home/bottom.nix { };
-    fastfetch = import ./home/fastfetch.nix { };
+    yazi = import ./home/yazi.nix { inherit config pkgs; };
+    zoxide = import ./home/zoxide.nix { inherit config pkgs; };
+    zsh = import ./home/zsh.nix { inherit config pkgs; };
   };
 }

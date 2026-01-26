@@ -1,10 +1,11 @@
+{ ... }:
 {
   enable = true;
   settings = {
-    no-emit-version = true;
-    no-comments = true;
     keyid-format = "0xlong";
-    with-fingerprint = true;
+    no-comments = true;
+    no-emit-version = true;
     use-agent = true;
+    with-fingerprint = true;
   };
 }

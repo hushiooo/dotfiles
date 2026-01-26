@@ -104,11 +104,9 @@ install_packages() {
 
     # Casks (GUI apps)
     brew_install cask "ghostty"
-    brew_install cask "docker"
     brew_install cask "raycast"
-    brew_install cask "slack"
+    brew_install cask "notion"
     brew_install cask "linear-linear"
-    brew_install cask "hiddenbar"
 
     echo ""
     success "All packages installed"
@@ -152,8 +150,8 @@ apply_defaults() {
     defaults write com.apple.finder ShowRecentTags -bool false
 
     defaults write NSGlobalDomain AppleInterfaceStyle -string "Dark"
-    defaults write NSGlobalDomain KeyRepeat -int 2
-    defaults write NSGlobalDomain InitialKeyRepeat -int 15
+    defaults write NSGlobalDomain KeyRepeat -int 1
+    defaults write NSGlobalDomain InitialKeyRepeat -int 10
     defaults write NSGlobalDomain NSAutomaticWindowAnimationsEnabled -bool false
     defaults write NSGlobalDomain AppleICUForce24HourTime -bool true
     defaults write NSGlobalDomain AppleMeasurementUnits -string "Centimeters"

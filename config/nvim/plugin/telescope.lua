@@ -139,12 +139,21 @@ telescope.setup({
             override_file_sorter = true,
             case_mode = "smart_case",
         },
+        file_browser = {
+            hidden = true,
+            grouped = true,
+            respect_gitignore = false,
+            hijack_netrw = true,
+            initial_mode = "normal",
+        },
     },
 })
 
 -- Load extensions
+
 telescope.load_extension("fzf")
 telescope.load_extension("dap")
+telescope.load_extension("file_browser")
 
 -- Keybindings
 local builtin = require("telescope.builtin")
@@ -154,3 +163,17 @@ vim.keymap.set("n", "<leader>fb", builtin.buffers, { desc = "Find buffers" })
 vim.keymap.set("n", "<leader>fh", builtin.help_tags, { desc = "Help tags" })
 vim.keymap.set("n", "<leader>fr", builtin.oldfiles, { desc = "Recent files" })
 vim.keymap.set("n", "<leader>fs", builtin.grep_string, { desc = "Search word under cursor" })
+
+local telescope_browser = telescope.extensions.file_browser
+local function resolve_browser_path()
+    local buffer_dir = vim.fn.expand("%:p:h")
+    if buffer_dir == "" then
+        return vim.loop.cwd()
+    end
+    return buffer_dir
+end
+
+vim.keymap.set("n", "<leader>e", function()
+    telescope_browser.file_browser({ path = resolve_browser_path(), select_buffer = true })
+end, { desc = "File browser" })
+

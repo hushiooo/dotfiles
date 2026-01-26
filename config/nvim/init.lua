@@ -28,7 +28,6 @@ opt.showcmd = false
 opt.ruler = false
 opt.title = true
 opt.winminwidth = 5
-opt.list = false
 opt.fillchars:append({
     eob = " ",
     fold = " ",

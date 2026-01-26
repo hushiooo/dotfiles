@@ -1,3 +1,4 @@
+{ ... }:
 {
   enable = true;
   enableZshIntegration = true;
@@ -25,24 +26,11 @@
             };
           }
           {
-            type = "git";
-            style = "plain";
-            foreground = "#a9b1d6";
-            background = "transparent";
-            template = "  {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if .StashCount }}  {{ .StashCount }}{{ end }}";
-            properties = {
-              branch_icon = "";
-              commit_icon = "";
-              fetch_status = true;
-              fetch_stash_count = true;
-            };
-          }
-          {
             type = "nix-shell";
             style = "plain";
             foreground = "#7ebae4";
             background = "transparent";
-            template = " ";
+            template = " *";
           }
           {
             type = "python";

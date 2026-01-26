@@ -1,5 +1,5 @@
 {
-  description = "Home Manager configuration for macOS";
+  description = "My workstation nix flake";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -28,12 +28,12 @@
         modules = [ ./home.nix ];
       };
 
-      formatter.${system} = pkgs.nixfmt-rfc-style;
+      formatter.${system} = pkgs.nixfmt;
 
       devShells.${system}.default = pkgs.mkShell {
         packages = with pkgs; [
-          nixfmt-rfc-style
-          nil
+          nixd
+          nixfmt
         ];
       };
     };

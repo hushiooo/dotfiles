@@ -71,13 +71,12 @@ setup("jsonls", {
 -- Nix
 setup("nixd", {
     settings = {
-        nixd = {
-            formatting = { command = { "nixfmt" } },
-            nixpkgs = { expr = "(import <nixpkgs> {})" },
-            options = {
-                nixos = { expr = "(import <nixpkgs/nixos> { configuration = {}; }).options" },
-            },
+    nixd = {
+        formatting = { command = { "nixfmt" } },
+        nixpkgs = {
+            expr = "import <nixpkgs> { }",
         },
+    },
     },
 })
 
@@ -125,7 +124,6 @@ for _, server in ipairs({
     "html",
     "cssls",
     "dockerls",
-    "marksman",
     "terraformls",
 }) do
     setup(server)

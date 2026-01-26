@@ -1,4 +1,4 @@
-{ pkgs }:
+{ pkgs, ... }:
 {
   enable = true;
   defaultEditor = true;
@@ -6,81 +6,65 @@
   vimAlias = true;
 
   plugins = with pkgs.vimPlugins; [
-    # UI
-    tokyonight-nvim
-    lualine-nvim
-    nvim-web-devicons
-    dressing-nvim
-
-    # Navigation
-    nvim-tree-lua
-    telescope-nvim
-    telescope-fzf-native-nvim
-    which-key-nvim
-
-    # Editing
-    gitsigns-nvim
-
-    # LSP & Completion
-    nvim-lspconfig
-    nvim-cmp
-    cmp-nvim-lsp
     cmp-buffer
+    cmp-nvim-lsp
     cmp-path
     cmp_luasnip
+    dressing-nvim
+    gitsigns-nvim
+    lualine-nvim
     luasnip
-
-    # Debugging
+    nvim-cmp
     nvim-dap
     nvim-dap-python
     nvim-dap-ui
     nvim-dap-virtual-text
-    telescope-dap-nvim
-
-    # Search & Replace
+    nvim-lspconfig
     nvim-spectre
-
-    # Utils
+    nvim-web-devicons
     plenary-nvim
-
-    # Treesitter
+    telescope-dap-nvim
+    telescope-file-browser-nvim
+    telescope-fzf-native-nvim
+    telescope-nvim
+    tokyonight-nvim
     (nvim-treesitter.withPlugins (
       plugins: with plugins; [
-        python
-        typescript
-        javascript
-        tsx
-        go
-        rust
-        lua
-        nix
-        json
-        yaml
-        toml
         bash
-        markdown
+        go
         hcl
+        javascript
+        json
+        lua
+        markdown
+        nix
+        python
+        rust
+        toml
+        tsx
+        typescript
+        yaml
       ]
     ))
   ];
 
   extraPackages = with pkgs; [
-    nodePackages.typescript-language-server
-    nodePackages.typescript
-    nodePackages.vscode-langservers-extracted
-    nodePackages.dockerfile-language-server-nodejs
-    lua-language-server
-    gopls
-    rust-analyzer
-    clang-tools
-    marksman
     bash-language-server
-    yaml-language-server
+    clang-tools
+    gopls
+    lua-language-server
     nixd
-    terraform-ls
+    nixfmt
+    dockerfile-language-server
+    nodePackages.typescript
+    nodePackages.typescript-language-server
+    nodePackages.vscode-langservers-extracted
     ruff
-    stylua
+    ty
+    rust-analyzer
     shfmt
-    nixfmt-rfc-style
+    stylua
+    terraform-ls
+    yaml-language-server
   ];
 }
