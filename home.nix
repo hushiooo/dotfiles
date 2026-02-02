@@ -24,17 +24,19 @@
     stateVersion = "26.05";
 
     packages = with pkgs; [
-      awscli2
       bun
+      checkov
       cmake
-      colima
+      codex
       coreutils
       curl
+      dbmate
       delta
       duf
+      earthly
       fd
       gcc
-      gh
+      go-task
       gnumake
       go
       google-cloud-sdk
@@ -48,9 +50,17 @@
       nodejs_24
       opencode
       orbstack
+      postgresql_16
+      pre-commit
+      python314
       ruff
       rustup
+      sops
+      sqlc
       tailscale
+      terraform
+      terragrunt
+      tflint
       tldr
       ty
       uv

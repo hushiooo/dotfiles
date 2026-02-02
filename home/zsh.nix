@@ -48,6 +48,9 @@
     gstp = "git stash pop";
     hms = "home-manager switch --flake ~/dotfiles";
     hmu = "nix flake update ~/dotfiles && home-manager switch --flake ~/dotfiles";
+    aws = "aws";
+    awsp = "aws --profile";
+    awsr = "aws --region";
     la = "eza -a";
     lg = "lazygit";
     ll = "eza -alh --git";
@@ -116,6 +119,7 @@
     setopt PUSHD_TO_HOME
     setopt vi
     DIRSTACKSIZE=20
+
 
     bindkey '^[[1;5C' forward-word
     bindkey '^[[1;5D' backward-word

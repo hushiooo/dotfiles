@@ -56,9 +56,10 @@
     nixd
     nixfmt
     dockerfile-language-server
-    nodePackages.typescript
-    nodePackages.typescript-language-server
-    nodePackages.vscode-langservers-extracted
+    marksman
+    typescript
+    typescript-language-server
+    vscode-langservers-extracted
     ruff
     ty
     rust-analyzer

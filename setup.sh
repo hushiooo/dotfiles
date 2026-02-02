@@ -82,9 +82,15 @@ brew_install() {
     local name="$2"
 
     if [[ "$type" == "cask" ]]; then
-        if ! brew list --cask "$name" &>/dev/null; then
+        if ! brew list --cask --versions "$name" &>/dev/null; then
             info "Installing $name..."
-            brew install --cask "$name"
+            if ! brew install --cask "$name"; then
+                if brew list --cask --versions "$name" &>/dev/null; then
+                    success "$name already installed"
+                    return
+                fi
+                error "Failed to install $name"
+            fi
         else
             success "$name already installed"
         fi
@@ -106,6 +112,9 @@ install_packages() {
     brew_install cask "ghostty"
     brew_install cask "raycast"
     brew_install cask "notion"
+    brew_install cask "postico"
+    brew_install cask "slack"
+    brew_install cask "google-chrome"
     brew_install cask "linear-linear"
 
     echo ""

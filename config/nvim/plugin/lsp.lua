@@ -48,6 +48,7 @@ setup("clangd", {
 })
 
 -- Rust
+
 setup("rust_analyzer", {
     settings = {
         ["rust-analyzer"] = {
@@ -118,6 +119,11 @@ setup("ty", {
     },
 })
 
+-- Markdown
+setup("marksman", {
+    filetypes = { "markdown", "markdown.mdx" },
+})
+
 -- Web & misc servers
 for _, server in ipairs({
     "ts_ls",
@@ -128,7 +134,6 @@ for _, server in ipairs({
 }) do
     setup(server)
 end
-
 
 vim.diagnostic.config({
     virtual_text = false,
