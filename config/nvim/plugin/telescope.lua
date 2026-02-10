@@ -141,8 +141,14 @@ telescope.setup({
             hidden = true,
             grouped = true,
             respect_gitignore = false,
+            display_stat = false,
+            no_ignore = true,
+            theme = "dropdown",
+            previewer = false,
+            layout_config = { height = 0.8 },
             hijack_netrw = true,
             initial_mode = "normal",
+            git_status = false,
         },
     },
 })
@@ -174,4 +180,3 @@ end
 vim.keymap.set("n", "<leader>e", function()
     telescope_browser.file_browser({ path = resolve_browser_path(), select_buffer = true })
 end, { desc = "File browser" })
-
