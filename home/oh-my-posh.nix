@@ -57,13 +57,6 @@
             background = "transparent";
             template = "  {{ .Full }}";
           }
-          {
-            type = "node";
-            style = "plain";
-            foreground = "#9ece6a";
-            background = "transparent";
-            template = "  {{ .Full }}";
-          }
         ];
       }
       {

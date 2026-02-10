@@ -57,6 +57,7 @@
     nixfmt
     dockerfile-language-server
     marksman
+    (python314.withPackages (ps: [ ps.debugpy ]))
     typescript
     typescript-language-server
     vscode-langservers-extracted
