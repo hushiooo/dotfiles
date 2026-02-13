@@ -130,7 +130,7 @@
     bindkey '^[[H' beginning-of-line
     bindkey '^I' autosuggest-accept
     bindkey '^K' kill-line
-    bindkey '^R' history-incremental-search-backward
+
     bindkey '^U' backward-kill-line
 
     export GPG_TTY=$(tty)

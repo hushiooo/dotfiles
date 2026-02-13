@@ -22,6 +22,12 @@
   fileWidgetOptions = [
     "--preview 'bat --style=numbers --color=always --line-range :300 {} 2>/dev/null || tree -C {} 2>/dev/null'"
   ];
+  historyWidgetOptions = [
+    "--preview 'echo {}'"
+    "--preview-window=up:3:wrap"
+    "--sort"
+    "--exact"
+  ];
 
   colors = {
     bg = "#1a1b26";

@@ -27,7 +27,7 @@
       bun
       checkov
       cmake
-      codex
+      cursor-cli
       coreutils
       curl
       dbmate
@@ -48,7 +48,6 @@
       lua
       nerd-fonts._0xproto
       nodejs_24
-      opencode
       orbstack
       postgresql_16
       pre-commit
