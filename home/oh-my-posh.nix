@@ -57,6 +57,13 @@
             background = "transparent";
             template = "  {{ .Full }}";
           }
+          {
+            type = "aws";
+            style = "plain";
+            foreground = "#e0af68";
+            background = "transparent";
+            template = "  {{ .Profile }}{{ if .Region }} ({{ .Region }}){{ end }}";
+          }
         ];
       }
       {

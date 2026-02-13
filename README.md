@@ -4,20 +4,20 @@ My Nix + Home Manager development environment.
 
 ## Setup
 
-# 1. Install Nix (via Determinate Systems installer)
+### 1. Install Nix (via Determinate Systems installer)
 https://docs.determinate.systems
 
-# 2. Clone the repo
+### 2. Clone the repo
 ```bash
 nix-shell -p git --run "git clone https://github.com/hushiooo/dotfiles.git ~/dotfiles"
 ```
 
-# 3. Bootstrap macOS apps and defaults
+### 3. Bootstrap macOS apps and defaults
 ```bash
 cd ~/dotfiles && ./setup.sh
 ```
 
-# 4. Apply Home Manager configuration
+### 4. Apply Home Manager configuration
 ```bash
 nix run home-manager -- switch --flake ~/dotfiles
 ```

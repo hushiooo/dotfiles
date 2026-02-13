@@ -73,7 +73,7 @@
       s = "status -sb";
       sl = "stash list";
       sp = "stash pop";
-      ss = "stash save";
+      ss = "stash push";
       st = "status";
       undo = "reset --soft HEAD~1";
       unstage = "reset HEAD --";

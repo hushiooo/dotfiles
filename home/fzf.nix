@@ -5,12 +5,12 @@
   tmux.enableShellIntegration = true;
 
   changeDirWidgetCommand = "fd --type d --hidden --follow --exclude .git";
-  changeDirWidgetOptions = [ "--preview 'tree -C {} | head -100'" ];
+  changeDirWidgetOptions = [ "--preview 'eza --tree --color=always --level=2 {} | head -100'" ];
   defaultCommand = "fd --type f --hidden --follow --exclude .git";
   defaultOptions = [
     "--border=rounded"
     "--height 50%"
-    "--inline-info"
+    "--info=inline"
     "--layout=reverse"
     "--margin=1,2"
     "--marker='✓'"

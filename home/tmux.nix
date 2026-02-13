@@ -18,7 +18,7 @@
     setw -g pane-base-index 1
 
     # Fix terminal colors
-    set-option -g default-terminal "screen-256color"
+    set-option -g default-terminal "tmux-256color"
     set-option -a terminal-features 'xterm-256color:RGB'
 
     # Status bar position
