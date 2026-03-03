@@ -22,6 +22,64 @@ cd ~/dotfiles && ./setup.sh
 nix run home-manager -- switch --flake ~/dotfiles
 ```
 
+## Cursor CLI global setup
+
+This repository manages global Cursor CLI defaults via Home Manager:
+
+- `~/.cursor/mcp.json` from `config/cursor/mcp.json`
+- `~/.cursor/skills/*` from `config/cursor/skills/`
+- `~/.cursor/commands/*` from `config/cursor/commands/`
+- `~/.cursor/rules/*` from `config/cursor/rules/`
+- `~/AGENTS.md` from `config/cursor/AGENTS.md`
+
+Global agent policy includes commit hygiene: prefer atomic commits and split large changes by concern for easier human review and cherry-picking.
+
+Included global MCP servers:
+
+- Official reference servers (`modelcontextprotocol/servers`):
+  - `fetch` (web content fetching and markdown conversion)
+  - `filesystem` (secure file operations)
+  - `git` (Git repository tooling)
+  - `memory` (persistent knowledge graph memory)
+  - `sequential-thinking` (structured reflective reasoning)
+  - `time` (time and timezone conversion)
+  - `everything` is intentionally excluded to keep tool surface focused
+- Additional practical servers:
+  - `context7` (live docs and library references)
+  - `linear` (issues and project tracking)
+
+`filesystem` is intentionally scoped to:
+- `/Users/joad.goutal`
+
+Included global skills:
+
+- `code-review`
+- `self-review`
+- `commit-message`
+- `test-plan`
+- `debug-root-cause`
+- `pr-summary`
+- `preflight-checks`
+
+Included global slash commands:
+
+- `/self-review`
+- `/test-plan`
+- `/commit-message`
+- `/pr-summary`
+- `/preflight`
+- `/mcp-status`
+- `/mcp-doctor`
+- `/mcp-reference`
+- `/review-ready`
+- `/commit-plan`
+
+After editing any Cursor files in this repo, apply:
+
+```bash
+home-manager switch --flake ~/dotfiles
+```
+
 ## SSH and GPG keys
 
 ```bash
@@ -72,7 +130,7 @@ nix develop
 ├── flake.lock
 ├── home.nix
 ├── home/           # Program modules
-├── config/         # Raw config files
+├── config/         # Raw config files (nvim, ghostty, cursor, ...)
 ├── setup.sh        # macOS bootstrap script
 └── README.md
 ```

@@ -4,6 +4,8 @@
   ...
 }:
 {
+  imports = [ ./home/cursor-cli.nix ];
+
   programs.home-manager.enable = true;
 
   news.display = "silent";
@@ -27,7 +29,6 @@
       bun
       checkov
       cmake
-      cursor-cli
       coreutils
       curl
       dbmate
@@ -56,6 +57,7 @@
       rustup
       sops
       sqlc
+      sqlfluff
       tailscale
       terraform
       terragrunt

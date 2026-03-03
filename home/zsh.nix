@@ -127,10 +127,8 @@
 
     asp() {
       local config="''${AWS_CONFIG_FILE:-$HOME/.aws/config}"
-      if [[ ! -f "$config" ]]; then
-        echo "AWS config not found: $config" >&2
-        return 1
-      fi
+      local credentials="''${AWS_SHARED_CREDENTIALS_FILE:-$HOME/.aws/credentials}"
+      local current="''${AWS_PROFILE:-''${AWS_DEFAULT_PROFILE:-none}}"
 
       if [[ "$1" == "-" ]]; then
         unset AWS_PROFILE AWS_DEFAULT_PROFILE
@@ -138,23 +136,117 @@
         return 0
       fi
 
-      local profiles
-      profiles=$(sed -n 's/^\[profile \(.*\)\]$/\1/p' "$config" | sort)
-      if [[ -z "$profiles" ]]; then
-        echo "No profiles found in $config" >&2
+      local profiles_raw
+      profiles_raw="$(
+        {
+          [[ -f "$config" ]] && sed -n -E \
+            -e 's/^\[profile[[:space:]]+(.+)\][[:space:]]*$/\1/p' \
+            -e 's/^\[default\][[:space:]]*$/default/p' \
+            "$config"
+          [[ -f "$credentials" ]] && sed -n -E \
+            's/^\[([^]]+)\][[:space:]]*$/\1/p' \
+            "$credentials"
+        } | awk 'NF' | sort -u
+      )"
+
+      if [[ -z "$profiles_raw" ]]; then
+        echo "No AWS profiles found (checked $config and $credentials)" >&2
         return 1
       fi
 
-      local selected="''${1:-$(echo "$profiles" | fzf \
-        --prompt="AWS profile ❯ " \
-        --header="Current: ''${AWS_PROFILE:-none}" \
-        --preview="aws configure list --profile {}" \
-        --preview-window=down:4:wrap)}"
+      local -a profile_list rm_profiles
+      profile_list=("''${(@f)profiles_raw}")
+
+      case "$1" in
+        -h|--help)
+          printf '%s\n' \
+            "Usage:" \
+            "  asp                 Select AWS profile interactively" \
+            "  asp <profile>       Switch to a specific profile" \
+            "  asp rm              Select a risk-management profile only" \
+            "  asp rm <env> [role] Shortcut for stoik-risk-management-<env>-<role>" \
+            "  asp --list          List known profiles" \
+            "  asp --current       Show current profile and identity status" \
+            "  asp --login         Run aws sso login for current profile" \
+            "  asp -               Clear profile from current shell" \
+            "" \
+            "Examples:" \
+            "  asp rm" \
+            "  asp rm staging admin" \
+            "  task build-deploy TG_ENV=staging ROLE=admin"
+          return 0
+          ;;
+        --list|-l)
+          echo "$profiles_raw"
+          return 0
+          ;;
+        --current|-c)
+          echo "Current AWS profile: $current"
+          if [[ "$current" != "none" ]]; then
+            aws sts get-caller-identity --profile "$current" --query 'Arn' --output text 2>/dev/null || \
+              echo "SSO session missing/expired for $current"
+          fi
+          return 0
+          ;;
+        --login)
+          if [[ "$current" == "none" ]]; then
+            echo "No profile selected. Use: asp <profile>" >&2
+            return 1
+          fi
+          aws sso login --profile "$current"
+          return $?
+          ;;
+      esac
+
+      local selected
+      if [[ "$1" == "rm" ]]; then
+        shift
+        if [[ -n "$1" || -n "$2" ]]; then
+          local env="''${1:-staging}"
+          local role="''${2:-admin}"
+          selected="stoik-risk-management-$env-$role"
+        else
+          rm_profiles=("''${(@M)profile_list:#stoik-risk-management-*}")
+          if (( ''${#rm_profiles[@]} == 0 )); then
+            echo "No stoik risk-management profiles found" >&2
+            return 1
+          fi
+          selected="$(printf '%s\n' "''${rm_profiles[@]}" | fzf \
+            --prompt="RM AWS profile ❯ " \
+            --header="Current: $current | shortcut: asp rm staging admin" \
+            --preview="aws configure list --profile {}" \
+            --preview-window=down:4:wrap)"
+        fi
+      else
+        selected="''${1:-$(printf '%s\n' "''${profile_list[@]}" | fzf \
+          --prompt="AWS profile ❯ " \
+          --header="Current: $current" \
+          --preview="aws configure list --profile {}" \
+          --preview-window=down:4:wrap)}"
+      fi
+
+      if [[ -z "$selected" ]]; then
+        return 0
+      fi
+
+      if (( ''${profile_list[(Ie)$selected]} == 0 )); then
+        echo "Unknown AWS profile: $selected" >&2
+        echo "Use 'asp --list' to inspect available profiles." >&2
+        return 1
+      fi
 
       if [[ -n "$selected" ]]; then
         export AWS_PROFILE="$selected"
         export AWS_DEFAULT_PROFILE="$selected"
-        echo "Switched to AWS profile: $selected"
+
+        local account
+        account="$(aws sts get-caller-identity --profile "$selected" --query 'Account' --output text 2>/dev/null || true)"
+        if [[ -n "$account" ]]; then
+          echo "Switched to AWS profile: $selected (account: $account)"
+        else
+          echo "Switched to AWS profile: $selected"
+          echo "SSO session missing/expired. Run: aws sso login --profile $selected"
+        fi
       fi
     }
 

@@ -1,0 +1,66 @@
+{
+  "mcpServers": {
+    "fetch": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-fetch"
+      ],
+      "description": "Fetch and convert web content to markdown for LLM-friendly reading"
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/joad.goutal"
+      ],
+      "description": "Secure filesystem operations scoped to your home directory"
+    },
+    "git": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-git"
+      ],
+      "description": "Read, search, and manipulate Git repositories"
+    },
+    "context7": {
+      "url": "https://mcp.context7.com/mcp",
+      "description": "Up-to-date code documentation and library lookup"
+    },
+    "linear": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.linear.app/mcp"
+      ],
+      "description": "Linear issue tracking and project management"
+    },
+    "memory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "env": {
+        "MEMORY_FILE_PATH": "/Users/joad.goutal/.cursor/memory/memory.jsonl"
+      },
+      "description": "Persistent memory MCP for reusable context and notes"
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "description": "Structured multi-step reasoning support"
+    },
+    "time": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-time"
+      ],
+      "description": "Time and timezone conversion capabilities"
+    }
+  }
+}

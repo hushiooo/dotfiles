@@ -1,0 +1,12 @@
+---
+description: Global engineering defaults for local Cursor sessions
+alwaysApply: true
+---
+# Global Engineering Defaults
+
+- Make the smallest safe change that satisfies the request.
+- Follow repository-local conventions before introducing new patterns.
+- Prefer explicit failure paths over silent fallback behavior.
+- Keep changes testable and update tests for behavior changes.
+- Do not commit or push unless explicitly requested.
+- When commit work is requested, prefer atomic commits split by concern for easy review and cherry-picking.
