@@ -13,33 +13,54 @@
   customPaneNavigationAndResize = true;
 
   extraConfig = ''
-    # Window Management
-    set-option -g renumber-windows on
+    ##### Core behavior #####
+    set -g renumber-windows on
     setw -g pane-base-index 1
 
-    # Fix terminal colors
-    set-option -g default-terminal "tmux-256color"
-    set-option -a terminal-features 'xterm-256color:RGB'
+    # Terminal / colors
+    set -g default-terminal "tmux-256color"
+    set -as terminal-features "xterm-256color:RGB"
 
     # Status bar position
-    set-option -g status-position top
+    set -g status-position top
 
-    # Pane splits
-    bind c new-window -c '#{pane_current_path}'
-    bind ) split-window -h -c '#{pane_current_path}'
-    bind - split-window -v -c '#{pane_current_path}'
+
+    ##### Create / split (preserve CWD) #####
+    bind c new-window -c "#{pane_current_path}"
+    bind ) split-window -h -c "#{pane_current_path}"
+    bind - split-window -v -c "#{pane_current_path}"
     bind b break-pane -d
 
-    # Vim-like pane navigation
+
+    ##### Pane navigation (prefix + hjkl) #####
     bind h select-pane -L
     bind j select-pane -D
     bind k select-pane -U
     bind l select-pane -R
 
-    # Fast toggle between current and last-used window
-    bind-key C-a last-window
+    # Pane reordering inside window
+    bind p swap-pane -U
+    bind P swap-pane -D
 
-    # Window selection (AZERTY layout)
+
+    ##### Move panes between windows (non-destructive) #####
+    # Send pane to next/previous window and follow
+    bind > move-pane -t :.+ \; select-window -t :.+
+    bind < move-pane -t :.- \; select-window -t :.-
+
+    # Prompted move: enter target window number (e.g. 1)
+    bind M command-prompt -p "move-pane to window:" "move-pane -t '%%'"
+
+    # Prompted join: enter source as w.p (e.g. 2.1)
+    bind J command-prompt -p "join-pane from (w.p):" "join-pane -s '%%'"
+
+
+    ##### Window navigation #####
+    # Fast toggle between current and last-used window
+    bind C-a last-window
+
+
+    ##### Window selection (AZERTY layout) #####
     unbind &
     unbind é
     unbind "\""
@@ -62,33 +83,27 @@
     bind ç select-window -t 9
     bind à select-window -t 10
 
-    # Easy clear history
-    bind-key L clear-history
 
-    # Synchronize panes toggle
-    bind-key y set-window-option synchronize-panes\; display-message "synchronize mode toggled."
+    ##### Utilities #####
+    bind L clear-history
+    bind y set-window-option synchronize-panes \; display-message "synchronize mode toggled."
 
-    # Status bar
+
+    ##### Theme #####
     set -g status-style "bg=#24283b,fg=#a9b1d6"
-
-    # Left status
     set -g status-left ""
 
-    # Window status
     set -g window-status-format "#[fg=#a9b1d6,bg=#24283b] #I │ #W "
     set -g window-status-current-format "#[fg=#24283b,bg=#7aa2f7,bold] #I │ #W "
     set -g window-status-separator ""
 
-    # Right status
     set -g status-right-length 100
     set -g status-right "#[fg=#a9b1d6,bg=#24283b] #[fg=#24283b,bg=#7aa2f7,bold] #S #[fg=#24283b,bg=#9ece6a,bold] %H:%M #[fg=#24283b,bg=#bb9af7,bold] %d-%m-%Y "
 
-    # Pane borders
     set -g pane-border-style "fg=#7aa2f7"
     set -g pane-active-border-style "fg=#7aa2f7"
     set -g pane-border-lines heavy
 
-    # Message style
     set -g message-style "fg=#7aa2f7,bg=#24283b,bold"
   '';
 
@@ -96,7 +111,7 @@
     {
       plugin = tmuxPlugins.vim-tmux-navigator;
       extraConfig = ''
-        # Smart pane switching with awareness of Vim splits
+        # Smart pane switching with awareness of Vim splits (no prefix)
         bind -n C-h if -F "#{@pane_is_vim}" "send-keys C-h" "select-pane -L"
         bind -n C-j if -F "#{@pane_is_vim}" "send-keys C-j" "select-pane -D"
         bind -n C-k if -F "#{@pane_is_vim}" "send-keys C-k" "select-pane -U"
@@ -124,12 +139,7 @@
         set -g @yank_selection_mouse 'clipboard'
       '';
     }
-    {
-      plugin = tmuxPlugins.sensible;
-      extraConfig = ''
-        set -g default-command "$SHELL"
-      '';
-    }
-    tmuxPlugins.pain-control
+
+    # sensible removed (optional), pain-control removed (requested)
   ];
 }
