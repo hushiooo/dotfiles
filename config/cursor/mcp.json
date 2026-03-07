@@ -23,9 +23,39 @@
       ],
       "description": "Read, search, and manipulate Git repositories"
     },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "dotenv-cli",
+        "-e",
+        "/Users/joad.goutal/dotfiles/.env",
+        "--",
+        "npx",
+        "-y",
+        "mcp-remote",
+        "https://api.githubcopilot.com/mcp/",
+        "--header",
+        "Authorization: Bearer ${GITHUB_PAT}"
+      ],
+      "description": "GitHub MCP via dotenv + mcp-remote using ~/dotfiles/.env"
+    },
     "context7": {
-      "url": "https://mcp.context7.com/mcp",
-      "description": "Up-to-date code documentation and library lookup"
+      "command": "npx",
+      "args": [
+        "-y",
+        "dotenv-cli",
+        "-e",
+        "/Users/joad.goutal/dotfiles/.env",
+        "--",
+        "npx",
+        "-y",
+        "mcp-remote",
+        "https://mcp.context7.com/mcp",
+        "--header",
+        "CONTEXT7_API_KEY: ${CONTEXT7_API_KEY}"
+      ],
+      "description": "Context7 MCP via dotenv + mcp-remote using ~/dotfiles/.env"
     },
     "linear": {
       "command": "npx",

@@ -45,11 +45,24 @@ Included global MCP servers:
   - `time` (time and timezone conversion)
   - `everything` is intentionally excluded to keep tool surface focused
 - Additional practical servers:
-  - `context7` (live docs and library references)
+  - `context7` (live docs and library references; API key loaded from `~/dotfiles/.env`)
+  - `github` (hosted GitHub MCP server; PAT loaded from `~/dotfiles/.env`)
   - `linear` (issues and project tracking)
 
 `filesystem` is intentionally scoped to:
 - `/Users/joad.goutal`
+
+MCP credentials are loaded directly from `~/dotfiles/.env` via `dotenv-cli` in `config/cursor/mcp.json` (no custom wrapper script).
+Create your local secrets file once:
+
+```bash
+cp ~/dotfiles/.env.example ~/dotfiles/.env
+```
+
+Expected variables in `~/dotfiles/.env`:
+
+- `GITHUB_PAT`
+- `CONTEXT7_API_KEY`
 
 Included global skills:
 
@@ -57,9 +70,7 @@ Included global skills:
 - `self-review`
 - `commit-message`
 - `test-plan`
-- `debug-root-cause`
 - `pr-summary`
-- `preflight-checks`
 
 Included global slash commands:
 
@@ -67,12 +78,6 @@ Included global slash commands:
 - `/test-plan`
 - `/commit-message`
 - `/pr-summary`
-- `/preflight`
-- `/mcp-status`
-- `/mcp-doctor`
-- `/mcp-reference`
-- `/review-ready`
-- `/commit-plan`
 
 After editing any Cursor files in this repo, apply:
 

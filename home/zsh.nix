@@ -56,6 +56,7 @@
     path = "echo $PATH | tr ':' '\\n'";
     ports = "lsof -i -P -n | rg LISTEN";
     rm = "rm -iv";
+    tf_clean = "rm -rfv **/.terragrunt-cache/";
     t = "tmux";
     td = "tmux detach";
     tka = "tmux kill-server";

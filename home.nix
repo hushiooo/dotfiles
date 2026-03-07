@@ -31,6 +31,7 @@
       cmake
       coreutils
       curl
+      codex
       dbmate
       delta
       duf
