@@ -89,6 +89,16 @@
   };
 
   initContent = ''
+    # macOS /etc/zprofile path_helper puts system paths first.
+    # Re-prepend Nix profile bins so vi/java resolve to Nix packages.
+    path=(
+      "$HOME/.nix-profile/bin"
+      "/nix/var/nix/profiles/default/bin"
+      $path
+    )
+    export PATH
+    hash -r
+
     source ${pkgs.zsh-history-substring-search}/share/zsh-history-substring-search/zsh-history-substring-search.zsh
     source ${pkgs.zsh-syntax-highlighting}/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 

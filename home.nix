@@ -71,6 +71,8 @@
     ];
 
     sessionPath = [
+      "$HOME/.nix-profile/bin"
+      "/nix/var/nix/profiles/default/bin"
       "$HOME/.cargo/bin"
       "$HOME/.local/bin"
       "$HOME/go/bin"
@@ -79,6 +81,12 @@
     ];
 
     sessionVariables = {
+      # Keep Cargo/rustc linking on macOS with Apple toolchain,
+      # even when Nix gcc-wrapper exists earlier in PATH.
+      CC = "/usr/bin/cc";
+      CXX = "/usr/bin/c++";
+      CARGO_TARGET_AARCH64_APPLE_DARWIN_LINKER = "/usr/bin/cc";
+
       EDITOR = "nvim";
       HOMEBREW_NO_ANALYTICS = 1;
       LANG = "en_US.UTF-8";
