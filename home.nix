@@ -48,6 +48,7 @@
       jdk
       lazydocker
       lua
+      mergiraf
       nerd-fonts._0xproto
       nodejs_24
       orbstack

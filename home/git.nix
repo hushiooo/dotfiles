@@ -41,6 +41,8 @@
     "venv/"
   ];
 
+  attributes = [ "* merge=mergiraf" ];
+
   settings = {
     user = {
       name = "hushiooo";
@@ -101,8 +103,12 @@
     init.defaultBranch = "main";
     interactive.diffFilter = "delta --color-only";
     merge = {
-      conflictStyle = "zdiff3";
+      conflictStyle = "diff3";
       ff = "only";
+      mergiraf = {
+        driver = "mergiraf merge --git %O %A %B -s %S -x %X -y %Y -p %P -l %L";
+        name = "mergiraf";
+      };
     };
     pull.rebase = true;
     push = {
