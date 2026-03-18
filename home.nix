@@ -53,7 +53,7 @@
       nodejs_24
       orbstack
       postgresql_16
-      pre-commit
+      prek
       python314
       ruff
       rustup
