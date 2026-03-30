@@ -46,6 +46,7 @@
       hexyl
       jq
       jdk
+      just
       lazydocker
       lua
       mergiraf
@@ -55,6 +56,7 @@
       postgresql_16
       prek
       python314
+      pnpm
       ruff
       rustup
       sops
