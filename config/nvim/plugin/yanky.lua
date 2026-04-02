@@ -5,4 +5,8 @@ require("yanky").setup({
 
 vim.keymap.set("n", "<leader>sy", function()
     require("yanky").yank_history_picker()
-end, { desc = "Yank History Picker" })
+end, { desc = "Yank history" })
+
+vim.keymap.set("n", "<leader>sY", function()
+    require("yanky").clear()
+end, { desc = "Clear yank history" })

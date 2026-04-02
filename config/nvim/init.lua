@@ -19,7 +19,6 @@ opt.numberwidth = 2
 opt.cursorline = true
 opt.cursorlineopt = "both"
 opt.signcolumn = "yes"
-opt.termguicolors = true
 opt.cmdheight = 0
 opt.laststatus = 3
 opt.pumheight = 12
@@ -46,7 +45,6 @@ opt.confirm = true
 -- Performance
 opt.updatetime = 150
 opt.timeoutlen = 300
-opt.lazyredraw = true
 opt.shortmess:append({ W = true, I = true, c = true, C = true })
 
 -- Scrolling
@@ -74,7 +72,6 @@ opt.splitkeep = "screen"
 -- Search
 opt.ignorecase = true
 opt.smartcase = true
-opt.inccommand = "nosplit"
 
 -- Indentation
 opt.expandtab = true
@@ -99,23 +96,7 @@ opt.grepformat = "%f:%l:%c:%m"
 
 -- 2-space indentation override
 autocmd("FileType", {
-    pattern = "json",
-    callback = function()
-        vim.opt_local.shiftwidth = 2
-        vim.opt_local.tabstop = 2
-    end,
-})
-
-autocmd("FileType", {
-    pattern = "ts",
-    callback = function()
-        vim.opt_local.shiftwidth = 2
-        vim.opt_local.tabstop = 2
-    end,
-})
-
-autocmd("FileType", {
-    pattern = "js",
+    pattern = { "json", "javascript", "typescript", "typescriptreact", "javascriptreact" },
     callback = function()
         vim.opt_local.shiftwidth = 2
         vim.opt_local.tabstop = 2
@@ -139,7 +120,7 @@ local general_group = augroup("GeneralSettings", { clear = true })
 autocmd("TextYankPost", {
     group = general_group,
     callback = function()
-        vim.highlight.on_yank({ higroup = "Visual", timeout = 150 })
+        vim.hl.on_yank({ higroup = "Visual", timeout = 150 })
     end,
     desc = "Briefly highlight on yank",
 })

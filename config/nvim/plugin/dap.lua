@@ -4,11 +4,11 @@ local dap_python = require("dap-python")
 local map = vim.keymap.set
 
 local function path_exists(path)
-    return path and vim.loop.fs_stat(path) ~= nil
+    return path and vim.uv.fs_stat(path) ~= nil
 end
 
 local function get_start_path()
-    local cwd = vim.loop.cwd() or vim.fn.getcwd()
+    local cwd = vim.uv.cwd() or vim.fn.getcwd()
     local bufname = vim.api.nvim_buf_get_name(0)
     return bufname ~= "" and vim.fs.dirname(bufname) or cwd
 end
@@ -16,7 +16,7 @@ end
 local function find_root(markers)
     local start = get_start_path()
     local root = vim.fs.find(markers, { path = start, upward = true })[1]
-    return root and vim.fs.dirname(root) or (vim.loop.cwd() or vim.fn.getcwd())
+    return root and vim.fs.dirname(root) or (vim.uv.cwd() or vim.fn.getcwd())
 end
 
 local function get_project_root()

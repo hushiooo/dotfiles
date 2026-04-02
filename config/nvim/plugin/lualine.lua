@@ -27,7 +27,7 @@ require("lualine").setup({
                 function()
                     local fname = vim.api.nvim_buf_get_name(0)
                     if fname == "" then return "[No Name]" end
-                    local cwd = vim.loop.cwd() or ""
+                    local cwd = vim.uv.cwd() or ""
                     local rel = vim.fn.fnamemodify(fname, ":.")
                     if cwd ~= "" and fname:sub(1, #cwd) == cwd then rel = fname:sub(#cwd + 2) end
 

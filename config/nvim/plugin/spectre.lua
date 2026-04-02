@@ -1,7 +1,7 @@
 local spectre = require("spectre")
 local map = vim.keymap.set
 local separator = string.rep("─", 46)
-local is_macos = vim.loop.os_uname().sysname == "Darwin"
+local is_macos = vim.uv.os_uname().sysname == "Darwin"
 
 spectre.setup({
     color_devicons = true,

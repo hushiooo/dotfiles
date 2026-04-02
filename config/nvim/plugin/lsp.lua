@@ -9,16 +9,6 @@ local function setup(server, config)
     vim.lsp.enable(server)
 end
 
-vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, {
-    border = border,
-    title = "Hover",
-})
-
-vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, {
-    border = border,
-    close_events = { "CursorMoved", "BufHidden", "InsertCharPre" },
-})
-
 -- Lua
 setup("lua_ls", {
     settings = {
@@ -169,23 +159,21 @@ vim.api.nvim_create_autocmd("LspAttach", {
     group = vim.api.nvim_create_augroup("UserLspConfig", {}),
     callback = function(ev)
         local opts = { buffer = ev.buf, silent = true }
-        map("n", "gD", vim.lsp.buf.declaration, opts)
         map("n", "gd", vim.lsp.buf.definition, opts)
+        map("n", "gD", vim.lsp.buf.declaration, opts)
         map("n", "gi", vim.lsp.buf.implementation, opts)
         map("n", "gr", vim.lsp.buf.references, opts)
-        map("n", "K", vim.lsp.buf.hover, opts)
-        map("n", "<C-k>", vim.lsp.buf.signature_help, opts)
+        map("n", "K", function() vim.lsp.buf.hover({ border = border }) end, opts)
+        map("n", "<C-k>", function() vim.lsp.buf.signature_help({ border = border }) end, opts)
         map("n", "<leader>cr", vim.lsp.buf.rename, opts)
         map({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, opts)
         map("n", "<leader>cf", function() vim.lsp.buf.format({ async = true }) end, opts)
         map("n", "<leader>cs", vim.lsp.buf.workspace_symbol, opts)
         map("n", "<leader>ct", vim.lsp.buf.type_definition, opts)
         map("n", "<leader>cd", vim.diagnostic.open_float, { buffer = ev.buf, desc = "Show diagnostics", silent = true })
-
-        local client = vim.lsp.get_client_by_id(ev.data.client_id)
-        if client and client.server_capabilities.inlayHintProvider then
-            pcall(vim.lsp.inlay_hint, ev.buf, true)
-        end
+        map("n", "<leader>ci", function()
+            vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = ev.buf }), { bufnr = ev.buf })
+        end, { buffer = ev.buf, desc = "Toggle inlay hints", silent = true })
     end,
 })
 

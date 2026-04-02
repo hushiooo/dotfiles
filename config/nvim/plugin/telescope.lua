@@ -172,7 +172,7 @@ local telescope_browser = telescope.extensions.file_browser
 local function resolve_browser_path()
     local buffer_dir = vim.fn.expand("%:p:h")
     if buffer_dir == "" then
-        return vim.loop.cwd()
+        return vim.uv.cwd()
     end
     return buffer_dir
 end
