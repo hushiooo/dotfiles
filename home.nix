@@ -52,6 +52,7 @@
       mergiraf
       nerd-fonts._0xproto
       nodejs_24
+      opencode
       orbstack
       postgresql_16
       prek
