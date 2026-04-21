@@ -47,6 +47,9 @@ setup("rust_analyzer", {
     },
 })
 
+-- Zig
+setup("zls")
+
 -- YAML
 setup("yamlls", {
     settings = {

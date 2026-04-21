@@ -72,6 +72,7 @@
       uv
       wget
       yq-go
+      zig
     ];
 
     sessionPath = [

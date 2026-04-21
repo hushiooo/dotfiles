@@ -44,6 +44,7 @@
         tsx
         typescript
         yaml
+        zig
       ]
     ))
   ];
@@ -68,5 +69,6 @@
     stylua
     terraform-ls
     yaml-language-server
+    zls
   ];
 }
