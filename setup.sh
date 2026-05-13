@@ -80,26 +80,27 @@ install_homebrew() {
 brew_install() {
     local type="$1"
     local name="$2"
+    local short="${name##*/}"
 
     if [[ "$type" == "cask" ]]; then
-        if ! brew list --cask --versions "$name" &>/dev/null; then
+        if ! brew list --cask --versions "$short" &>/dev/null; then
             info "Installing $name..."
-            if ! brew install --cask "$name"; then
-                if brew list --cask --versions "$name" &>/dev/null; then
-                    success "$name already installed"
+            if ! brew install --cask --adopt "$name"; then
+                if brew list --cask --versions "$short" &>/dev/null; then
+                    success "$short already installed"
                     return
                 fi
                 error "Failed to install $name"
             fi
         else
-            success "$name already installed"
+            success "$short already installed"
         fi
     else
-        if ! brew list "$name" &>/dev/null; then
+        if ! brew list "$short" &>/dev/null; then
             info "Installing $name..."
             brew install "$name"
         else
-            success "$name already installed"
+            success "$short already installed"
         fi
     fi
 }
@@ -108,14 +109,51 @@ install_packages() {
     info "Installing Homebrew packages..."
     echo ""
 
-    # Casks (GUI apps)
+    # Casks
     brew_install cask "ghostty"
-    brew_install cask "raycast"
-    brew_install cask "notion"
-    brew_install cask "postico"
-    brew_install cask "slack"
     brew_install cask "google-chrome"
+    brew_install cask "google-cloud-sdk"
     brew_install cask "linear-linear"
+    brew_install cask "notion"
+    brew_install cask "obsidian"
+    brew_install cask "orbstack"
+    brew_install cask "postico"
+    brew_install cask "raycast"
+    brew_install cask "slack"
+    brew_install cask "tailscale"
+    brew_install cask "temurin"
+
+    # Formulae
+    brew_install formula "checkov"
+    brew_install formula "codex"
+    brew_install formula "dbmate"
+    brew_install formula "duf"
+    brew_install formula "earthbuild/earthbuild/earth"
+    brew_install formula "go"
+    brew_install formula "go-task"
+    brew_install formula "gum"
+    brew_install formula "hashicorp/tap/terraform"
+    brew_install formula "hexyl"
+    brew_install formula "just"
+    brew_install formula "lazydocker"
+    brew_install formula "lua"
+    brew_install formula "mergiraf"
+    brew_install formula "node"
+    brew_install formula "pnpm"
+    brew_install formula "postgresql@16"
+    brew_install formula "prek"
+    brew_install formula "python@3.14"
+    brew_install formula "ruff"
+    brew_install formula "rustup"
+    brew_install formula "sops"
+    brew_install formula "sqlc"
+    brew_install formula "sqlfluff"
+    brew_install formula "sst/tap/opencode"
+    brew_install formula "terragrunt"
+    brew_install formula "tflint"
+    brew_install formula "ty"
+    brew_install formula "uv"
+    brew_install formula "zig"
 
     echo ""
     success "All packages installed"

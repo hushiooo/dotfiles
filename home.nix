@@ -4,8 +4,6 @@
   ...
 }:
 {
-  imports = [ ./home/cursor-cli.nix ];
-
   programs.home-manager.enable = true;
 
   news.display = "silent";
@@ -25,54 +23,27 @@
     homeDirectory = "/Users/joad.goutal";
     stateVersion = "26.05";
 
+    # Foundational tools only.
+    # Anything that moves faster than nixpkgs-unstable can absorb
+    # (language toolchains, AI CLIs, cloud SDKs, IaC, app-style packages)
+    # is intentionally NOT installed here. Manage those out-of-band:
+    #   - language toolchains -> mise / asdf / rustup-init / per-project flakes
+    #   - macOS apps          -> Homebrew casks
+    #   - cloud / IaC         -> mise plugins or vendored binaries
+    #   - AI CLIs             -> npm i -g / brew / vendor installer
     packages = with pkgs; [
-      bun
-      checkov
       cmake
       coreutils
       curl
-      codex
-      dbmate
       delta
-      duf
-      earthly
       fd
       gcc
-      go-task
       gnumake
-      go
-      google-cloud-sdk
-      gum
-      hexyl
       jq
-      jdk
-      just
-      lazydocker
-      lua
-      mergiraf
       nerd-fonts._0xproto
-      nodejs_24
-      opencode
-      orbstack
-      postgresql_16
-      prek
-      python314
-      pnpm
-      ruff
-      rustup
-      sops
-      sqlc
-      sqlfluff
-      tailscale
-      terraform
-      terragrunt
-      tflint
       tldr
-      ty
-      uv
       wget
       yq-go
-      zig
     ];
 
     sessionPath = [

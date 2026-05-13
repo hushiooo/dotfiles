@@ -15,15 +15,10 @@
     lualine-nvim
     luasnip
     nvim-cmp
-    nvim-dap
-    nvim-dap-python
-    nvim-dap-ui
-    nvim-dap-virtual-text
     nvim-lspconfig
     nvim-spectre
     nvim-web-devicons
     plenary-nvim
-    telescope-dap-nvim
     telescope-file-browser-nvim
     telescope-fzf-native-nvim
     telescope-nvim
@@ -49,25 +44,25 @@
     ))
   ];
 
+  # Pure language servers + formatters that nvim alone uses.
+  # Tools you also invoke from the terminal (ruff, ty, ...) live in Homebrew
+  # and are picked up via PATH; do not duplicate them here.
   extraPackages = with pkgs; [
     bash-language-server
     clang-tools
+    dockerfile-language-server
     gopls
     lua-language-server
+    marksman
     nixd
     nixfmt
-    dockerfile-language-server
-    marksman
-    (python314.withPackages (ps: [ ps.debugpy ]))
-    typescript
-    typescript-language-server
-    vscode-langservers-extracted
-    ruff
-    ty
     rust-analyzer
     shfmt
     stylua
     terraform-ls
+    typescript
+    typescript-language-server
+    vscode-langservers-extracted
     yaml-language-server
     zls
   ];

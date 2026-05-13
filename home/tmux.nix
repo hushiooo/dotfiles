@@ -139,7 +139,5 @@
         set -g @yank_selection_mouse 'clipboard'
       '';
     }
-
-    # sensible removed (optional), pain-control removed (requested)
   ];
 }

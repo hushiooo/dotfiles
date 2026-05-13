@@ -8,8 +8,9 @@
     signByDefault = true;
   };
 
+  attributes = [ "* merge=mergiraf" ];
+
   ignores = [
-    "!.env.example"
     "*.egg-info/"
     "*.iml"
     "*.pyc"
@@ -40,8 +41,6 @@
     "result-*"
     "venv/"
   ];
-
-  attributes = [ "* merge=mergiraf" ];
 
   settings = {
     user = {

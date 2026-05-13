@@ -115,10 +115,10 @@
     setopt PUSHD_MINUS
     setopt PUSHD_SILENT
     setopt PUSHD_TO_HOME
-    setopt vi
     DIRSTACKSIZE=20
 
 
+    bindkey -v
     bindkey '^[[1;5C' forward-word
     bindkey '^[[1;5D' backward-word
     bindkey '^[[3~' delete-char

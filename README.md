@@ -22,68 +22,13 @@ cd ~/dotfiles && ./setup.sh
 nix run home-manager -- switch --flake ~/dotfiles
 ```
 
-## Cursor CLI global setup
+## Scope
 
-This repository manages global Cursor CLI defaults via Home Manager:
-
-- `~/.cursor/mcp.json` from `config/cursor/mcp.json`
-- `~/.cursor/skills/*` from `config/cursor/skills/`
-- `~/.cursor/commands/*` from `config/cursor/commands/`
-- `~/.cursor/rules/*` from `config/cursor/rules/`
-- `~/AGENTS.md` from `config/cursor/AGENTS.md`
-
-Global agent policy includes commit hygiene: prefer atomic commits and split large changes by concern for easier human review and cherry-picking.
-
-Included global MCP servers:
-
-- Official reference servers (`modelcontextprotocol/servers`):
-  - `fetch` (web content fetching and markdown conversion)
-  - `filesystem` (secure file operations)
-  - `git` (Git repository tooling)
-  - `memory` (persistent knowledge graph memory)
-  - `sequential-thinking` (structured reflective reasoning)
-  - `time` (time and timezone conversion)
-  - `everything` is intentionally excluded to keep tool surface focused
-- Additional practical servers:
-  - `context7` (live docs and library references; API key loaded from `~/dotfiles/.env`)
-  - `github` (hosted GitHub MCP server; PAT loaded from `~/dotfiles/.env`)
-  - `linear` (issues and project tracking)
-
-`filesystem` is intentionally scoped to:
-- `/Users/joad.goutal`
-
-MCP credentials are loaded directly from `~/dotfiles/.env` via `dotenv-cli` in `config/cursor/mcp.json` (no custom wrapper script).
-Create your local secrets file once:
-
-```bash
-cp ~/dotfiles/.env.example ~/dotfiles/.env
-```
-
-Expected variables in `~/dotfiles/.env`:
-
-- `GITHUB_PAT`
-- `CONTEXT7_API_KEY`
-
-Included global skills:
-
-- `code-review`
-- `self-review`
-- `commit-message`
-- `test-plan`
-- `pr-summary`
-
-Included global slash commands:
-
-- `/self-review`
-- `/test-plan`
-- `/commit-message`
-- `/pr-summary`
-
-After editing any Cursor files in this repo, apply:
-
-```bash
-home-manager switch --flake ~/dotfiles
-```
+Nix + Home Manager installs only foundational, slow-moving tools (build
+essentials, core CLI utils, configured TUIs, shell, fonts). Anything that
+moves faster than the `nixpkgs-unstable` cadence (language toolchains, cloud
+SDKs, IaC, AI CLIs, app-style packages) is installed via Homebrew through
+`setup.sh`.
 
 ## SSH and GPG keys
 
@@ -135,7 +80,7 @@ nix develop
 ├── flake.lock
 ├── home.nix
 ├── home/           # Program modules
-├── config/         # Raw config files (nvim, ghostty, cursor, ...)
+├── config/         # Raw config files (nvim, ghostty)
 ├── setup.sh        # macOS bootstrap script
 └── README.md
 ```
