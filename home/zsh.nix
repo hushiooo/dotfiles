@@ -376,5 +376,14 @@
         echo "'$1' is not a valid file"
       fi
     }
+
+    ti() {
+      local sel
+      sel=$(command task -l \
+        | fzf --preview 'command task --summary {2}' --preview-window=right:60%:wrap \
+        | awk '{print $2}' | tr -d ':')
+      [[ -z "$sel" ]] && return
+      print -z "task $sel "
+    }
   '';
 }

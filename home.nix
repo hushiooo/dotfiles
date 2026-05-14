@@ -19,37 +19,71 @@
   };
 
   home = {
-    username = "joad.goutal";
-    homeDirectory = "/Users/joad.goutal";
+    username = "joad";
+    homeDirectory = "/Users/joad";
     stateVersion = "26.05";
 
-    # Foundational tools only.
-    # Anything that moves faster than nixpkgs-unstable can absorb
-    # (language toolchains, AI CLIs, cloud SDKs, IaC, app-style packages)
-    # is intentionally NOT installed here. Manage those out-of-band:
-    #   - language toolchains -> mise / asdf / rustup-init / per-project flakes
-    #   - macOS apps          -> Homebrew casks
-    #   - cloud / IaC         -> mise plugins or vendored binaries
-    #   - AI CLIs             -> npm i -g / brew / vendor installer
+    # All CLI tools and language toolchains managed here.
     packages = with pkgs; [
+      # Core utilities
       cmake
       coreutils
       curl
       delta
       fd
       gcc
+      gh
       gnumake
       jq
       nerd-fonts._0xproto
+      tflint
       tldr
       wget
       yq-go
+
+      # Language toolchains
+      cargo
+      clippy
+      go
+      lua
+      nodejs
+      python314
+      rust-analyzer
+      rustc
+      rustfmt
+      zig
+
+      # Language tools
+      pnpm
+      prek
+      ruff
+      sqlc
+      sqlfluff
+      ty
+      uv
+
+      # Infra / Cloud
+      awscli2
+      dbmate
+      sops
+      terragrunt
+
+      # Build / Task runners
+      go-task
+      just
+
+      # General CLI
+      duf
+      gum
+      hexyl
+      lazydocker
+      mergiraf
+      postgresql_16
     ];
 
     sessionPath = [
       "$HOME/.nix-profile/bin"
       "/nix/var/nix/profiles/default/bin"
-      "$HOME/.cargo/bin"
       "$HOME/.local/bin"
       "$HOME/go/bin"
       "/opt/homebrew/bin"

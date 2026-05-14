@@ -23,7 +23,7 @@
       };
     in
     {
-      homeConfigurations."joad.goutal" = home-manager.lib.homeManagerConfiguration {
+      homeConfigurations."joad" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
         modules = [ ./home.nix ];
       };

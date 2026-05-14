@@ -3,6 +3,14 @@
 # macOS Setup Script
 # Installs prerequisites, Homebrew packages, and applies system defaults.
 #
+# Most CLI tools and language toolchains are managed via Nix (home.nix).
+# This script handles things Nix can't (or shouldn't) do on macOS:
+#   - GUI apps  -> CASKS array below
+#   - Formulae that fail to build in nixpkgs on macOS, or have unfree
+#     licenses we'd rather not pin in Nix -> FORMULAE array below
+#
+# To add a new package: just append a line to the relevant array.
+#
 # Usage:
 #   ./setup.sh          # Full setup
 #   ./setup.sh defaults # Apply macOS defaults only
@@ -10,6 +18,37 @@
 #
 
 set -euo pipefail
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Homebrew packages (edit these arrays to add/remove packages)
+# ──────────────────────────────────────────────────────────────────────────────
+
+CASKS=(
+    "ghostty"
+    "google-chrome"
+    "google-cloud-sdk"
+    "linear-linear"
+    "notion"
+    "obsidian"
+    "orbstack"
+    "postico"
+    "raycast"
+    "slack"
+    "tailscale"
+    "temurin"
+)
+
+# Formulae kept in Brew on purpose. Reason in comment next to each.
+FORMULAE=(
+    "checkov"                       # nixpkgs build OOMs on macOS (heavy py deps)
+    "hashicorp/tap/terraform"       # BSL license; avoid pinning unfree in Nix
+)
+
+# Formulae installed from HEAD (built from source, latest commit).
+# Use for taps with broken/missing bottles.
+HEAD_FORMULAE=(
+    "earthbuild/earthbuild/earth"   # bottle 404s; --HEAD builds from source
+)
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Colors & Helpers
@@ -77,86 +116,68 @@ install_homebrew() {
     fi
 }
 
-brew_install() {
-    local type="$1"
-    local name="$2"
+install_formula() {
+    local name="$1"
     local short="${name##*/}"
 
-    if [[ "$type" == "cask" ]]; then
-        if ! brew list --cask --versions "$short" &>/dev/null; then
-            info "Installing $name..."
-            if ! brew install --cask --adopt "$name"; then
-                if brew list --cask --versions "$short" &>/dev/null; then
-                    success "$short already installed"
-                    return
-                fi
-                error "Failed to install $name"
-            fi
-        else
-            success "$short already installed"
-        fi
+    if brew list "$short" &>/dev/null; then
+        success "$short already installed"
     else
-        if ! brew list "$short" &>/dev/null; then
-            info "Installing $name..."
-            brew install "$name"
-        else
+        info "Installing $name..."
+        brew install "$name"
+    fi
+}
+
+install_head_formula() {
+    local name="$1"
+    local short="${name##*/}"
+
+    if brew list "$short" &>/dev/null; then
+        success "$short already installed (HEAD)"
+    else
+        info "Installing $name (--HEAD)..."
+        brew install --HEAD "$name"
+    fi
+}
+
+install_cask() {
+    local name="$1"
+    local short="${name##*/}"
+
+    if brew list --cask --versions "$short" &>/dev/null; then
+        success "$short already installed"
+        return
+    fi
+
+    info "Installing $name..."
+    if ! brew install --cask --adopt "$name"; then
+        if brew list --cask --versions "$short" &>/dev/null; then
             success "$short already installed"
+            return
         fi
+        error "Failed to install $name"
     fi
 }
 
 install_packages() {
-    info "Installing Homebrew packages..."
+    info "Installing Homebrew formulae..."
     echo ""
-
-    # Casks
-    brew_install cask "ghostty"
-    brew_install cask "google-chrome"
-    brew_install cask "google-cloud-sdk"
-    brew_install cask "linear-linear"
-    brew_install cask "notion"
-    brew_install cask "obsidian"
-    brew_install cask "orbstack"
-    brew_install cask "postico"
-    brew_install cask "raycast"
-    brew_install cask "slack"
-    brew_install cask "tailscale"
-    brew_install cask "temurin"
-
-    # Formulae
-    brew_install formula "checkov"
-    brew_install formula "codex"
-    brew_install formula "dbmate"
-    brew_install formula "duf"
-    brew_install formula "earthbuild/earthbuild/earth"
-    brew_install formula "go"
-    brew_install formula "go-task"
-    brew_install formula "gum"
-    brew_install formula "hashicorp/tap/terraform"
-    brew_install formula "hexyl"
-    brew_install formula "just"
-    brew_install formula "lazydocker"
-    brew_install formula "lua"
-    brew_install formula "mergiraf"
-    brew_install formula "node"
-    brew_install formula "pnpm"
-    brew_install formula "postgresql@16"
-    brew_install formula "prek"
-    brew_install formula "python@3.14"
-    brew_install formula "ruff"
-    brew_install formula "rustup"
-    brew_install formula "sops"
-    brew_install formula "sqlc"
-    brew_install formula "sqlfluff"
-    brew_install formula "sst/tap/opencode"
-    brew_install formula "terragrunt"
-    brew_install formula "tflint"
-    brew_install formula "ty"
-    brew_install formula "uv"
-    brew_install formula "zig"
+    for formula in "${FORMULAE[@]}"; do
+        install_formula "$formula"
+    done
+    for formula in "${HEAD_FORMULAE[@]}"; do
+        install_head_formula "$formula"
+    done
 
     echo ""
-    success "All packages installed"
+    info "Installing Homebrew casks..."
+    echo ""
+    for cask in "${CASKS[@]}"; do
+        install_cask "$cask"
+    done
+
+    echo ""
+    success "All Homebrew packages installed"
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -197,8 +218,8 @@ apply_defaults() {
     defaults write com.apple.finder ShowRecentTags -bool false
 
     defaults write NSGlobalDomain AppleInterfaceStyle -string "Dark"
-    defaults write NSGlobalDomain KeyRepeat -int 1
-    defaults write NSGlobalDomain InitialKeyRepeat -int 10
+    defaults write NSGlobalDomain KeyRepeat -int 2
+    defaults write NSGlobalDomain InitialKeyRepeat -int 12
     defaults write NSGlobalDomain NSAutomaticWindowAnimationsEnabled -bool false
     defaults write NSGlobalDomain AppleICUForce24HourTime -bool true
     defaults write NSGlobalDomain AppleMeasurementUnits -string "Centimeters"
