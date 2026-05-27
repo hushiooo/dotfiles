@@ -29,7 +29,7 @@
           use = [ "edit" ];
         }
         {
-          name = "*/";
+          url = "*/";
           use = [
             "edit"
             "open"

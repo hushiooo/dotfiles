@@ -6,6 +6,8 @@
 {
   programs.home-manager.enable = true;
 
+  home.enableNixpkgsReleaseCheck = false;
+
   news.display = "silent";
 
   manual.manpages.enable = false;
