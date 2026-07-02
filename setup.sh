@@ -33,6 +33,7 @@ CASKS=(
     "orbstack"
     "postico"
     "raycast"
+    "session-manager-plugin"
     "slack"
     "tailscale"
     "temurin"

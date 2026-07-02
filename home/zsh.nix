@@ -10,6 +10,10 @@
     fi
   '';
 
+  profileExtra = ''
+    source ~/.orbstack/shell/init.zsh 2>/dev/null || :
+  '';
+
   shellAliases = {
     ".." = "cd ..";
     "..." = "cd ../..";
