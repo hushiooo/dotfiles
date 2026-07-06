@@ -4,8 +4,10 @@
   enableZshIntegration = true;
   tmux.enableShellIntegration = true;
 
-  changeDirWidgetCommand = "fd --type d --hidden --follow --exclude .git";
-  changeDirWidgetOptions = [ "--preview 'eza --tree --color=always --level=2 {} | head -100'" ];
+  changeDirWidget = {
+    command = "fd --type d --hidden --follow --exclude .git";
+    options = [ "--preview 'eza --tree --color=always --level=2 {} | head -100'" ];
+  };
   defaultCommand = "fd --type f --hidden --follow --exclude .git";
   defaultOptions = [
     "--border=rounded"
@@ -18,16 +20,20 @@
     "--pointer='▶'"
     "--prompt='❯ '"
   ];
-  fileWidgetCommand = "fd --type f --hidden --follow --exclude .git";
-  fileWidgetOptions = [
-    "--preview 'bat --style=numbers --color=always --line-range :300 {} 2>/dev/null || tree -C {} 2>/dev/null'"
-  ];
-  historyWidgetOptions = [
-    "--preview 'echo {}'"
-    "--preview-window=up:3:wrap"
-    "--sort"
-    "--exact"
-  ];
+  fileWidget = {
+    command = "fd --type f --hidden --follow --exclude .git";
+    options = [
+      "--preview 'bat --style=numbers --color=always --line-range :300 {} 2>/dev/null || tree -C {} 2>/dev/null'"
+    ];
+  };
+  historyWidget = {
+    options = [
+      "--preview 'echo {}'"
+      "--preview-window=up:3:wrap"
+      "--sort"
+      "--exact"
+    ];
+  };
 
   colors = {
     bg = "#1a1b26";

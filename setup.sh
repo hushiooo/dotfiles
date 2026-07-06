@@ -26,8 +26,8 @@ set -euo pipefail
 CASKS=(
     "ghostty"
     "google-chrome"
-    "google-cloud-sdk"
-    "linear-linear"
+    "gcloud-cli"
+    "linear"
     "notion"
     "obsidian"
     "orbstack"
@@ -35,7 +35,7 @@ CASKS=(
     "raycast"
     "session-manager-plugin"
     "slack"
-    "tailscale"
+    "tailscale-app"
     "temurin"
 )
 
@@ -48,7 +48,13 @@ FORMULAE=(
 # Formulae installed from HEAD (built from source, latest commit).
 # Use for taps with broken/missing bottles.
 HEAD_FORMULAE=(
-    "earthbuild/earthbuild/earth"   # bottle 404s; --HEAD builds from source
+    "earthbuild/tap/earth"          # bottle 404s; --HEAD builds from source
+)
+
+# Third-party taps required by FORMULAE / HEAD_FORMULAE.
+REQUIRED_TAPS=(
+    "hashicorp/tap"
+    "earthbuild/tap"
 )
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -117,6 +123,34 @@ install_homebrew() {
     fi
 }
 
+trust_required_taps() {
+    local tap
+    for tap in "${REQUIRED_TAPS[@]}"; do
+        if ! brew tap | grep -qx "$tap"; then
+            info "Tapping $tap..."
+            brew tap "$tap"
+        fi
+        brew trust --tap "$tap" &>/dev/null || true
+    done
+
+    brew trust --formula hashicorp/tap/terraform &>/dev/null || true
+    brew trust --formula earthbuild/tap/earth &>/dev/null || true
+}
+
+prune_unused_taps() {
+    local tap formula tap_line
+    while IFS= read -r tap; do
+        for formula in $(brew list --formula -1 2>/dev/null); do
+            tap_line="$(brew info "$formula" 2>/dev/null | awk -F': ' '/^Tap: / { print $2; exit }')"
+            if [[ "$tap_line" == "$tap" ]]; then
+                continue 2
+            fi
+        done
+        info "Removing unused tap $tap..."
+        brew untap "$tap" &>/dev/null || warn "Could not remove tap $tap"
+    done < <(brew tap 2>/dev/null)
+}
+
 install_formula() {
     local name="$1"
     local short="${name##*/}"
@@ -161,6 +195,9 @@ install_cask() {
 }
 
 install_packages() {
+    trust_required_taps
+    prune_unused_taps
+
     info "Installing Homebrew formulae..."
     echo ""
     for formula in "${FORMULAE[@]}"; do
