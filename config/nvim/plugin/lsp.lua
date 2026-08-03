@@ -1,3 +1,5 @@
+vim.lsp.set_log_level("ERROR")
+
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
 local sev = vim.diagnostic.severity
 local border = "rounded"
