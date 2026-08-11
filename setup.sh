@@ -43,6 +43,7 @@ CASKS=(
 FORMULAE=(
     "checkov"                       # nixpkgs build OOMs on macOS (heavy py deps)
     "hashicorp/tap/terraform"       # BSL license; avoid pinning unfree in Nix
+    "pi-coding-agent"               # AI CLI; releases far faster than nixpkgs
 )
 
 # Formulae installed from HEAD (built from source, latest commit).

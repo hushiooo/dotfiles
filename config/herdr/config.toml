@@ -1,0 +1,119 @@
+onboarding = false
+
+[terminal]
+new_cwd = "follow"
+
+[theme]
+name = "tokyo-night"
+
+[ui]
+prompt_new_tab_name = false
+confirm_close = false
+
+[worktrees]
+directory = "~/dev/worktrees"
+
+[experimental]
+# Keeps prefix chords readable on French AZERTY (macOS).
+switch_ascii_input_source_in_prefix = true
+
+[keys]
+prefix = "ctrl+a"
+
+# Create / split (tmux: c, ), -)
+new_tab = "prefix+c"
+split_vertical = "prefix+)"
+split_horizontal = "prefix+minus"
+
+# Pane navigation (tmux: h/j/k/l + vim-tmux-navigator ctrl+h/j/k/l)
+focus_pane_left = ["prefix+h", "ctrl+h"]
+focus_pane_down = ["prefix+j", "ctrl+j"]
+focus_pane_up = ["prefix+k", "ctrl+k"]
+focus_pane_right = ["prefix+l", "ctrl+l"]
+
+# tmux used p/P to reorder; left/right keep the herdr default shift+h/shift+l
+swap_pane_up = "prefix+p"
+swap_pane_down = "prefix+shift+p"
+
+# prefix+p is taken above, so previous-tab moves to shift+n
+previous_tab = "prefix+shift+n"
+next_tab = "prefix+n"
+
+# prefix+b is break-pane below, so the sidebar moves up one
+toggle_sidebar = "prefix+shift+b"
+
+open_worktree = "prefix+ctrl+w"
+
+# Command palette: fuzzy jump to any tab, agent or worktree, plus the verbs
+# that have no dedicated key. Replaces a pile of one-off bindings.
+[[keys.command]]
+key = ["prefix+space", "cmd+p"]
+type = "plugin_action"
+command = "joad.palette.open"
+description = "command palette"
+
+# Break pane to new tab (tmux: prefix b)
+[[keys.command]]
+key = "prefix+b"
+type = "shell"
+command = "herdr pane move \"$HERDR_ACTIVE_PANE_ID\" --new-tab"
+description = "break pane to new tab"
+
+[[keys.command]]
+key = "prefix+ctrl+g"
+type = "popup"
+command = "$HOME/.nix-profile/bin/lazygit"
+description = "lazygit"
+width = "90%"
+height = "90%"
+
+# AZERTY number row -> tabs 1-10 (same physical keys as tmux)
+[[keys.command]]
+key = "prefix+ampersand"
+type = "shell"
+command = "$HOME/.nix-profile/bin/herdr-tab-focus 1"
+
+[[keys.command]]
+key = "prefix+é"
+type = "shell"
+command = "$HOME/.nix-profile/bin/herdr-tab-focus 2"
+
+[[keys.command]]
+key = "prefix+double_quote"
+type = "shell"
+command = "$HOME/.nix-profile/bin/herdr-tab-focus 3"
+
+[[keys.command]]
+key = "prefix+quote"
+type = "shell"
+command = "$HOME/.nix-profile/bin/herdr-tab-focus 4"
+
+[[keys.command]]
+key = "prefix+("
+type = "shell"
+command = "$HOME/.nix-profile/bin/herdr-tab-focus 5"
+
+[[keys.command]]
+key = "prefix+§"
+type = "shell"
+command = "$HOME/.nix-profile/bin/herdr-tab-focus 6"
+
+[[keys.command]]
+key = "prefix+è"
+type = "shell"
+command = "$HOME/.nix-profile/bin/herdr-tab-focus 7"
+
+[[keys.command]]
+key = "prefix+!"
+type = "shell"
+command = "$HOME/.nix-profile/bin/herdr-tab-focus 8"
+
+[[keys.command]]
+key = "prefix+ç"
+type = "shell"
+command = "$HOME/.nix-profile/bin/herdr-tab-focus 9"
+
+[[keys.command]]
+key = "prefix+à"
+type = "shell"
+command = "$HOME/.nix-profile/bin/herdr-tab-focus 10"

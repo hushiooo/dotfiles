@@ -1,9 +1,12 @@
 {
   config,
+  lib,
   pkgs,
   ...
 }:
 {
+  imports = [ ./home/herdr.nix ];
+
   programs.home-manager.enable = true;
 
   home.enableNixpkgsReleaseCheck = false;
@@ -108,7 +111,18 @@
     };
 
     file.".local/bin/.keep".text = "";
+    file.".pi/agent/AGENTS.md".source = ./config/pi/agent/AGENTS.md;
     file.".ssh/control/.keep".text = "";
+
+    # Pi rewrites settings.json itself (model switches, /settings), so it is
+    # seeded once rather than symlinked read-only into the Nix store. Delete
+    # the file and re-run `hms` to reset it to the version tracked here.
+    activation.seedPiSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      if [ ! -e "$HOME/.pi/agent/settings.json" ]; then
+        run mkdir -p "$HOME/.pi/agent"
+        run install -m 644 ${./config/pi/agent/settings.json} "$HOME/.pi/agent/settings.json"
+      fi
+    '';
   };
 
   services.gpg-agent = {

@@ -72,6 +72,26 @@ nix fmt
 nix develop
 ```
 
+## Pi coding agent
+
+[Pi](https://pi.dev) is the terminal coding agent. Installed via Homebrew
+(`setup.sh`) because it releases far faster than `nixpkgs-unstable`.
+
+```bash
+pi          # new session; run /login once to authenticate with Anthropic
+pic         # continue last session
+pir         # browse past sessions
+```
+
+Config lives in `config/pi/agent/`:
+
+- `AGENTS.md` is symlinked to `~/.pi/agent/AGENTS.md` and loaded in every project.
+- `settings.json` is **seeded, not symlinked** — pi rewrites it whenever you switch
+  models. To reset it to the tracked version: `rm ~/.pi/agent/settings.json && hms`.
+
+Skills are picked up automatically from `~/.agents/skills/` and per-project
+`.agents/skills/`, and are callable as `/skill:name`.
+
 ## Structure
 
 ```
@@ -80,7 +100,7 @@ nix develop
 ├── flake.lock
 ├── home.nix
 ├── home/           # Program modules
-├── config/         # Raw config files (nvim, ghostty)
+├── config/         # Raw config files (nvim, ghostty, pi)
 ├── setup.sh        # macOS bootstrap script
 └── README.md
 ```
