@@ -184,9 +184,7 @@ map("n", "<leader>aa", "<C-w>w", { desc = "Window: next (cycle)" })
 
 -- File operations
 map("n", "<leader>w", "<cmd>w<CR>")
--- <leader>qq, not <leader>q: a bare <leader>q would stall for timeoutlen
--- waiting to see whether <leader>qo / <leader>qn follow.
-map("n", "<leader>qq", "<cmd>q<CR>", { desc = "Quit window" })
+map("n", "<leader>q", "<cmd>q<CR>", { desc = "Quit window", nowait = true })
 
 -- Buffers
 map("n", "<leader>b", "<C-^>")

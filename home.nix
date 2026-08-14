@@ -12,6 +12,7 @@
     ./home/eza.nix
     ./home/fastfetch.nix
     ./home/fzf.nix
+    ./home/gh.nix
     ./home/git.nix
     ./home/gpg.nix
     ./home/herdr.nix
@@ -56,7 +57,6 @@
       delta
       fd
       gcc
-      gh
       gnumake
       jq
       nerd-fonts._0xproto
