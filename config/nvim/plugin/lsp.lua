@@ -1,10 +1,9 @@
-vim.lsp.set_log_level("ERROR")
+vim.lsp.log.set_level(vim.log.levels.ERROR)
 
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
 local sev = vim.diagnostic.severity
-local border = "rounded"
 local map = vim.keymap.set
-local has_telescope, telescope_builtin = pcall(require, "telescope.builtin")
+local telescope_builtin = require("telescope.builtin")
 
 local function setup(server, config)
     vim.lsp.config(server, vim.tbl_deep_extend("force", { capabilities = capabilities }, config or {}))
@@ -44,7 +43,8 @@ setup("clangd", {
 setup("rust_analyzer", {
     settings = {
         ["rust-analyzer"] = {
-            checkOnSave = { command = "clippy" },
+            checkOnSave = true,
+            check = { command = "clippy" },
         },
     },
 })
@@ -77,18 +77,7 @@ setup("nixd", {
 })
 
 -- Bash
-setup("bashls", {
-    on_attach = function(_, bufnr)
-        local filename = vim.api.nvim_buf_get_name(bufnr)
-        if filename:match("%.env$") then
-            vim.schedule(function()
-                for _, c in ipairs(vim.lsp.get_clients({ bufnr = bufnr })) do
-                    if c.name == "bashls" then c.stop() end
-                end
-            end)
-        end
-    end,
-})
+setup("bashls")
 
 -- Python
 setup("ruff", {
@@ -133,7 +122,6 @@ end
 vim.diagnostic.config({
     virtual_text = false,
     float = {
-        border = border,
         source = "if_many",
         header = "",
         prefix = "",
@@ -164,12 +152,11 @@ vim.api.nvim_create_autocmd("LspAttach", {
     group = vim.api.nvim_create_augroup("UserLspConfig", {}),
     callback = function(ev)
         local opts = { buffer = ev.buf, silent = true }
+        -- Neovim 0.12 already ships K (hover), gri, grr, grn, gra, grt and gO.
+        -- Only the extras live here; mapping bare `gr` would shadow the whole
+        -- built-in gr prefix and stall every gr… sequence for timeoutlen.
         map("n", "gd", vim.lsp.buf.definition, opts)
-        map("n", "gD", vim.lsp.buf.declaration, opts)
-        map("n", "gi", vim.lsp.buf.implementation, opts)
-        map("n", "gr", vim.lsp.buf.references, opts)
-        map("n", "K", function() vim.lsp.buf.hover({ border = border }) end, opts)
-        map("n", "<C-k>", function() vim.lsp.buf.signature_help({ border = border }) end, opts)
+        map("n", "<C-k>", vim.lsp.buf.signature_help, opts)
         map("n", "<leader>cr", vim.lsp.buf.rename, opts)
         map({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, opts)
         map("n", "<leader>cf", function() vim.lsp.buf.format({ async = true }) end, opts)
@@ -182,24 +169,19 @@ vim.api.nvim_create_autocmd("LspAttach", {
     end,
 })
 
-local function open_diagnostics(scope)
-    if has_telescope then
-        if scope == "workspace" then
-            telescope_builtin.diagnostics()
-        else
-            telescope_builtin.diagnostics({ bufnr = 0 })
-        end
-        return
-    end
+map("n", "<leader>xd", function()
+    telescope_builtin.diagnostics({ bufnr = 0 })
+end, { desc = "Diagnostics (buffer)" })
 
-    if scope == "workspace" then
-        vim.diagnostic.setqflist()
-        vim.cmd("copen")
-    else
-        vim.diagnostic.setloclist(0)
-        vim.cmd("lopen")
-    end
-end
+map("n", "<leader>xD", function()
+    telescope_builtin.diagnostics()
+end, { desc = "Diagnostics (workspace)" })
 
-map("n", "<leader>xd", function() open_diagnostics("buffer") end, { desc = "Diagnostics (buffer)" })
-map("n", "<leader>xD", function() open_diagnostics("workspace") end, { desc = "Diagnostics (workspace)" })
+-- ]d / [d need Option on AZERTY, so diagnostic movement gets leader keys.
+map("n", "<leader>dn", function()
+    vim.diagnostic.jump({ count = 1 })
+end, { desc = "Diagnostic: next" })
+
+map("n", "<leader>dp", function()
+    vim.diagnostic.jump({ count = -1 })
+end, { desc = "Diagnostic: previous" })

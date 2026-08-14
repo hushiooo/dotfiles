@@ -27,6 +27,9 @@ opt.showcmd = false
 opt.ruler = false
 opt.title = true
 opt.winminwidth = 5
+-- Single source of truth for float borders: LSP, diagnostics and other
+-- vim.api.nvim_open_win callers pick this up without per-call border args.
+opt.winborder = "rounded"
 opt.fillchars:append({
     eob = " ",
     fold = " ",
@@ -94,8 +97,12 @@ opt.foldcolumn = "0"
 opt.grepprg = "rg --vimgrep --smart-case --hidden --glob '!.git'"
 opt.grepformat = "%f:%l:%c:%m"
 
+-- General autocommands
+local general_group = augroup("GeneralSettings", { clear = true })
+
 -- 2-space indentation override
 autocmd("FileType", {
+    group = general_group,
     pattern = { "json", "javascript", "typescript", "typescriptreact", "javascriptreact" },
     callback = function()
         vim.opt_local.shiftwidth = 2
@@ -105,6 +112,7 @@ autocmd("FileType", {
 
 -- Markdown / gitcommit: soften text defaults
 autocmd("FileType", {
+    group = general_group,
     pattern = { "gitcommit", "markdown" },
     callback = function()
         vim.opt_local.wrap = true
@@ -113,9 +121,6 @@ autocmd("FileType", {
         vim.opt_local.conceallevel = 0
     end,
 })
-
--- General autocommands
-local general_group = augroup("GeneralSettings", { clear = true })
 
 autocmd("TextYankPost", {
     group = general_group,
@@ -143,7 +148,13 @@ autocmd("VimResized", {
 
 autocmd("FileType", {
     group = general_group,
-    callback = function() pcall(vim.treesitter.start) end,
+    callback = function(args)
+        -- Only start where a parser actually exists; 0.12 already auto-starts
+        -- lua, markdown, query and help from its own ftplugins.
+        if vim.treesitter.get_parser(args.buf, nil, { error = false }) then
+            vim.treesitter.start(args.buf)
+        end
+    end,
     desc = "Enable treesitter highlighting",
 })
 
@@ -173,7 +184,9 @@ map("n", "<leader>aa", "<C-w>w", { desc = "Window: next (cycle)" })
 
 -- File operations
 map("n", "<leader>w", "<cmd>w<CR>")
-map("n", "<leader>q", "<cmd>q<CR>")
+-- <leader>qq, not <leader>q: a bare <leader>q would stall for timeoutlen
+-- waiting to see whether <leader>qo / <leader>qn follow.
+map("n", "<leader>qq", "<cmd>q<CR>", { desc = "Quit window" })
 
 -- Buffers
 map("n", "<leader>b", "<C-^>")
@@ -181,8 +194,10 @@ map("n", "<leader>b", "<C-^>")
 -- Clear search highlights
 map("n", "<leader>h", "<cmd>noh<CR>")
 
--- Paragraph navigation (° on AZERTY)
-map("n", "°", "(")
+-- Paragraph navigation: { and } need Option on a French Mac layout, whereas
+-- ° and § are plain Shift.
+map("n", "°", "{", { desc = "Paragraph back" })
+map("n", "§", "}", { desc = "Paragraph forward" })
 
 -- Redo
 map("n", "U", "<C-r>")
@@ -194,23 +209,14 @@ map("v", "p", '"_dP', { noremap = true, silent = true })
 -- Quickfix Keymaps
 -- ========================
 
-vim.api.nvim_create_autocmd("FileType", {
-    pattern = "TelescopePrompt",
-    callback = function(args)
-        local actions = require("telescope.actions")
-        local opts = { buffer = args.buf, silent = true, nowait = true }
-
-        vim.keymap.set({ "i", "n" }, "<leader>mq", function()
-            actions.smart_send_to_qflist(args.buf)
-        end, vim.tbl_extend("force", opts, { desc = "Marked → quickfix (replace)" }))
-
-        vim.keymap.set({ "i", "n" }, "<leader>mQ", function()
-            actions.smart_add_to_qflist(args.buf)
-        end, vim.tbl_extend("force", opts, { desc = "Marked → quickfix (append)" }))
-    end,
-})
+-- Sending marked telescope entries to the quickfix list is <C-q>, configured in
+-- plugin/telescope.lua. It used to also live here as <leader>mq, but a
+-- <Space>-prefixed insert-mode map stalls every space typed into a prompt.
 
 map("n", "<leader>qo", "<cmd>copen<CR>", { desc = "Quickfix: open" })
+-- ]q / [q need Option on AZERTY, so quickfix movement gets leader keys.
+map("n", "<leader>qn", "<cmd>cnext<CR>", { desc = "Quickfix: next" })
+map("n", "<leader>qp", "<cmd>cprev<CR>", { desc = "Quickfix: previous" })
 
 map("n", "<leader>cq", function()
     vim.fn.setqflist({}, "r")

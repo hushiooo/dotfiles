@@ -4,7 +4,7 @@ require("lualine").setup({
         globalstatus = true,
         component_separators = "",
         section_separators = "",
-        disabled_filetypes = { "alpha", "dashboard" },
+        disabled_filetypes = {},
     },
     sections = {
         lualine_a = {
@@ -27,27 +27,26 @@ require("lualine").setup({
                 function()
                     local fname = vim.api.nvim_buf_get_name(0)
                     if fname == "" then return "[No Name]" end
-                    local cwd = vim.uv.cwd() or ""
+                    -- ":." is already cwd-relative.
                     local rel = vim.fn.fnamemodify(fname, ":.")
-                    if cwd ~= "" and fname:sub(1, #cwd) == cwd then rel = fname:sub(#cwd + 2) end
-
                     local parts = vim.split(rel, "/")
-                    if #parts <= 2 then return rel end
 
-                    local root = parts[1]
-                    local parent = parts[#parts - 1]
-                    local file = parts[#parts]
+                    local name = rel
+                    if #parts > 3 then
+                        name = string.format("%s/…/%s/%s", parts[1], parts[#parts - 1], parts[#parts])
+                    end
 
-                    if #parts == 3 then return table.concat(parts, "/") end
+                    -- A `symbols` table is ignored on a function component, so
+                    -- the flags below are rendered inline instead.
+                    if vim.bo.modified then
+                        name = name .. " +"
+                    elseif vim.bo.readonly then
+                        name = name .. " ~"
+                    end
 
-                    return string.format("%s/…/%s/%s", root, parent, file)
+                    return name
                 end,
                 padding = { left = 1, right = 1 },
-                symbols = {
-                    readonly = " ",
-                    modified = " ",
-                    unnamed = "",
-                },
             },
             {
                 "diagnostics",

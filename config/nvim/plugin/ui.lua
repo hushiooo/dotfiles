@@ -1,5 +1,3 @@
-local border = "rounded"
-
 require("tokyonight").setup({
     style = "night",
     transparent = false,
@@ -12,7 +10,7 @@ require("tokyonight").setup({
         sidebars = "normal",
         floats = "normal",
     },
-    sidebars = { "qf", "help", "terminal", "nvim-tree" },
+    sidebars = { "qf", "help", "terminal" },
     dim_inactive = false,
     lualine_bold = false,
     on_highlights = function(hl, c)
@@ -37,14 +35,12 @@ require("tokyonight").setup({
         hl.TelescopePreviewNormal = { bg = c.bg_dark, fg = c.fg }
         hl.TelescopePreviewBorder = { fg = c.blue0, bg = c.bg_dark }
         hl.TelescopePreviewTitle = { fg = c.bg_dark, bg = c.blue0, bold = true }
-        hl.NotifyBackground = { bg = c.bg_dark }
     end,
 })
 vim.cmd.colorscheme("tokyonight")
 
--- Dressing
+-- Dressing. Borders come from vim.o.winborder, set in init.lua.
 local function with_border(conf)
-    conf.border = border
     conf.relative = conf.relative or "editor"
     conf.title_pos = conf.title_pos or "center"
     conf.col = conf.col or 0
@@ -94,7 +90,6 @@ gitsigns.setup({
         delete       = { text = "" },
         topdelete    = { text = "" },
         changedelete = { text = "▎" },
-        untracked    = { text = "┆" },
     },
     attach_to_untracked = false,
     max_file_length = 20000,
@@ -108,7 +103,6 @@ gitsigns.setup({
     },
     current_line_blame_formatter = "<author>, <author_time:%R> • <summary>",
     preview_config = {
-        border = border,
         style = "minimal",
         relative = "cursor",
         row = 0,
@@ -122,3 +116,7 @@ local map = vim.keymap.set
 -- Gitsigns
 map("n", "<leader>gb", function() gitsigns.toggle_current_line_blame() end, { desc = "Toggle git blame" })
 map("n", "<leader>gp", function() gitsigns.preview_hunk() end, { desc = "Preview git hunk" })
+
+-- ]c / [c need Option on AZERTY, so hunk movement gets leader keys.
+map("n", "<leader>gn", function() gitsigns.nav_hunk("next") end, { desc = "Git hunk: next" })
+map("n", "<leader>gN", function() gitsigns.nav_hunk("prev") end, { desc = "Git hunk: previous" })

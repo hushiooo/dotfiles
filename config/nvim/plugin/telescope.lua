@@ -61,17 +61,18 @@ telescope.setup({
             i = {
                 ["<C-j>"] = actions.move_selection_next,
                 ["<C-k>"] = actions.move_selection_previous,
-                ["<C-d>"] = actions.delete_buffer,
                 ["<C-q>"] = actions.smart_send_to_qflist + actions.open_qflist,
                 ["<C-Down>"] = actions.cycle_history_next,
                 ["<C-Up>"] = actions.cycle_history_prev,
-                ["<M-p>"] = layout_actions.toggle_preview,
+                -- <C-g>, not <M-p>: macos-option-as-alt = false in the Ghostty
+                -- config means Option never reaches nvim as Meta.
+                ["<C-g>"] = layout_actions.toggle_preview,
                 ["<C-c>"] = actions.close,
                 ["<Esc>"] = false,
             },
             n = {
                 ["q"] = actions.close,
-                ["<M-p>"] = layout_actions.toggle_preview,
+                ["<C-g>"] = layout_actions.toggle_preview,
                 ["dd"] = actions.delete_buffer,
                 ["<C-Down>"] = actions.cycle_history_next,
                 ["<C-Up>"] = actions.cycle_history_prev,
@@ -167,15 +168,7 @@ vim.keymap.set("n", "<leader>fh", builtin.help_tags, { desc = "Help tags" })
 vim.keymap.set("n", "<leader>fr", builtin.oldfiles, { desc = "Recent files" })
 vim.keymap.set("n", "<leader>fs", builtin.grep_string, { desc = "Search word under cursor" })
 
-local telescope_browser = telescope.extensions.file_browser
-local function resolve_browser_path()
-    local buffer_dir = vim.fn.expand("%:p:h")
-    if buffer_dir == "" then
-        return vim.uv.cwd()
-    end
-    return buffer_dir
-end
-
 vim.keymap.set("n", "<leader>e", function()
-    telescope_browser.file_browser({ path = resolve_browser_path(), select_buffer = true })
+    -- file_browser expands this itself, falling back to cwd for unnamed buffers.
+    telescope.extensions.file_browser.file_browser({ path = "%:p:h", select_buffer = true })
 end, { desc = "File browser" })

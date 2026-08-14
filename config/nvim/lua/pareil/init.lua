@@ -5,10 +5,7 @@ local diff = require("pareil.diff")
 M.config = {
     popup = {
         max_width = 120,
-        border = "rounded",
-        title = "pareil.nvim diff",
-        title_pos = "center",
-        close_mappings = { "q" },
+        title = "pareil diff",
     },
     diff = {
         result_type = "unified",
@@ -32,8 +29,8 @@ function M.open()
         git.select_file("Select file from first branch", function(file1)
             git.select_branch("Select second branch", function(branch2)
                 git.select_file("Select file from second branch", function(file2)
-                    git.extract_files(file1, file2, branch1, branch2, function(tmp1, tmp2)
-                        diff.show(tmp1, tmp2, M.config)
+                    git.extract_files(file1, file2, branch1, branch2, function(content1, content2)
+                        diff.show(content1, content2, M.config)
                     end, root)
                 end, { branch = branch2, root = root })
             end, { root = root })

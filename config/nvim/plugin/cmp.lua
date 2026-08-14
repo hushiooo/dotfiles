@@ -29,11 +29,6 @@ local kind_icons = {
     TypeParameter = "󰅲",
 }
 
-local tab_selected_once = false
-
-cmp.event:on("menu_opened", function() tab_selected_once = false end)
-cmp.event:on("menu_closed", function() tab_selected_once = false end)
-
 local function has_words_before()
     local cursor = vim.api.nvim_win_get_cursor(0)
     local line, col = cursor[1], cursor[2]
@@ -74,7 +69,6 @@ cmp.setup({
             vim_item.kind = string.format("%s %s", kind_icons[vim_item.kind] or "", vim_item.kind)
             vim_item.menu = ({
                 nvim_lsp = "LSP",
-                nvim_lua = "NVIM",
                 luasnip = "SNIP",
                 buffer = "BUF",
                 path = "PATH",
@@ -90,18 +84,12 @@ cmp.setup({
         ["<CR>"] = cmp.mapping.confirm({ select = true }),
         ["<C-j>"] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Select }),
         ["<C-k>"] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Select }),
+        -- locally_jumpable, not jumpable: the plain variants stay true after the
+        -- cursor has left a snippet, which hijacks Tab into a stale one.
         ["<Tab>"] = cmp.mapping(function(fallback)
             if cmp.visible() then
-                -- Start selection at the top of the menu instead of skipping to the second entry.
-                if cmp.get_selected_entry() == nil then
-                    cmp.select_next_item({ behavior = cmp.SelectBehavior.Select })
-                    tab_selected_once = true
-                elseif not tab_selected_once then
-                    tab_selected_once = true
-                else
-                    cmp.select_next_item()
-                end
-            elseif luasnip.expand_or_jumpable() then
+                cmp.select_next_item()
+            elseif luasnip.expand_or_locally_jumpable() then
                 luasnip.expand_or_jump()
             elseif has_words_before() then
                 cmp.complete()
@@ -112,17 +100,17 @@ cmp.setup({
         ["<S-Tab>"] = cmp.mapping(function(fallback)
             if cmp.visible() then
                 cmp.select_prev_item()
-            elseif luasnip.jumpable(-1) then
+            elseif luasnip.locally_jumpable(-1) then
                 luasnip.jump(-1)
             else
                 fallback()
             end
         end, { "i", "s" }),
         ["<C-l>"] = cmp.mapping(function()
-            if luasnip.expand_or_jumpable() then luasnip.expand_or_jump() end
+            if luasnip.expand_or_locally_jumpable() then luasnip.expand_or_jump() end
         end, { "i", "s" }),
         ["<C-h>"] = cmp.mapping(function()
-            if luasnip.jumpable(-1) then luasnip.jump(-1) end
+            if luasnip.locally_jumpable(-1) then luasnip.jump(-1) end
         end, { "i", "s" }),
     }),
     sources = cmp.config.sources({

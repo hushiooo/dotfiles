@@ -52,10 +52,6 @@ function M.get_repo_root()
     return nil
 end
 
-function M.is_inside_repo()
-    return M.get_repo_root() ~= nil
-end
-
 ---@param branch string|nil
 ---@param root string
 ---@return string[]
@@ -74,22 +70,6 @@ local function list_files(branch, root)
     end
 
     return vim.split(result.stdout or "", "\n", { trimempty = true })
-end
-
----@param branch string
----@param path string
----@param root string
----@return boolean
-local function exists_in_branch(branch, path, root)
-    if not root or branch == nil or branch == "" or path == nil or path == "" then
-        return false
-    end
-
-    local result = run_git(
-        { "cat-file", "-e", string.format("%s:%s", branch, path) },
-        { root = root, allow_nonzero = true }
-    )
-    return result ~= nil and result.code == 0
 end
 
 ---@param prompt string
@@ -206,7 +186,7 @@ end
 ---@param file2 string
 ---@param branch1 string
 ---@param branch2 string
----@param callback fun(path1: string, path2: string)
+---@param callback fun(content1: string, content2: string)
 ---@param root string
 function M.extract_files(file1, file2, branch1, branch2, callback, root)
     root = root or M.get_repo_root()
@@ -215,18 +195,8 @@ function M.extract_files(file1, file2, branch1, branch2, callback, root)
         return
     end
 
-    if not exists_in_branch(branch1, file1, root) then
-        notify_error(("'%s' does not exist on branch '%s'.\nTip: Pick the file from that branch's tree."):format(file1, branch1))
-        return
-    end
-
-    if not exists_in_branch(branch2, file2, root) then
-        notify_error(("'%s' does not exist on branch '%s'.\nTip: Pick the file from that branch's tree."):format(file2, branch2))
-        return
-    end
-
-    local tmp1 = vim.fn.tempname()
-    local tmp2 = vim.fn.tempname()
+    -- No existence pre-check: both paths came out of `ls-tree` for their branch,
+    -- and a bad revision surfaces as git's own error below anyway.
     local revpath1 = string.format("%s:%s", branch1, file1)
     local revpath2 = string.format("%s:%s", branch2, file2)
 
@@ -247,16 +217,10 @@ function M.extract_files(file1, file2, branch1, branch2, callback, root)
             end
 
             vim.schedule(function()
-                vim.fn.writefile(vim.split(res1.stdout or "", "\n"), tmp1)
-                vim.fn.writefile(vim.split(res2.stdout or "", "\n"), tmp2)
-                callback(tmp1, tmp2)
-                vim.fn.delete(tmp1)
-                vim.fn.delete(tmp2)
+                callback(res1.stdout or "", res2.stdout or "")
             end)
         end)
     end)
 end
-
-M.exists_in_branch = exists_in_branch
 
 return M

@@ -138,20 +138,6 @@ trust_required_taps() {
     brew trust --formula earthbuild/tap/earth &>/dev/null || true
 }
 
-prune_unused_taps() {
-    local tap formula tap_line
-    while IFS= read -r tap; do
-        for formula in $(brew list --formula -1 2>/dev/null); do
-            tap_line="$(brew info "$formula" 2>/dev/null | awk -F': ' '/^Tap: / { print $2; exit }')"
-            if [[ "$tap_line" == "$tap" ]]; then
-                continue 2
-            fi
-        done
-        info "Removing unused tap $tap..."
-        brew untap "$tap" &>/dev/null || warn "Could not remove tap $tap"
-    done < <(brew tap 2>/dev/null)
-}
-
 install_formula() {
     local name="$1"
     local short="${name##*/}"
@@ -197,7 +183,6 @@ install_cask() {
 
 install_packages() {
     trust_required_taps
-    prune_unused_taps
 
     info "Installing Homebrew formulae..."
     echo ""

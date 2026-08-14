@@ -1,7 +1,6 @@
 local spectre = require("spectre")
 local map = vim.keymap.set
 local separator = string.rep("─", 46)
-local is_macos = vim.uv.os_uname().sysname == "Darwin"
 
 spectre.setup({
     color_devicons = true,
@@ -43,13 +42,8 @@ spectre.setup({
             },
         },
     },
-    replace_engine = {
-        ["sed"] = {
-            cmd = "sed",
-            -- BSD sed (macOS) needs an empty backup suffix argument
-            args = is_macos and { "-i", "" } or { "-i" },
-        },
-    },
+    -- No replace_engine override: nvim-spectre already special-cases BSD sed on
+    -- Darwin, and passes the -e flag that a hand-rolled override drops.
     line_sep_start = "╭" .. separator,
     result_padding = "│ ",
     line_sep = "╰" .. separator,

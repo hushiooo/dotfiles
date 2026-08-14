@@ -5,7 +5,26 @@
   ...
 }:
 {
-  imports = [ ./home/herdr.nix ];
+  imports = [
+    ./home/bat.nix
+    ./home/bottom.nix
+    ./home/direnv.nix
+    ./home/eza.nix
+    ./home/fastfetch.nix
+    ./home/fzf.nix
+    ./home/git.nix
+    ./home/gpg.nix
+    ./home/herdr.nix
+    ./home/lazygit.nix
+    ./home/neovim.nix
+    ./home/oh-my-posh.nix
+    ./home/ripgrep.nix
+    ./home/ssh.nix
+    ./home/tmux.nix
+    ./home/yazi.nix
+    ./home/zoxide.nix
+    ./home/zsh.nix
+  ];
 
   programs.home-manager.enable = true;
 
@@ -53,7 +72,6 @@
       lua
       nodejs
       python314
-      rust-analyzer
       rustc
       rustfmt
       zig
@@ -133,23 +151,4 @@
     pinentry.package = pkgs.pinentry_mac;
   };
 
-  programs = {
-    bat = import ./home/bat.nix { inherit pkgs; };
-    bottom = import ./home/bottom.nix { inherit pkgs; };
-    direnv = import ./home/direnv.nix { inherit pkgs; };
-    eza = import ./home/eza.nix { inherit pkgs; };
-    fastfetch = import ./home/fastfetch.nix { inherit pkgs; };
-    fzf = import ./home/fzf.nix { inherit pkgs; };
-    git = import ./home/git.nix { inherit config pkgs; };
-    gpg = import ./home/gpg.nix { inherit config pkgs; };
-    lazygit = import ./home/lazygit.nix { inherit pkgs; };
-    neovim = import ./home/neovim.nix { inherit pkgs; };
-    oh-my-posh = import ./home/oh-my-posh.nix { inherit pkgs; };
-    ripgrep = import ./home/ripgrep.nix { inherit pkgs; };
-    ssh = import ./home/ssh.nix { inherit config pkgs; };
-    tmux = import ./home/tmux.nix { inherit pkgs; };
-    yazi = import ./home/yazi.nix { inherit config pkgs; };
-    zoxide = import ./home/zoxide.nix { inherit config pkgs; };
-    zsh = import ./home/zsh.nix { inherit config pkgs; };
-  };
 }

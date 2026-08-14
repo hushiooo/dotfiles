@@ -24,11 +24,19 @@ nix run home-manager -- switch --flake ~/dotfiles
 
 ## Scope
 
-Nix + Home Manager installs only foundational, slow-moving tools (build
-essentials, core CLI utils, configured TUIs, shell, fonts). Anything that
-moves faster than the `nixpkgs-unstable` cadence (language toolchains, cloud
-SDKs, IaC, AI CLIs, app-style packages) is installed via Homebrew through
-`setup.sh`.
+Nix + Home Manager is the default for everything: CLI tools, language
+toolchains, cloud and IaC tooling, configured TUIs, shell, and fonts.
+
+Homebrew (via `setup.sh`) is the exception, used only for:
+
+- GUI apps, which Nix does not manage well on macOS — the `CASKS` array.
+- The handful of formulae that cannot or should not come from nixpkgs. Each one
+  carries its reason inline in `FORMULAE` / `HEAD_FORMULAE`: a build that OOMs
+  on macOS, an unfree license we would rather not pin, or a release cadence far
+  ahead of `nixpkgs-unstable`.
+
+If you are adding a package, it goes in `home.nix` unless one of those reasons
+applies.
 
 ## SSH and GPG keys
 
@@ -99,7 +107,7 @@ Skills are picked up automatically from `~/.agents/skills/` and per-project
 ├── flake.nix
 ├── flake.lock
 ├── home.nix
-├── home/           # Program modules
+├── home/           # One Home Manager module per program, listed in home.nix imports
 ├── config/         # Raw config files (nvim, ghostty, pi)
 ├── setup.sh        # macOS bootstrap script
 └── README.md
