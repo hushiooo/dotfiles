@@ -15,7 +15,6 @@
     ./home/gh.nix
     ./home/git.nix
     ./home/gpg.nix
-    ./home/herdr.nix
     ./home/lazygit.nix
     ./home/neovim.nix
     ./home/oh-my-posh.nix

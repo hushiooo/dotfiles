@@ -152,16 +152,12 @@ vim.api.nvim_create_autocmd("LspAttach", {
     group = vim.api.nvim_create_augroup("UserLspConfig", {}),
     callback = function(ev)
         local opts = { buffer = ev.buf, silent = true }
-        -- Neovim 0.12 already ships K (hover), gri, grr, grn, gra, grt and gO.
-        -- Only the extras live here; mapping bare `gr` would shadow the whole
-        -- built-in gr prefix and stall every gr… sequence for timeoutlen.
+        -- 0.12 globals: gra, gri, grn, grr, grt, grx, gO, K; ]d/[d for diagnostics.
+        -- gd is not a default; <C-k> gives normal-mode signature help (default is i<C-s>).
         map("n", "gd", vim.lsp.buf.definition, opts)
         map("n", "<C-k>", vim.lsp.buf.signature_help, opts)
-        map("n", "<leader>cr", vim.lsp.buf.rename, opts)
-        map({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, opts)
         map("n", "<leader>cf", function() vim.lsp.buf.format({ async = true }) end, opts)
         map("n", "<leader>cs", vim.lsp.buf.workspace_symbol, opts)
-        map("n", "<leader>ct", vim.lsp.buf.type_definition, opts)
         map("n", "<leader>cd", vim.diagnostic.open_float, { buffer = ev.buf, desc = "Show diagnostics", silent = true })
         map("n", "<leader>ci", function()
             vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = ev.buf }), { bufnr = ev.buf })

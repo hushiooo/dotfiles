@@ -44,8 +44,6 @@
       gpf = "git push --force-with-lease";
       gpl = "git pull --rebase";
       gs = "git status -sb";
-      h = "herdr";
-      hl = "herdr session list";
       hms = "home-manager switch --flake ~/dotfiles";
       hmu = "nix flake update ~/dotfiles && home-manager switch --flake ~/dotfiles";
       la = "eza -a";
@@ -326,48 +324,6 @@
           tmux kill-session -t "$session"
           echo "Killed session: $session"
         fi
-      }
-
-      ha() {
-        local name
-        if [[ -n "$1" ]]; then
-          herdr --session "$1"
-          return
-        fi
-        name=$(herdr session list --json \
-          | jq -r '.sessions[] | "\(.name)\t\(if .running then "running" else "stopped" end)"' \
-          | fzf --print-query \
-            --prompt="herdr session ❯ " \
-            --header="enter to attach, or type a new name to create" \
-          | tail -n1 \
-          | cut -f1)
-        if [[ -n "$name" ]]; then
-          herdr --session "$name"
-        fi
-      }
-
-      hk() {
-        local name
-        if [[ -n "$1" ]]; then
-          herdr session stop "$1"
-          return
-        fi
-        name=$(herdr session list --json \
-          | jq -r '.sessions[] | select(.running) | .name' \
-          | fzf --prompt="herdr stop ❯ " --header="select a running session to stop")
-        if [[ -n "$name" ]]; then
-          herdr session stop "$name"
-          echo "Stopped session: $name"
-        fi
-      }
-
-      hwt() {
-        local branch="$1"
-        if [[ -z "$branch" ]]; then
-          echo "usage: hwt <branch>" >&2
-          return 1
-        fi
-        herdr worktree create --cwd "$PWD" --branch "$branch" --focus
       }
 
       fkill() {

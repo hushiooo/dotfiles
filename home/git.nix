@@ -39,7 +39,6 @@
       "htmlcov/"
       "node_modules/"
       "result"
-      "result-*"
       "venv/"
     ];
 
