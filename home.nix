@@ -86,6 +86,7 @@
 
       # Infra / Cloud
       awscli2
+      crane
       dbmate
       sops
       terragrunt
