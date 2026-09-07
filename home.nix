@@ -89,11 +89,14 @@
       crane
       dbmate
       sops
+      terraform
       terragrunt
+      trivy
 
       # Build / Task runners
       go-task
       just
+      process-compose
 
       # General CLI
       duf

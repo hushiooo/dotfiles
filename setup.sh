@@ -42,7 +42,6 @@ CASKS=(
 # Formulae kept in Brew on purpose. Reason in comment next to each.
 FORMULAE=(
     "checkov"                       # nixpkgs build OOMs on macOS (heavy py deps)
-    "hashicorp/tap/terraform"       # BSL license; avoid pinning unfree in Nix
     "pi-coding-agent"               # AI CLI; releases far faster than nixpkgs
 )
 
@@ -54,7 +53,6 @@ HEAD_FORMULAE=(
 
 # Third-party taps required by FORMULAE / HEAD_FORMULAE.
 REQUIRED_TAPS=(
-    "hashicorp/tap"
     "earthbuild/tap"
 )
 
@@ -134,7 +132,6 @@ trust_required_taps() {
         brew trust --tap "$tap" &>/dev/null || true
     done
 
-    brew trust --formula hashicorp/tap/terraform &>/dev/null || true
     brew trust --formula earthbuild/tap/earth &>/dev/null || true
 }
 
