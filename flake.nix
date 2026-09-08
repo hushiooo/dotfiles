@@ -7,12 +7,19 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # herdr ships releases well ahead of nixpkgs, so build the pinned tag from
+    # its own flake. Bump the tag here, then `nix flake update herdr`.
+    herdr = {
+      url = "github:herdrdev/herdr/v0.9.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
     {
       nixpkgs,
       home-manager,
+      herdr,
       ...
     }:
     let
@@ -20,6 +27,9 @@
       pkgs = import nixpkgs {
         inherit system;
         config.allowUnfree = true;
+        overlays = [
+          (_final: _prev: { herdr = herdr.packages.${system}.default; })
+        ];
       };
     in
     {
