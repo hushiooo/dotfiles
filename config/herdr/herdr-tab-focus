@@ -1,9 +1,13 @@
+# Focus the Nth tab (1-based, display order) of the current workspace.
+# .number is a stable id that gaps out when a tab is closed, so it desyncs the
+# key from the visible slot; the list is already in display order, so the Nth
+# entry is slot N. Scope to HERDR_ACTIVE_WORKSPACE_ID or another workspace wins.
+ws="${HERDR_ACTIVE_WORKSPACE_ID:?herdr-tab-focus must run from a herdr keybinding}"
 n="${1:?usage: herdr-tab-focus <1-10>}"
 
 tab_id="$(
-  herdr tab list \
-    | jq -r --argjson n "$n" '.result.tabs[] | select(.number == $n) | .tab_id' \
-    | head -n1
+  herdr tab list --workspace "$ws" \
+    | jq -r --argjson n "$n" '.result.tabs[$n - 1].tab_id // empty'
 )"
 
 if [ -n "$tab_id" ] && [ "$tab_id" != "null" ]; then

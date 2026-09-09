@@ -20,6 +20,7 @@
     ./home/neovim.nix
     ./home/oh-my-posh.nix
     ./home/ripgrep.nix
+    ./home/skills.nix
     ./home/ssh.nix
     ./home/tmux.nix
     ./home/yazi.nix

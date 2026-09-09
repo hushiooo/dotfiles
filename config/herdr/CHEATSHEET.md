@@ -1,0 +1,92 @@
+# Herdr keybindings
+
+Prefix: **Ctrl+A** (AZERTY-friendly; ASCII input switches while the prefix is
+held). Press **Ctrl+A ?** inside Herdr for the live, authoritative keymap.
+
+Bindings below are prefix-first: `Ctrl+A c` means tap the prefix, then `c`.
+Entries marked *(default)* are Herdr 0.9.0 built-ins we do not override; the
+rest live in `config.toml`.
+
+## Panes
+
+| Action                             | Key                                |
+| ---------------------------------- | ---------------------------------- |
+| Split side-by-side                 | `Ctrl+A )`                         |
+| Split stacked                      | `Ctrl+A -`                         |
+| Focus pane                         | `Ctrl+A h/j/k/l` or `Ctrl+h/j/k/l` |
+| Swap pane up / down *(default)*    | `Ctrl+A K` / `Ctrl+A J`            |
+| Swap pane left / right *(default)* | `Ctrl+A H` / `Ctrl+A L`            |
+| Cycle panes *(default)*            | `Ctrl+A Tab` / `Ctrl+A Shift+Tab`  |
+| Break pane to new tab              | `Ctrl+A b`                         |
+| Zoom pane (toggle) *(default)*     | `Ctrl+A z`                         |
+| Close pane *(default)*             | `Ctrl+A x`                         |
+| Resize mode *(default)*            | `Ctrl+A r`                         |
+| Copy mode *(default)*              | `Ctrl+A [`                         |
+
+## Tabs
+
+| Action                      | Key                                                |
+| --------------------------- | -------------------------------------------------- |
+| New tab *(default)*         | `Ctrl+A c`                                         |
+| Next / prev tab *(default)* | `Ctrl+A n` / `Ctrl+A p`                            |
+| Jump to tab 1–10            | `Ctrl+A` `& é " ' ( § è ! ç à` (AZERTY number row) |
+
+## Navigate mode
+
+Open the workspace/sidebar navigation surface with `Ctrl+A w`, then move without
+the arrow keys:
+
+| Action                  | Key                                    |
+| ----------------------- | -------------------------------------- |
+| Move between workspaces | `Ctrl+K` / `Ctrl+J` (↑ / ↓ still work) |
+| Move between panes      | `h` `j` `k` `l`                        |
+
+## Agents
+
+| Action         | Key              |
+| -------------- | ---------------- |
+| Next agent     | `Ctrl+A a`       |
+| Previous agent | `Ctrl+A Shift+A` |
+
+## Workspaces, worktrees & tools
+
+| Action                             | Key                                         |
+| ---------------------------------- | ------------------------------------------- |
+| Workspace picker / navigate        | `Ctrl+A w`                                  |
+| Jump to workspace 1–9              | `Ctrl+A Shift+` `1…9` (shifted number row)  |
+| Open a `~/dev` repo as a workspace | `Ctrl+A Space` (git-repo picker w/ preview) |
+| New workspace *(default)*          | `Ctrl+A Shift+N`                            |
+| Toggle sidebar                     | `Ctrl+A B`                                  |
+| Lazygit popup                      | `Ctrl+A Ctrl+G`                             |
+
+A **worktree is just a workspace**, so navigate to one with `Shift+1…9` or the
+sidebar (it sits indented under its parent repo). Worktree lifecycle:
+
+| Action                       | Key                                             |
+| ---------------------------- | ----------------------------------------------- |
+| Create worktree *(default)*  | `Ctrl+A Shift+G`                                |
+| Worktree hub — open / delete | `Ctrl+A Ctrl+W` (enter opens, `Ctrl+X` deletes) |
+| Create worktree from a shell | `hwt feature/foo`                               |
+| Keybinding help *(default)*  | `Ctrl+A ?`                                      |
+| Settings *(default)*         | `Ctrl+A s`                                      |
+
+## Session
+
+| Action                             | Command / Key                |
+| ---------------------------------- | ---------------------------- |
+| Attach (default session)           | `h` or `herdr`               |
+| Attach / create named              | `ha work`                    |
+| Pick session (fzf)                 | `ha`                         |
+| List sessions                      | `hl`                         |
+| Stop session                       | `hk` or `hk work`            |
+| Detach (leave running) *(default)* | `Ctrl+A q`                   |
+| Reload config                      | `herdr server reload-config` |
+
+## Notes
+
+- Herdr auto-saves layout; no resurrect/continuum plugins needed.
+- Config is a read-only symlink into the Nix store, so theme/settings changes
+  made in the Herdr UI will not persist. Edit `config/herdr/config.toml` and run
+  `hms`.
+- Managed by the official Herdr flake pinned in `flake.nix` (currently 0.9.0);
+  bump the tag there and `nix flake update herdr`.
