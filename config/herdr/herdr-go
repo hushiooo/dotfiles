@@ -56,6 +56,32 @@ fzf_theme=(
 
 confirm() { [ "$(printf 'no\nyes\n' | fzf "${fzf_theme[@]}" --height=6 --info=hidden --prompt="$1 ")" = "yes" ]; }
 
+# --- commit-history preview -------------------------------------------------
+# A real graph view rather than a flat oneline list, tuned to the Tokyo Night
+# palette so it reads as a visualization: cyan hashes, blue ref decorations, a
+# dimmed "· <relative age> · <author>" trailer, and the graph rail on the left.
+# Field {5} (target_path) is substituted by fzf; falls back to a dir listing.
+#
+# ctrl-g toggles a scope flag: absent = the row's branch only; present = --all,
+# showing every ref's topology (merges/siblings). The flag file is created and
+# torn down inside the popup lifetime.
+gitall_flag="$(mktemp -u "${TMPDIR:-/tmp}/herdr-go-gitall.XXXXXX")"
+trap 'rm -f "$gitall_flag"' EXIT
+# $gitall_flag is spliced in now; $all is deliberately left unexpanded so fzf's
+# preview shell evaluates it per-refresh (SC2016 is a false positive here).
+# shellcheck disable=SC2016
+preview_cmd='
+  if git -C {5} rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    [ -e "'"$gitall_flag"'" ] && all=--all || all=
+    git -C {5} -c color.ui=always log --graph --decorate $all --color=always \
+      --format="%C(#7dcfff)%h%C(reset)%C(#7aa2f7)%d%C(reset) %s %C(#565f89)· %ar · %an%C(reset)" \
+      -30
+  else
+    ls -la {5} 2>/dev/null
+  fi
+'
+gitall_bind="ctrl-g:execute-silent(if [ -e '$gitall_flag' ]; then rm -f '$gitall_flag'; else : > '$gitall_flag'; fi)+refresh-preview"
+
 # --- rows: each repo (recency-sorted) followed by its worktrees --------------
 # field1 = display (glyph + indent + name)   shown; the rest are hidden state.
 # field2 = kind  repo|wt
@@ -120,11 +146,13 @@ out="$(
         --delimiter='\t' --with-nth=1 \
         --prompt='go ❯ ' \
         --list-label=' repos · worktrees ' \
-        --header='enter: open · N: new worktree · D: delete space · ● live ○ on disk · ctrl-/: preview' \
+        --header='enter: open · N: new worktree · D: delete space · ● live ○ on disk · ctrl-/: preview · ctrl-g: all branches' \
         --expect=N,D \
         --bind 'ctrl-/:toggle-preview' \
-        --preview 'git -C {5} -c color.ui=always log --oneline --decorate -15 2>/dev/null || ls -la {5}' \
-        --preview-window 'right,50%,border-left'
+        --bind "$gitall_bind" \
+        --preview "$preview_cmd" \
+        --preview-label ' history ' \
+        --preview-window 'right,55%,border-left,nowrap'
 )" || exit 0
 
 key="$(head -1 <<<"$out")"       # the pressed --expect key (empty on plain Enter)

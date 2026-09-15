@@ -6,9 +6,9 @@ new_cwd = "follow"
 [theme]
 name = "tokyo-night"
 
-# Sidebar gets its own darker panel so it reads as a separate surface.
+# Sidebar inherits the theme background so it reads as one continuous surface;
+# only the active-row and selection highlights are customized.
 [theme.custom]
-sidebar_bg = "#16161e"
 active_row_bg = "#292e42"
 selection_bg = "#3b4261"
 
@@ -16,10 +16,25 @@ selection_bg = "#3b4261"
 prompt_new_tab_name = false
 confirm_close = false
 
+# I live in the collapsed sidebar: start there, and keep the narrow status rail
+# (compact) rather than hiding it to zero width.
+sidebar_start_collapsed = true
+sidebar_collapsed_mode = "compact"
+
+# Surface the active workspace in the terminal/tab title -- useful when the
+# sidebar is collapsed and the space name isn't otherwise visible.
+window_title = "{workspace}"
+
+# Reclaim the tab-bar row when a workspace only has one tab.
+hide_tab_bar_when_single_tab = true
+
 # Tokyo Night blue accent for highlights, borders and pickers (default: cyan).
 accent = "#7aa2f7"
 
-status_indicators = "symbols"
+status_indicators = "dots"
+# Attention queue: float blocked/working agents to the top of the panel (rather
+# than grouping strictly by space) so the ones needing input surface first.
+agent_panel_sort = "priority"
 show_agent_labels_on_pane_borders = true
 
 # Right side of the tab bar: ZOOM pill + date/clock (plain text, no per-cell color).
@@ -43,8 +58,20 @@ rows = [
   [{ token = "agent", bold = true }, { token = "terminal_title_stripped", dim = true }],
 ]
 
+# Background agent state changes -> native macOS desktop notifications, so they
+# land even when Herdr isn't the focused window.
 [ui.toast]
-delivery = "herdr"
+delivery = "system"
+
+# Audible cue when a background agent goes blocked (needs input) or done.
+# (droid stays muted by Herdr's default.)
+[ui.sound]
+enabled = true
+
+# Reattach agent panes to their native conversation sessions after a Herdr
+# server restart/reload (requires official integrations that report session refs).
+[session]
+resume_agents_on_restore = true
 
 # [worktrees].directory is set from reposRoot in home/herdr.nix.
 
@@ -84,8 +111,13 @@ toggle_sidebar = "prefix+shift+b"
 # creates, D removes), so the native create binding is retired -- one way to do
 # a thing. open/remove were already unset.
 new_worktree = ""
-next_agent = "prefix+a"
-previous_agent = "prefix+shift+a"
+
+# prefix+ctrl+a can't be used (double-tapping the prefix sends a literal ctrl+a
+# to the app), so last-pane takes prefix+a. The agent-switch binds are retired
+# to free it -- unused in this workflow -- and prefix+shift+a with them.
+last_pane = "prefix+a"
+next_agent = ""
+previous_agent = ""
 
 # The command palette: navigate every ~/dev repo and its worktrees, create new
 # worktrees (N), and tear spaces down (D) -- all from one popup.
