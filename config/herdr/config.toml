@@ -58,10 +58,9 @@ rows = [
   [{ token = "agent", bold = true }, { token = "terminal_title_stripped", dim = true }],
 ]
 
-# Background agent state changes -> native macOS desktop notifications, so they
-# land even when Herdr isn't the focused window.
+# Background agent state changes -> in-app Herdr toasts only (no OS notifications).
 [ui.toast]
-delivery = "system"
+delivery = "herdr"
 
 # Audible cue when a background agent goes blocked (needs input) or done.
 # (droid stays muted by Herdr's default.)

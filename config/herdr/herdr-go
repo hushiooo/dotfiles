@@ -18,6 +18,31 @@ set -uo pipefail
 repos="${HERDR_REPOS:-$HOME/dev}"
 sep=' · '   # repo/branch separator baked into every worktree's workspace label
 
+now=$EPOCHSECONDS   # single clock read (bash builtin, no fork) for relative ages
+
+# Tokyo Night cells for the list rows (fzf --ansi renders these).
+C_NAME=$'\033[38;2;192;202;245m'   # subject/name        (#c0caf5)
+C_DIM=$'\033[38;2;86;95;137m'      # muted meta / age    (#565f89)
+C_BR=$'\033[38;2;122;162;247m'     # branch              (#7aa2f7)
+C_LIVE=$'\033[38;2;158;206;154m'   # live glyph          (#9ece6a)
+C_RST=$'\033[0m'
+
+# Compact "last active" age (2h, 3d, 1w, 5mo, 1y) from an epoch into $REL.
+# Pure arithmetic -- no date(1) fork per row.
+reltime() {
+  local d v
+  if [ "${1:-0}" = 0 ]; then REL=""; return; fi
+  d=$(( now - $1 )); (( d < 0 )) && d=0
+  if   (( d < 3600 ));     then v="$(( d / 60 ))m"
+  elif (( d < 86400 ));    then v="$(( d / 3600 ))h"
+  elif (( d < 604800 ));   then v="$(( d / 86400 ))d"
+  elif (( d < 2592000 ));  then v="$(( d / 604800 ))w"
+  elif (( d < 31536000 )); then v="$(( d / 2592000 ))mo"
+  else                          v="$(( d / 31536000 ))y"
+  fi
+  REL="$v"
+}
+
 # --- live state: a single workspace-list call -------------------------------
 # Herdr attaches a `.worktree` block to any git-resolved workspace (primary
 # repos AND linked worktrees), with `.checkout_path` as the on-disk location and
@@ -26,26 +51,30 @@ sep=' · '   # repo/branch separator baked into every worktree's workspace label
 # Some plain-repo workspaces expose no `.worktree` yet, so we also keep the set
 # of open labels as a fallback for repos (labels are unique ~/dev basenames).
 ws_json="$(herdr workspace list 2>/dev/null || printf '{}')"
-open_by_path="$(jq -r '
-  .result.workspaces[]? | select(.worktree != null)
-  | [.worktree.checkout_path, .workspace_id] | @tsv' <<<"$ws_json")"
-open_labels="$(jq -r '.result.workspaces[]?.label' <<<"$ws_json")"
 
-wsid_for_path() { awk -F'\t' -v p="$1" '$1 == p { print $2; exit }' <<<"$open_by_path"; }
-wsid_for_label() {
-  jq -r --arg l "$1" \
-    'first(.result.workspaces[]? | select(.label == $l) | .workspace_id) // empty' \
-    <<<"$ws_json"
-}
-label_is_open() {
-  case $'\n'"$open_labels"$'\n' in
-    *$'\n'"$1"$'\n'*) return 0 ;;
-    *) return 1 ;;
-  esac
-}
+# Fold the one workspace-list payload into two in-process lookup maps, so per-row
+# open-state checks are O(1) bash array reads instead of an awk/jq fork apiece:
+#   wsid_by_path  : an on-disk checkout_path -> its workspace_id (authoritative
+#                   "is this exact directory open?" key)
+#   wsid_by_label : a workspace label -> its workspace_id (fallback for plain-repo
+#                   workspaces that expose no `.worktree` block; labels are unique
+#                   ~/dev basenames)
+declare -A wsid_by_path wsid_by_label
+while IFS=$'\t' read -r path id; do
+  [ -n "$path" ] && wsid_by_path["$path"]="$id"
+done < <(jq -r '.result.workspaces[]? | select(.worktree != null)
+  | [.worktree.checkout_path, .workspace_id] | @tsv' <<<"$ws_json")
+while IFS=$'\t' read -r label id; do
+  [ -n "$label" ] && wsid_by_label["$label"]="$id"
+done < <(jq -r '.result.workspaces[]? | [.label, .workspace_id] | @tsv' <<<"$ws_json")
 
 # --- shared fzf look --------------------------------------------------------
+# NB: override the user's global FZF_DEFAULT_OPTS (which sets --height 50% plus
+# outer margin/padding) so the palette fills its whole herdr popup instead of
+# rendering at half height with a dead band below. confirm()/the branch picker
+# re-set --height afterwards, so their explicit values still win.
 fzf_theme=(
+  --height=100% --margin=0 --padding=0
   --ansi --layout=reverse --border=rounded --info=inline-right
   --highlight-line --no-scrollbar --pointer='▶'
   --bind 'ctrl-j:down,ctrl-k:up'
@@ -83,7 +112,8 @@ preview_cmd='
 gitall_bind="ctrl-g:execute-silent(if [ -e '$gitall_flag' ]; then rm -f '$gitall_flag'; else : > '$gitall_flag'; fi)+refresh-preview"
 
 # --- rows: each repo (recency-sorted) followed by its worktrees --------------
-# field1 = display (glyph + indent + name)   shown; the rest are hidden state.
+# field1 = display cell (colored: glyph + name + last-active age + branch) shown;
+#          the rest are hidden state used after selection.
 # field2 = kind  repo|wt
 # field3 = repo_name
 # field4 = repo_path        (primary checkout — a safe cwd for git operations)
@@ -91,12 +121,39 @@ gitall_bind="ctrl-g:execute-silent(if [ -e '$gitall_flag' ]; then rm -f '$gitall
 # field6 = branch           (wt rows only)
 # field7 = open_wsid        (empty when the space is not currently open)
 emit_repo() {
-  local dir="$1" repo glyph wsid
-  repo="$(basename "$dir")"
-  wsid="$(wsid_for_path "$dir")"
-  if [ -z "$wsid" ] && label_is_open "$repo"; then wsid="$(wsid_for_label "$repo")"; fi
-  [ -n "$wsid" ] && glyph='●' || glyph='○'
-  printf '%s  %s\trepo\t%s\t%s\t%s\t\t%s\n' "$glyph" "$repo" "$repo" "$dir" "$dir" "$wsid"
+  local dir="$1" t="${2:-0}" repo glyph gcol wsid wt_dir head_ref branch age namep agep cell
+  repo="${dir##*/}"                              # basename without a fork
+  wsid="${wsid_by_path[$dir]:-}"
+  [ -z "$wsid" ] && wsid="${wsid_by_label[$repo]:-}"
+  if [ -n "$wsid" ]; then glyph='●'; gcol="$C_LIVE"; else glyph='○'; gcol="$C_DIM"; fi
+
+  # Current branch straight from .git/HEAD (a plain read, no git fork). A raw sha
+  # means detached HEAD -> show the short sha instead of a branch name.
+  branch=""
+  if [ -f "$dir/.git/HEAD" ] && read -r head_ref < "$dir/.git/HEAD"; then
+    case "$head_ref" in
+      "ref: refs/heads/"*) branch="${head_ref#ref: refs/heads/}" ;;
+      ?*)                  branch="${head_ref:0:7}" ;;
+    esac
+  fi
+
+  reltime "$t"; age="$REL"
+  printf -v namep '%-22s' "$repo"
+  printf -v agep '%4s' "$age"
+  printf -v cell '%s%s%s  %s%s%s  %s%s%s  %s%s%s' \
+    "$gcol" "$glyph" "$C_RST" "$C_NAME" "$namep" "$C_RST" \
+    "$C_DIM" "$agep" "$C_RST" "$C_BR" "$branch" "$C_RST"
+  printf '%s\trepo\t%s\t%s\t%s\t\t%s\n' "$cell" "$repo" "$dir" "$dir" "$wsid"
+
+  # Linked worktrees only exist once git has recorded them under .git/worktrees/.
+  # For the common no-worktree repo there is nothing to enumerate, so skip the
+  # git spawn entirely -- that spawn was the bulk of the palette's startup cost.
+  # NB: use a plain glob, not `compgen -G` -- compgen is absent from this
+  # non-interactive bash build, so it would silently skip *every* worktree.
+  local wts
+  wt_dir="$dir/.git/worktrees"
+  wts=("$wt_dir"/*)                              # unmatched glob stays literal
+  [ -e "${wts[0]}" ] || return 0
 
   # Linked worktrees for this repo, straight from git (fast, local, authoritative).
   git -C "$dir" worktree list --porcelain 2>/dev/null \
@@ -107,11 +164,15 @@ emit_repo() {
       ' \
     | while IFS=$'\t' read -r wpath wbranch; do
         [ "$wpath" = "$dir" ] && continue        # the primary checkout is the repo row itself
-        local wwsid wglyph
-        wwsid="$(wsid_for_path "$wpath")"
-        [ -n "$wwsid" ] && wglyph='●' || wglyph='○'
-        printf '    %s  %s\twt\t%s\t%s\t%s\t%s\t%s\n' \
-          "$wglyph" "$wbranch" "$repo" "$dir" "$wpath" "$wbranch" "$wwsid"
+        local wwsid wglyph wgcol wnamep wcell
+        wwsid="${wsid_by_path[$wpath]:-}"
+        if [ -n "$wwsid" ]; then wglyph='●'; wgcol="$C_LIVE"; else wglyph='○'; wgcol="$C_DIM"; fi
+        # Worktree rows are indented under their repo; the branch is the name.
+        printf -v wnamep '%-22s' "$wbranch"
+        printf -v wcell '    %s%s%s  %s%s%s' \
+          "$wgcol" "$wglyph" "$C_RST" "$C_BR" "$wnamep" "$C_RST"
+        printf '%s\twt\t%s\t%s\t%s\t%s\t%s\n' \
+          "$wcell" "$repo" "$dir" "$wpath" "$wbranch" "$wwsid"
       done
 }
 
@@ -130,8 +191,7 @@ rows="$(
         printf '%s\t%s\n' "${t:-0}" "$dir"
       done \
     | sort -rn -k1,1 \
-    | cut -f2- \
-    | while IFS= read -r dir; do emit_repo "$dir"; done
+    | while IFS=$'\t' read -r t dir; do emit_repo "$dir" "$t"; done
 )"
 
 if [ -z "$rows" ]; then
@@ -175,14 +235,19 @@ case "$key" in
     avail="$(comm -23 \
       <(git -C "$repo_path" for-each-ref --format='%(refname:short)' refs/heads 2>/dev/null | sort) \
       <(printf '%s\n' "$checked"))"
-    name="$(
+    # fzf exit codes: 0 = picked an existing branch; 1 = accepted a typed query
+    # that matched nothing (a BRAND-NEW branch name -- still emitted first via
+    # --print-query); 130 = Esc; 2 = error. The old `|| exit 0` treated the
+    # new-branch case (1) as an abort, so typing a fresh branch created nothing.
+    if name="$(
       printf '%s\n' "$avail" \
         | fzf "${fzf_theme[@]}" --print-query --height=60% \
             --prompt="worktree ❯ " \
             --list-label=" new worktree · $repo " \
             --header='type a new branch and press enter, or pick an existing branch'
-      )" || exit 0
-    name="$(tail -1 <<<"$name")"
+      )"; then rc=0; else rc=$?; fi
+    case $rc in 0|1) ;; *) exit 0 ;; esac
+    name="$(tail -1 <<<"$name")"   # last line = the picked branch, or the typed query
     [ -n "$name" ] || exit 0
     # `worktree create --branch` handles both: it checks out an existing branch
     # or creates a new one. (`worktree open --branch` only reopens an existing
