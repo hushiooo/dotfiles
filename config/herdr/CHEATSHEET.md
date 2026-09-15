@@ -13,7 +13,7 @@ rest live in `config.toml`.
 | ---------------------------------- | ---------------------------------- |
 | Split side-by-side                 | `Ctrl+A )`                         |
 | Split stacked                      | `Ctrl+A -`                         |
-| Focus pane                         | `Ctrl+A h/j/k/l` or `Ctrl+h/j/k/l` |
+| Focus pane                         | `Ctrl+A h/j/k/l`                   |
 | Swap pane up / down *(default)*    | `Ctrl+A K` / `Ctrl+A J`            |
 | Swap pane left / right *(default)* | `Ctrl+A H` / `Ctrl+A L`            |
 | Cycle panes *(default)*            | `Ctrl+A Tab` / `Ctrl+A Shift+Tab`  |
@@ -50,25 +50,39 @@ the arrow keys:
 
 ## Workspaces, worktrees & tools
 
-| Action                             | Key                                         |
-| ---------------------------------- | ------------------------------------------- |
-| Workspace picker / navigate        | `Ctrl+A w`                                  |
-| Jump to workspace 1–9              | `Ctrl+A Shift+` `1…9` (shifted number row)  |
-| Open a `~/dev` repo as a workspace | `Ctrl+A Space` (git-repo picker w/ preview) |
-| New workspace *(default)*          | `Ctrl+A Shift+N`                            |
-| Toggle sidebar                     | `Ctrl+A B`                                  |
-| Lazygit popup                      | `Ctrl+A Ctrl+G`                             |
+| Action                              | Key                                        |
+| ----------------------------------- | ------------------------------------------ |
+| Command palette (repos + worktrees) | `Ctrl+A Space`                             |
+| Workspace picker / navigate         | `Ctrl+A w`                                 |
+| Jump to workspace 1–9               | `Ctrl+A Shift+` `1…9` (shifted number row) |
+| New workspace *(default)*           | `Ctrl+A Shift+N`                           |
+| Toggle sidebar                      | `Ctrl+A B`                                 |
+| Lazygit popup                       | `Ctrl+A Ctrl+G`                            |
 
-A **worktree is just a workspace**, so navigate to one with `Shift+1…9` or the
-sidebar (it sits indented under its parent repo). Worktree lifecycle:
+### Command palette — `Ctrl+A Space`
 
-| Action                       | Key                                             |
-| ---------------------------- | ----------------------------------------------- |
-| Create worktree *(default)*  | `Ctrl+A Shift+G`                                |
-| Worktree hub — open / delete | `Ctrl+A Ctrl+W` (enter opens, `Ctrl+X` deletes) |
-| Create worktree from a shell | `hwt feature/foo`                               |
-| Keybinding help *(default)*  | `Ctrl+A ?`                                      |
-| Settings *(default)*         | `Ctrl+A s`                                      |
+The center of the repo/worktree workflow: one popup listing every git repo
+under `~/dev` (most-recent-activity first) with its worktrees nested underneath.
+`●` = open · `○` = on disk.
+
+| In the palette | Action                                                                                                    |
+| -------------- | --------------------------------------------------------------------------------------------------------- |
+| _type_         | fuzzy-filter by repo / branch name                                                                        |
+| `Enter`        | open — or focus, if already live — the highlighted space                                                  |
+| `N`            | **new worktree** for that row's repo: pick an existing branch or type a new one (labelled `repo · branch`) |
+| `D`            | **delete** the space — worktree: remove the checkout (branch kept); repo: close the workspace (files kept) |
+| `Ctrl-/`       | toggle the git-log preview                                                                                 |
+
+A **worktree is just a workspace**: it sits indented under its parent repo in
+both the palette and the sidebar, and you can also jump to it with `Shift+1…9`.
+From a shell, `hwt <branch>` is the scriptable twin of `N` (same `repo · branch`
+label). There is deliberately **one** way to create a worktree — the native
+`Ctrl+A Shift+G` is unbound.
+
+| Action                      | Key / command |
+| --------------------------- | ------------- |
+| Keybinding help *(default)* | `Ctrl+A ?`    |
+| Settings *(default)*        | `Ctrl+A s`    |
 
 ## Session
 

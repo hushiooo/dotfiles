@@ -55,11 +55,15 @@ prefix = "ctrl+a"
 split_vertical = "prefix+)"
 split_horizontal = "prefix+minus"
 
-# vim-tmux-navigator ctrl+h/j/k/l on top of prefix+h/j/k/l.
-focus_pane_left = ["prefix+h", "ctrl+h"]
-focus_pane_down = ["prefix+j", "ctrl+j"]
-focus_pane_up = ["prefix+k", "ctrl+k"]
-focus_pane_right = ["prefix+l", "ctrl+l"]
+# Pane focus is prefix-only. Direct ctrl+h/j/k/l are intentionally NOT bound:
+# Herdr has no per-app key passthrough, so they'd be swallowed before reaching
+# terminal apps and would shadow shell essentials everywhere (ctrl+j newline,
+# ctrl+k kill-line, ctrl+l clear, ctrl+h backspace) -- notably breaking
+# ctrl+j/ctrl+k selection in fzf. Navigate mode (prefix+w) still uses ctrl+j/k.
+focus_pane_left = "prefix+h"
+focus_pane_down = "prefix+j"
+focus_pane_up = "prefix+k"
+focus_pane_right = "prefix+l"
 
 # h/j/k/l move panes here, so workspaces use fzf-style ctrl+k/ctrl+j (arrows still work).
 navigate_workspace_up = ["up", "ctrl+k"]
@@ -76,26 +80,22 @@ goto = ""
 # prefix+b is the break-pane command below, so the sidebar moves to shift+b.
 toggle_sidebar = "prefix+shift+b"
 
-# Worktrees: create = prefix+shift+g (default); open/remove live in the
-# prefix+ctrl+w hub below, so the native keys stay unset.
+# Worktree lifecycle lives entirely in the prefix+space palette (herdr-go: N
+# creates, D removes), so the native create binding is retired -- one way to do
+# a thing. open/remove were already unset.
+new_worktree = ""
 next_agent = "prefix+a"
 previous_agent = "prefix+shift+a"
 
+# The command palette: navigate every ~/dev repo and its worktrees, create new
+# worktrees (N), and tear spaces down (D) -- all from one popup.
 [[keys.command]]
 key = "prefix+space"
 type = "popup"
-command = "$HOME/.nix-profile/bin/herdr-open"
-description = "open workspace from ~/dev"
+command = "$HOME/.nix-profile/bin/herdr-go"
+description = "repos + worktrees: open · N new · D delete"
 width = "80%"
-height = "70%"
-
-[[keys.command]]
-key = "prefix+ctrl+w"
-type = "popup"
-command = "$HOME/.nix-profile/bin/herdr-worktree"
-description = "worktree hub (open / delete)"
-width = "60%"
-height = "60%"
+height = "80%"
 
 # Break pane to new tab (tmux: prefix b)
 [[keys.command]]

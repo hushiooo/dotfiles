@@ -20,31 +20,21 @@ let
     text = builtins.readFile ../config/herdr/herdr-tab-focus;
   };
 
-  # Slim command palette: prefix+space popup to open a ~/dev repo as a workspace.
-  openWorkspace = pkgs.writeShellApplication {
-    name = "herdr-open";
+  # The command palette (prefix+space): one popup to navigate every ~/dev repo
+  # and its worktrees, spin up new named worktrees (N), and tear spaces down (D).
+  goNav = pkgs.writeShellApplication {
+    name = "herdr-go";
     runtimeInputs = [
       pkgs.herdr
       pkgs.jq
       pkgs.fzf
+      pkgs.git
+      pkgs.gawk
+      pkgs.gnused
       pkgs.findutils
       pkgs.coreutils
-      pkgs.git
     ];
-    text = builtins.readFile ../config/herdr/herdr-open;
-  };
-
-  # Worktree hub: prefix+ctrl+w popup to browse/open/delete the repo's worktrees.
-  worktreeHub = pkgs.writeShellApplication {
-    name = "herdr-worktree";
-    runtimeInputs = [
-      pkgs.herdr
-      pkgs.jq
-      pkgs.fzf
-      pkgs.git
-      pkgs.coreutils
-    ];
-    text = builtins.readFile ../config/herdr/herdr-worktree;
+    text = builtins.readFile ../config/herdr/herdr-go;
   };
 in
 {
@@ -58,12 +48,11 @@ in
     };
   };
 
-  # Exposes reposRoot to the palette popup (herdr-open reads $HERDR_REPOS).
+  # Exposes reposRoot to the palette popup (herdr-go reads $HERDR_REPOS).
   home.sessionVariables.HERDR_REPOS = reposRoot;
 
   home.packages = [
     tabFocus
-    openWorkspace
-    worktreeHub
+    goNav
   ];
 }

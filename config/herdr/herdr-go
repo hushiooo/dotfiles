@@ -1,0 +1,204 @@
+# Unified space navigator — the center of the repo/worktree workflow.
+#
+# Fuzzy-pick ANY git repo under ~/dev or one of its worktrees, then act on the
+# highlighted row without leaving the popup:
+#   enter → open/focus that space (reuses a live workspace, never duplicates)
+#   N     → new worktree for that row's repo (pick an existing branch or type a
+#           new one; the workspace is labelled "repo · branch")
+#   D     → dismiss that space (worktree: remove the checkout, keep the branch;
+#           repo: close the Herdr workspace, files on disk untouched)
+#
+# Runs inside a herdr popup, so fzf/read get a real tty. A repo and its
+# worktrees are "the same kind of thing" here: rows you jump to, spin up, or
+# tear down. Typing filters (repo names are lowercase); N/D are Shift so they
+# never collide with the query.
+
+set -uo pipefail
+
+repos="${HERDR_REPOS:-$HOME/dev}"
+sep=' · '   # repo/branch separator baked into every worktree's workspace label
+
+# --- live state: a single workspace-list call -------------------------------
+# Herdr attaches a `.worktree` block to any git-resolved workspace (primary
+# repos AND linked worktrees), with `.checkout_path` as the on-disk location and
+# `.is_linked_worktree` telling the two apart. That path is the authoritative
+# key for "is this exact directory already open, and in which workspace?".
+# Some plain-repo workspaces expose no `.worktree` yet, so we also keep the set
+# of open labels as a fallback for repos (labels are unique ~/dev basenames).
+ws_json="$(herdr workspace list 2>/dev/null || printf '{}')"
+open_by_path="$(jq -r '
+  .result.workspaces[]? | select(.worktree != null)
+  | [.worktree.checkout_path, .workspace_id] | @tsv' <<<"$ws_json")"
+open_labels="$(jq -r '.result.workspaces[]?.label' <<<"$ws_json")"
+
+wsid_for_path() { awk -F'\t' -v p="$1" '$1 == p { print $2; exit }' <<<"$open_by_path"; }
+wsid_for_label() {
+  jq -r --arg l "$1" \
+    'first(.result.workspaces[]? | select(.label == $l) | .workspace_id) // empty' \
+    <<<"$ws_json"
+}
+label_is_open() {
+  case $'\n'"$open_labels"$'\n' in
+    *$'\n'"$1"$'\n'*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# --- shared fzf look --------------------------------------------------------
+fzf_theme=(
+  --ansi --layout=reverse --border=rounded --info=inline-right
+  --highlight-line --no-scrollbar --pointer='▶'
+  --bind 'ctrl-j:down,ctrl-k:up'
+  --color='fg:#c0caf5,bg:-1,hl:#bb9af7,fg+:#c0caf5,bg+:#283457,hl+:#7dcfff'
+  --color='info:#7aa2f7,border:#3b4261,label:#7aa2f7,gutter:-1'
+  --color='prompt:#7dcfff,pointer:#7dcfff,marker:#9ece6a,header:#9ece6a'
+)
+
+confirm() { [ "$(printf 'no\nyes\n' | fzf "${fzf_theme[@]}" --height=6 --info=hidden --prompt="$1 ")" = "yes" ]; }
+
+# --- rows: each repo (recency-sorted) followed by its worktrees --------------
+# field1 = display (glyph + indent + name)   shown; the rest are hidden state.
+# field2 = kind  repo|wt
+# field3 = repo_name
+# field4 = repo_path        (primary checkout — a safe cwd for git operations)
+# field5 = target_path      (repo dir for a repo row; checkout dir for a wt row)
+# field6 = branch           (wt rows only)
+# field7 = open_wsid        (empty when the space is not currently open)
+emit_repo() {
+  local dir="$1" repo glyph wsid
+  repo="$(basename "$dir")"
+  wsid="$(wsid_for_path "$dir")"
+  if [ -z "$wsid" ] && label_is_open "$repo"; then wsid="$(wsid_for_label "$repo")"; fi
+  [ -n "$wsid" ] && glyph='●' || glyph='○'
+  printf '%s  %s\trepo\t%s\t%s\t%s\t\t%s\n' "$glyph" "$repo" "$repo" "$dir" "$dir" "$wsid"
+
+  # Linked worktrees for this repo, straight from git (fast, local, authoritative).
+  git -C "$dir" worktree list --porcelain 2>/dev/null \
+    | awk '
+        /^worktree /            { p = substr($0, 10) }
+        /^branch /              { b = substr($0, 8); sub("refs/heads/", "", b); print p "\t" b }
+        /^detached/             { print p "\t(detached)" }
+      ' \
+    | while IFS=$'\t' read -r wpath wbranch; do
+        [ "$wpath" = "$dir" ] && continue        # the primary checkout is the repo row itself
+        local wwsid wglyph
+        wwsid="$(wsid_for_path "$wpath")"
+        [ -n "$wwsid" ] && wglyph='●' || wglyph='○'
+        printf '    %s  %s\twt\t%s\t%s\t%s\t%s\t%s\n' \
+          "$wglyph" "$wbranch" "$repo" "$dir" "$wpath" "$wbranch" "$wwsid"
+      done
+}
+
+# Repos under the root (excluding the worktree pool), ordered by my most recent
+# local git activity: reflog (.git/logs/HEAD) mtime tracks "where was I last"
+# better than commit dates; fall back to .git's mtime.
+rows="$(
+  find "$repos" -mindepth 1 -maxdepth 1 -type d ! -name worktrees 2>/dev/null \
+    | while IFS= read -r dir; do
+        [ -e "$dir/.git" ] || continue
+        if [ -f "$dir/.git/logs/HEAD" ]; then
+          t="$(stat -c %Y "$dir/.git/logs/HEAD" 2>/dev/null)"
+        else
+          t="$(stat -c %Y "$dir/.git" 2>/dev/null)"
+        fi
+        printf '%s\t%s\n' "${t:-0}" "$dir"
+      done \
+    | sort -rn -k1,1 \
+    | cut -f2- \
+    | while IFS= read -r dir; do emit_repo "$dir"; done
+)"
+
+if [ -z "$rows" ]; then
+  printf 'no git repos under %s\n' "$repos"
+  sleep 1.5
+  exit 0
+fi
+
+out="$(
+  printf '%s\n' "$rows" \
+    | fzf "${fzf_theme[@]}" \
+        --delimiter='\t' --with-nth=1 \
+        --prompt='go ❯ ' \
+        --list-label=' repos · worktrees ' \
+        --header='enter: open · N: new worktree · D: delete space · ● live ○ on disk · ctrl-/: preview' \
+        --expect=N,D \
+        --bind 'ctrl-/:toggle-preview' \
+        --preview 'git -C {5} -c color.ui=always log --oneline --decorate -15 2>/dev/null || ls -la {5}' \
+        --preview-window 'right,50%,border-left'
+)" || exit 0
+
+key="$(head -1 <<<"$out")"       # the pressed --expect key (empty on plain Enter)
+sel="$(sed -n '2p' <<<"$out")"   # the chosen row (all hidden fields intact)
+[ -n "$sel" ] || exit 0
+
+kind="$(cut -f2 <<<"$sel")"
+repo="$(cut -f3 <<<"$sel")"
+repo_path="$(cut -f4 <<<"$sel")"
+target="$(cut -f5 <<<"$sel")"
+branch="$(cut -f6 <<<"$sel")"
+wsid="$(cut -f7 <<<"$sel")"
+
+case "$key" in
+  N)
+    # New worktree for this row's repo. Offer branches that exist but aren't
+    # checked out anywhere; typing a fresh name creates a new branch.
+    checked="$(git -C "$repo_path" worktree list --porcelain 2>/dev/null \
+      | awk '/^branch /{ b=substr($0,8); sub("refs/heads/","",b); print b }' | sort)"
+    avail="$(comm -23 \
+      <(git -C "$repo_path" for-each-ref --format='%(refname:short)' refs/heads 2>/dev/null | sort) \
+      <(printf '%s\n' "$checked"))"
+    name="$(
+      printf '%s\n' "$avail" \
+        | fzf "${fzf_theme[@]}" --print-query --height=60% \
+            --prompt="worktree ❯ " \
+            --list-label=" new worktree · $repo " \
+            --header='type a new branch and press enter, or pick an existing branch'
+      )" || exit 0
+    name="$(tail -1 <<<"$name")"
+    [ -n "$name" ] || exit 0
+    # `worktree create --branch` handles both: it checks out an existing branch
+    # or creates a new one. (`worktree open --branch` only reopens an existing
+    # checkout, so it's the wrong tool here.)
+    herdr worktree create --cwd "$repo_path" --branch "$name" --label "$repo$sep$name" --focus >/dev/null
+    ;;
+
+  D)
+    if [ "$kind" = "wt" ]; then
+      confirm "delete worktree $(basename "$target")? (branch kept)" || exit 0
+      if [ -n "$wsid" ]; then
+        herdr worktree remove --workspace "$wsid" --force >/dev/null
+      else
+        git -C "$repo_path" worktree remove --force "$target" >/dev/null
+      fi
+    else
+      # A repo row: "delete the space" = close the Herdr workspace, never the
+      # files. No-op with a hint if the repo isn't currently open.
+      if [ -z "$wsid" ]; then
+        printf '%s is not open — nothing to close\n' "$repo"; sleep 1.2; exit 0
+      fi
+      confirm "close workspace $repo? (files kept on disk)" || exit 0
+      if ! err="$(herdr workspace close "$wsid" 2>&1)"; then
+        # Herdr refuses to close a repo that still has open worktree workspaces
+        # unless we opt into closing the whole group.
+        if printf '%s' "$err" | grep -qi 'group'; then
+          confirm "$repo has open worktrees — close them too?" || exit 0
+          herdr workspace close "$wsid" --group >/dev/null
+        else
+          printf '%s\n' "$err"; sleep 2; exit 1
+        fi
+      fi
+    fi
+    ;;
+
+  *)
+    # Enter: open or focus the highlighted space.
+    if [ -n "$wsid" ]; then
+      herdr workspace focus "$wsid" >/dev/null
+    elif [ "$kind" = "wt" ]; then
+      # On-disk-but-closed worktree: reopen by its exact path.
+      herdr worktree open --cwd "$repo_path" --path "$target" --label "$repo$sep$branch" --focus >/dev/null
+    else
+      herdr workspace create --cwd "$repo_path" --label "$repo" --focus >/dev/null
+    fi
+    ;;
+esac

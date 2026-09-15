@@ -361,13 +361,19 @@
         fi
       }
 
+      # Scriptable twin of the palette's "N" (prefix+space): create a worktree
+      # for the current repo with the same repo-prefixed "repo · branch" label.
       hwt() {
         local branch="$1"
         if [[ -z "$branch" ]]; then
           echo "usage: hwt <branch>" >&2
           return 1
         fi
-        herdr worktree create --cwd "$PWD" --branch "$branch" --focus
+        local common repo
+        common="$(git -C "$PWD" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"
+        repo="$(basename "$(dirname "$common")")"
+        herdr worktree create --cwd "$PWD" --branch "$branch" \
+          --label "''${repo:+$repo · }$branch" --focus
       }
 
       fkill() {
