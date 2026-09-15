@@ -323,7 +323,7 @@ main() {
     echo "     System Settings → Keyboard → Keyboard Shortcuts → Modifier Keys"
     echo ""
     echo "  2. Apply Home Manager configuration:"
-    echo "     nix run home-manager -- switch --flake ~/dotfiles"
+    echo "     nix run home-manager -- switch --flake ~/dev/dotfiles"
     echo ""
 }
 

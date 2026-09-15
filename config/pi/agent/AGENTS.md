@@ -30,4 +30,4 @@
 ## Environment
 
 - macOS on Apple Silicon, zsh, Neovim.
-- Dotfiles are Nix + Home Manager in `~/dotfiles`; `hms` rebuilds.
+- Dotfiles are Nix + Home Manager in `~/dev/dotfiles`; `hms` rebuilds.

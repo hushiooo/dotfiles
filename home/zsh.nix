@@ -46,8 +46,8 @@
       gs = "git status -sb";
       h = "herdr";
       hl = "herdr session list";
-      hms = "home-manager switch --flake ~/dotfiles";
-      hmu = "nix flake update ~/dotfiles && home-manager switch --flake ~/dotfiles";
+      hms = "home-manager switch --flake ~/dev/dotfiles";
+      hmu = "nix flake update ~/dev/dotfiles && home-manager switch --flake ~/dev/dotfiles";
       la = "eza -a";
       lg = "lazygit";
       ll = "eza -alh --git";

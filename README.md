@@ -9,17 +9,17 @@ https://docs.determinate.systems
 
 ### 2. Clone the repo
 ```bash
-nix-shell -p git --run "git clone https://github.com/hushiooo/dotfiles.git ~/dotfiles"
+nix-shell -p git --run "git clone https://github.com/hushiooo/dotfiles.git ~/dev/dotfiles"
 ```
 
 ### 3. Bootstrap macOS apps and defaults
 ```bash
-cd ~/dotfiles && ./setup.sh
+cd ~/dev/dotfiles && ./setup.sh
 ```
 
 ### 4. Apply Home Manager configuration
 ```bash
-nix run home-manager -- switch --flake ~/dotfiles
+nix run home-manager -- switch --flake ~/dev/dotfiles
 ```
 
 ## Scope
@@ -65,7 +65,7 @@ echo "test" | gpg --clearsign
 
 ```bash
 # Rebuild after config changes
-home-manager switch --flake ~/dotfiles
+home-manager switch --flake ~/dev/dotfiles
 
 # Update flake inputs
 nix flake update
@@ -118,13 +118,13 @@ Skills are picked up automatically from `~/.agents/skills/` and per-project
 ### "command not found: home-manager"
 
 ```bash
-nix run home-manager -- switch --flake ~/dotfiles
+nix run home-manager -- switch --flake ~/dev/dotfiles
 ```
 
 ### "error: flake has no lock file"
 
 ```bash
-cd ~/dotfiles && nix flake update
+cd ~/dev/dotfiles && nix flake update
 ```
 
 ### GPG signing fails
