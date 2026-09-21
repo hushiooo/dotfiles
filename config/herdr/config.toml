@@ -125,8 +125,8 @@ key = "prefix+space"
 type = "popup"
 command = "$HOME/.nix-profile/bin/herdr-go"
 description = "repos + worktrees: open · N new · D delete"
-width = "80%"
-height = "80%"
+width = "42%"
+height = "55%"
 
 # Break pane to new tab (tmux: prefix b)
 [[keys.command]]

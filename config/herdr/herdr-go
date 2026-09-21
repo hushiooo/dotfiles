@@ -27,13 +27,14 @@ C_BR=$'\033[38;2;122;162;247m'     # branch              (#7aa2f7)
 C_LIVE=$'\033[38;2;158;206;154m'   # live glyph          (#9ece6a)
 C_RST=$'\033[0m'
 
-# Compact "last active" age (2h, 3d, 1w, 5mo, 1y) from an epoch into $REL.
+# Compact "last visited" age (2h, 3d, 1w, 5mo, 1y) from an epoch into $REL.
 # Pure arithmetic -- no date(1) fork per row.
 reltime() {
   local d v
   if [ "${1:-0}" = 0 ]; then REL=""; return; fi
   d=$(( now - $1 )); (( d < 0 )) && d=0
-  if   (( d < 3600 ));     then v="$(( d / 60 ))m"
+  if   (( d < 60 ));       then v="<1m"
+  elif (( d < 3600 ));     then v="$(( d / 60 ))m"
   elif (( d < 86400 ));    then v="$(( d / 3600 ))h"
   elif (( d < 604800 ));   then v="$(( d / 86400 ))d"
   elif (( d < 2592000 ));  then v="$(( d / 604800 ))w"
@@ -68,6 +69,44 @@ while IFS=$'\t' read -r label id; do
   [ -n "$label" ] && wsid_by_label["$label"]="$id"
 done < <(jq -r '.result.workspaces[]? | [.label, .workspace_id] | @tsv' <<<"$ws_json")
 
+# --- last visited: live spaces first, then recency of actually being there --
+# Herdr's workspace list has no visit clock, and git reflog mtime is "last
+# commit/checkout", not "last time I was in this space". We persist one epoch
+# per checkout path and bump the focused space each time the palette opens
+# (sidebar / prefix-number land you in a space, then opening Go records it).
+visited_file="${XDG_CACHE_HOME:-$HOME/.cache}/herdr-go/visited"
+declare -A visited
+if [ -f "$visited_file" ]; then
+  while IFS=$'\t' read -r path t; do
+    [ -n "$path" ] && [ -n "${t:-}" ] && visited["$path"]="$t"
+  done < "$visited_file"
+fi
+focus_path="$(jq -r '.result.workspaces[]? | select(.focused == true)
+  | .worktree.checkout_path // empty' <<<"$ws_json")"
+if [ -z "$focus_path" ]; then
+  focus_label="$(jq -r '.result.workspaces[]? | select(.focused == true)
+    | .label // empty' <<<"$ws_json")"
+  case "$focus_label" in
+    ""|*"$sep"*) ;;
+    *) [ -d "$repos/$focus_label" ] && focus_path="$repos/$focus_label" ;;
+  esac
+fi
+if [ -n "$focus_path" ]; then
+  visited["$focus_path"]="$now"
+fi
+save_visited() {
+  local tmp path
+  ((${#visited[@]})) || return 0
+  mkdir -p "$(dirname "$visited_file")"
+  tmp="$(mktemp "$visited_file.XXXXXX")"
+  for path in "${!visited[@]}"; do
+    [ -e "$path" ] || continue
+    printf '%s\t%s\n' "$path" "${visited[$path]}"
+  done | sort > "$tmp"
+  mv "$tmp" "$visited_file"
+}
+save_visited
+
 # --- shared fzf look --------------------------------------------------------
 # NB: override the user's global FZF_DEFAULT_OPTS (which sets --height 50% plus
 # outer margin/padding) so the palette fills its whole herdr popup instead of
@@ -76,7 +115,7 @@ done < <(jq -r '.result.workspaces[]? | [.label, .workspace_id] | @tsv' <<<"$ws_
 fzf_theme=(
   --height=100% --margin=0 --padding=0
   --ansi --layout=reverse --border=rounded --info=inline-right
-  --highlight-line --no-scrollbar --pointer='▶'
+  --highlight-line --no-scrollbar --pointer='▶' --no-preview
   --bind 'ctrl-j:down,ctrl-k:up'
   --color='fg:#c0caf5,bg:-1,hl:#bb9af7,fg+:#c0caf5,bg+:#283457,hl+:#7dcfff'
   --color='info:#7aa2f7,border:#3b4261,label:#7aa2f7,gutter:-1'
@@ -85,34 +124,39 @@ fzf_theme=(
 
 confirm() { [ "$(printf 'no\nyes\n' | fzf "${fzf_theme[@]}" --height=6 --info=hidden --prompt="$1 ")" = "yes" ]; }
 
-# --- commit-history preview -------------------------------------------------
-# A real graph view rather than a flat oneline list, tuned to the Tokyo Night
-# palette so it reads as a visualization: cyan hashes, blue ref decorations, a
-# dimmed "· <relative age> · <author>" trailer, and the graph rail on the left.
-# Field {5} (target_path) is substituted by fzf; falls back to a dir listing.
-#
-# ctrl-g toggles a scope flag: absent = the row's branch only; present = --all,
-# showing every ref's topology (merges/siblings). The flag file is created and
-# torn down inside the popup lifetime.
-gitall_flag="$(mktemp -u "${TMPDIR:-/tmp}/herdr-go-gitall.XXXXXX")"
-trap 'rm -f "$gitall_flag"' EXIT
-# $gitall_flag is spliced in now; $all is deliberately left unexpanded so fzf's
-# preview shell evaluates it per-refresh (SC2016 is a false positive here).
-# shellcheck disable=SC2016
-preview_cmd='
-  if git -C {5} rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    [ -e "'"$gitall_flag"'" ] && all=--all || all=
-    git -C {5} -c color.ui=always log --graph --decorate $all --color=always \
-      --format="%C(#7dcfff)%h%C(reset)%C(#7aa2f7)%d%C(reset) %s %C(#565f89)· %ar · %an%C(reset)" \
-      -30
-  else
-    ls -la {5} 2>/dev/null
-  fi
-'
-gitall_bind="ctrl-g:execute-silent(if [ -e '$gitall_flag' ]; then rm -f '$gitall_flag'; else : > '$gitall_flag'; fi)+refresh-preview"
+# path<TAB>branch for every checkout of $1 (primary + linked).
+porcelain_worktrees() {
+  git -C "$1" worktree list --porcelain 2>/dev/null | awk '
+    /^worktree /            { p = substr($0, 10) }
+    /^branch /              { b = substr($0, 8); sub("refs/heads/", "", b); print p "\t" b }
+    /^detached/             { print p "\t(detached)" }
+  '
+}
 
-# --- rows: each repo (recency-sorted) followed by its worktrees --------------
-# field1 = display cell (colored: glyph + name + last-active age + branch) shown;
+# live(0/1) <TAB> last-visit epoch <TAB> dir. A group is live if the primary
+# checkout or any linked worktree is open; visit is the newest stamp among
+# those checkouts so a worktree you just left still floats its repo up.
+group_meta() {
+  local dir="$1" repo="${1##*/}" live=0 visit t wpath
+  visit="${visited[$dir]:-0}"
+  if [ -n "${wsid_by_path[$dir]:-}" ] || [ -n "${wsid_by_label[$repo]:-}" ]; then
+    live=1
+  fi
+  if [ -e "$dir/.git/worktrees" ]; then
+    while IFS=$'\t' read -r wpath _; do
+      [ -n "$wpath" ] && [ "$wpath" != "$dir" ] || continue
+      [ -n "${wsid_by_path[$wpath]:-}" ] && live=1
+      t="${visited[$wpath]:-0}"
+      [ "$t" -gt "$visit" ] && visit=$t
+    done < <(porcelain_worktrees "$dir")
+  fi
+  printf '%s\t%s\t%s\n' "$live" "$visit" "$dir"
+}
+
+# --- rows: live groups first, then last-visited, worktrees under their repo --
+# fzf --no-sort keeps that emit order, so a worktree stays under its repo even
+# when the query matches both. --nth=1 searches only the visible cell.
+# field1 = display cell (colored: glyph + name + last-visited age + branch) shown;
 #          the rest are hidden state used after selection.
 # field2 = kind  repo|wt
 # field3 = repo_name
@@ -156,42 +200,41 @@ emit_repo() {
   [ -e "${wts[0]}" ] || return 0
 
   # Linked worktrees for this repo, straight from git (fast, local, authoritative).
-  git -C "$dir" worktree list --porcelain 2>/dev/null \
-    | awk '
-        /^worktree /            { p = substr($0, 10) }
-        /^branch /              { b = substr($0, 8); sub("refs/heads/", "", b); print p "\t" b }
-        /^detached/             { print p "\t(detached)" }
-      ' \
+  # Live worktrees first, then last visited — still indented under this repo.
+  porcelain_worktrees "$dir" \
     | while IFS=$'\t' read -r wpath wbranch; do
         [ "$wpath" = "$dir" ] && continue        # the primary checkout is the repo row itself
-        local wwsid wglyph wgcol wnamep wcell
         wwsid="${wsid_by_path[$wpath]:-}"
-        if [ -n "$wwsid" ]; then wglyph='●'; wgcol="$C_LIVE"; else wglyph='○'; wgcol="$C_DIM"; fi
-        # Worktree rows are indented under their repo; the branch is the name.
-        printf -v wnamep '%-22s' "$wbranch"
-        printf -v wcell '    %s%s%s  %s%s%s' \
-          "$wgcol" "$wglyph" "$C_RST" "$C_BR" "$wnamep" "$C_RST"
-        printf '%s\twt\t%s\t%s\t%s\t%s\t%s\n' \
-          "$wcell" "$repo" "$dir" "$wpath" "$wbranch" "$wwsid"
-      done
+        if [ -n "$wwsid" ]; then wglyph='●'; wgcol="$C_LIVE"; wlive=1
+        else wglyph='○'; wgcol="$C_DIM"; wlive=0; fi
+        wvisit="${visited[$wpath]:-0}"
+        # Parent name stays in the cell (same "repo · branch" label the
+        # workspace uses) so a filtered view cannot attribute this branch to
+        # whichever repo happened to match above it.
+        printf -v wcell '    %s%s%s  %s%s%s%s%s%s%s' \
+          "$wgcol" "$wglyph" "$C_RST" \
+          "$C_DIM" "$repo" "$sep" "$C_RST" \
+          "$C_BR" "$wbranch" "$C_RST"
+        printf '%s\t%s\t%s\twt\t%s\t%s\t%s\t%s\t%s\n' \
+          "$wlive" "$wvisit" "$wcell" "$repo" "$dir" "$wpath" "$wbranch" "$wwsid"
+      done \
+    | sort -t $'\t' -k1,1nr -k2,2nr \
+    | cut -f3-
 }
 
-# Repos under the root (excluding the worktree pool), ordered by my most recent
-# local git activity: reflog (.git/logs/HEAD) mtime tracks "where was I last"
-# better than commit dates; fall back to .git's mtime.
+# Repos under the root (excluding the worktree pool). Live groups (an open
+# primary or open worktree) float to the top; within each section, last
+# visited — not git activity. Age on the repo row is that visit clock.
 rows="$(
   find "$repos" -mindepth 1 -maxdepth 1 -type d ! -name worktrees 2>/dev/null \
     | while IFS= read -r dir; do
         [ -e "$dir/.git" ] || continue
-        if [ -f "$dir/.git/logs/HEAD" ]; then
-          t="$(stat -c %Y "$dir/.git/logs/HEAD" 2>/dev/null)"
-        else
-          t="$(stat -c %Y "$dir/.git" 2>/dev/null)"
-        fi
-        printf '%s\t%s\n' "${t:-0}" "$dir"
+        group_meta "$dir"
       done \
-    | sort -rn -k1,1 \
-    | while IFS=$'\t' read -r t dir; do emit_repo "$dir" "$t"; done
+    | sort -t $'\t' -k1,1nr -k2,2nr -k3,3 \
+    | while IFS=$'\t' read -r _live _visit dir; do
+        emit_repo "$dir" "${visited[$dir]:-0}"
+      done
 )"
 
 if [ -z "$rows" ]; then
@@ -203,16 +246,11 @@ fi
 out="$(
   printf '%s\n' "$rows" \
     | fzf "${fzf_theme[@]}" \
-        --delimiter='\t' --with-nth=1 \
+        --delimiter='\t' --with-nth=1 --nth=1 --no-sort \
         --prompt='go ❯ ' \
         --list-label=' repos · worktrees ' \
-        --header='enter: open · N: new worktree · D: delete space · ● live ○ on disk · ctrl-/: preview · ctrl-g: all branches' \
-        --expect=N,D \
-        --bind 'ctrl-/:toggle-preview' \
-        --bind "$gitall_bind" \
-        --preview "$preview_cmd" \
-        --preview-label ' history ' \
-        --preview-window 'right,55%,border-left,nowrap'
+        --header='enter: open · N: new worktree · D: delete space · ● live ○ on disk' \
+        --expect=N,D
 )" || exit 0
 
 key="$(head -1 <<<"$out")"       # the pressed --expect key (empty on plain Enter)
@@ -284,7 +322,13 @@ case "$key" in
     ;;
 
   *)
-    # Enter: open or focus the highlighted space.
+    # Enter: open or focus the highlighted space. Record the landing path so
+    # the next palette opening already knows this was last visited (covers
+    # workspaces whose list payload has no checkout_path).
+    if [ -n "$target" ]; then
+      visited["$target"]="$EPOCHSECONDS"
+      save_visited
+    fi
     if [ -n "$wsid" ]; then
       herdr workspace focus "$wsid" >/dev/null
     elif [ "$kind" = "wt" ]; then

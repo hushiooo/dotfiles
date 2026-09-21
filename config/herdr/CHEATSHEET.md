@@ -62,8 +62,8 @@ the arrow keys:
 ### Command palette — `Ctrl+A Space`
 
 The center of the repo/worktree workflow: one popup listing every git repo
-under `~/dev` (most-recent-activity first) with its worktrees nested underneath.
-`●` = open · `○` = on disk.
+under `~/dev` with its worktrees nested underneath. Open (●) spaces sit at the
+top, ordered by last visit — not git activity. `○` = on disk, not open.
 
 | In the palette | Action                                                                                                    |
 | -------------- | --------------------------------------------------------------------------------------------------------- |
@@ -71,7 +71,6 @@ under `~/dev` (most-recent-activity first) with its worktrees nested underneath.
 | `Enter`        | open — or focus, if already live — the highlighted space                                                  |
 | `N`            | **new worktree** for that row's repo: pick an existing branch or type a new one (labelled `repo · branch`) |
 | `D`            | **delete** the space — worktree: remove the checkout (branch kept); repo: close the workspace (files kept) |
-| `Ctrl-/`       | toggle the git-log preview                                                                                 |
 
 A **worktree is just a workspace**: it sits indented under its parent repo in
 both the palette and the sidebar, and you can also jump to it with `Shift+1…9`.
