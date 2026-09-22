@@ -3,5 +3,23 @@
   "defaultModel": "claude-opus-5",
   "defaultThinkingLevel": "high",
   "enabledModels": ["claude-opus-5", "claude-sonnet-5", "claude-haiku-4-5"],
-  "enableInstallTelemetry": false
+  "enableInstallTelemetry": false,
+  "theme": "dark",
+  "quietStartup": true,
+  "hideThinkingBlock": true,
+  "steeringMode": "all",
+  "followUpMode": "all",
+  "collapseChangelog": true,
+  "images": {
+    "blockImages": false
+  },
+  "terminal": {
+    "showImages": false
+  },
+  "packages": [
+    "npm:@gotgenes/pi-anthropic-auth",
+    "npm:pi-mcp-adapter",
+    "npm:pi-web-access",
+    "npm:pi-subagents"
+  ]
 }

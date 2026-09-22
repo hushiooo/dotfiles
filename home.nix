@@ -135,6 +135,8 @@
 
     file.".local/bin/.keep".text = "";
     file.".pi/agent/AGENTS.md".source = ./config/pi/agent/AGENTS.md;
+    file.".pi/agent/extensions/terminal-status-title.js".source =
+      ./config/pi/agent/extensions/terminal-status-title.js;
     file.".ssh/control/.keep".text = "";
 
     # Pi rewrites settings.json itself (model switches, /settings), so it is

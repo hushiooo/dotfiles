@@ -30,8 +30,6 @@ let
       pkgs.fzf
       pkgs.git
       pkgs.gawk
-      pkgs.gnused
-      pkgs.findutils
       pkgs.coreutils
     ];
     text = builtins.readFile ../config/herdr/herdr-go;
