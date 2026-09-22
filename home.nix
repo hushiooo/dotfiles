@@ -40,6 +40,10 @@
     enable = true;
     configFile = {
       "ghostty/config".source = ./config/ghostty/config;
+      "mcp/mcp.json" = {
+        source = ./config/mcp/mcp.json;
+        force = true;
+      };
       "nvim".source = ./config/nvim;
     };
   };
@@ -135,8 +139,14 @@
 
     file.".local/bin/.keep".text = "";
     file.".pi/agent/AGENTS.md".source = ./config/pi/agent/AGENTS.md;
-    file.".pi/agent/extensions/terminal-status-title.js".source =
-      ./config/pi/agent/extensions/terminal-status-title.js;
+    file.".pi/agent/extensions/terminal-status-title.js" = {
+      source = ./config/pi/agent/extensions/terminal-status-title.js;
+      force = true;
+    };
+    file.".pi/agent/extensions/usage-footer.js" = {
+      source = ./config/pi/agent/extensions/usage-footer.js;
+      force = true;
+    };
     file.".ssh/control/.keep".text = "";
 
     # Pi rewrites settings.json itself (model switches, /settings), so it is

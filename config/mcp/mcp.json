@@ -1,0 +1,12 @@
+{
+  "settings": {
+    "mcpFooterStatus": "off",
+    "notifyOnStartupConnect": false
+  },
+  "mcpServers": {
+    "unified-mcp": {
+      "url": "https://mcp.prod.data.cyber.stoik.tools/mcp",
+      "auth": "oauth"
+    }
+  }
+}
