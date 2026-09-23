@@ -41,13 +41,13 @@
       opener = {
         edit = [
           {
-            run = ''nvim "$@"'';
+            run = "nvim %s";
             block = true;
           }
         ];
         open = [
           {
-            run = ''open "$@"'';
+            run = "open %s";
             orphan = true;
           }
         ];

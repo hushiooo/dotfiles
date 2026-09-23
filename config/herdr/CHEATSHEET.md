@@ -72,7 +72,7 @@ marks the current one). Live rows show agent state (`working` / `blocked` /
 | _type_         | fuzzy-filter by repo / branch / agent state                                                               |
 | `Enter`        | open — or focus, if already live — the highlighted space                                                  |
 | `N`            | **new worktree** for that row's repo: pick a local or remote branch (newest first) or type a new name      |
-| `D`            | **delete** the space — one confirm (defaults to no); the prompt names dirty / blocked / current            |
+| `D`            | **delete** the space (defaults to no; type `yes` if an agent is working). Live worktree: `herdr worktree remove --force` (branch kept). Closed worktree: `git worktree remove`. Repo: `herdr workspace close` (files kept). |
 
 A **worktree is just a workspace**: it sits indented under its parent repo in
 both the palette and the sidebar, and you can also jump to it with `Shift+1…9`.

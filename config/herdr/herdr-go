@@ -1,34 +1,39 @@
 # shellcheck shell=bash
 # Space navigator (Herdr popup, prefix+space).
 #
-# One list of every git repo under $HERDR_REPOS and its linked worktrees:
-#   enter  open or focus the row (never duplicates a live workspace)
-#   N      new worktree for that row's repo, labelled "repo · branch"
-#   D      dismiss — worktree: drop the checkout (branch kept);
-#          repo: close the Herdr workspace (files kept)
+# writeShellApplication wraps this with set -euo pipefail — a false test or
+# cancelled fzf must not abort the process, or the popup just vanishes.
+#
+#   enter  focus a live workspace, or open one (never duplicates)
+#   N      herdr worktree create for that row's repo, labelled "repo · branch"
+#   D      live worktree: herdr worktree remove (branch kept)
+#          closed worktree: git worktree remove (no workspace to hand Herdr)
+#          repo: herdr workspace close (files kept)
+#          agent working → type yes
 #
 # N/D are Shift so they never collide with the lowercase filter query.
 
-set -uo pipefail
+set -euo pipefail
 
 repos="${HERDR_REPOS:-$HOME/dev}"
 sep=' · '
 now=$EPOCHSECONDS
 visited_file="${XDG_CACHE_HOME:-$HOME/.cache}/herdr-go/visited"
 
-# Tokyo Night cells (fzf --ansi).
-C_NAME=$'\033[38;2;192;202;245m'   # #c0caf5
-C_DIM=$'\033[38;2;86;95;137m'      # #565f89
-C_BR=$'\033[38;2;122;162;247m'     # #7aa2f7
-C_LIVE=$'\033[38;2;158;206;154m'   # #9ece6a
-C_WORK=$'\033[38;2;224;175;104m'   # #e0af68
-C_BLOCK=$'\033[38;2;247;118;142m'  # #f7768e
+C_NAME=$'\033[38;2;192;202;245m'
+C_DIM=$'\033[38;2;86;95;137m'
+C_BR=$'\033[38;2;122;162;247m'
+C_LIVE=$'\033[38;2;158;206;154m'
+C_WORK=$'\033[38;2;224;175;104m'
+C_BLOCK=$'\033[38;2;247;118;142m'
 C_RST=$'\033[0m'
 
-# Override FZF_DEFAULT_OPTS (--height 50%, margin) so the list fills the popup.
-# confirm() and the branch picker re-set --height; those values still win.
+# Herdr's server inherits the login shell. FZF_DEFAULT_OPTS (--height 50%,
+# margin, padding) plus FZF_DEFAULT_COMMAND=fd will wreck a 55% popup.
+export FZF_DEFAULT_OPTS=""
+export FZF_DEFAULT_COMMAND=""
 fzf_theme=(
-  --height=100% --margin=0 --padding=0
+  --height=100% --margin=0 --padding=0 --sync
   --ansi --layout=reverse --border=rounded --info=inline-right
   --highlight-line --no-scrollbar --pointer='▶' --no-preview
   --bind 'ctrl-j:down,ctrl-k:up'
@@ -37,21 +42,19 @@ fzf_theme=(
   --color='prompt:#7dcfff,pointer:#7dcfff,marker:#9ece6a,header:#9ece6a'
 )
 
-# TSV row: field 1 is the fzf cell (--with-nth=1 --nth=1); the rest is hidden.
+# TSV: field 1 is the fzf cell; the rest is hidden.
 #   1 cell | 2 kind=repo|wt | 3 repo | 4 repo_path | 5 target | 6 branch | 7 wsid
 
-# --- small helpers ----------------------------------------------------------
-
 reltime() {
-  # Compact age from epoch → $REL. No date(1).
   local d v
-  if [ "${1:-0}" = 0 ]; then REL=""; return; fi
-  d=$((now - $1)); ((d < 0)) && d=0
-  if   ((d < 60));      then v="<1m"
-  elif ((d < 3600));    then v="$((d / 60))m"
-  elif ((d < 86400));   then v="$((d / 3600))h"
-  elif ((d < 604800));  then v="$((d / 86400))d"
-  elif ((d < 2592000)); then v="$((d / 604800))w"
+  if [ "${1:-0}" = 0 ]; then REL=""; return 0; fi
+  d=$((now - $1))
+  if ((d < 0)); then d=0; fi
+  if   ((d < 60));       then v="<1m"
+  elif ((d < 3600));     then v="$((d / 60))m"
+  elif ((d < 86400));    then v="$((d / 3600))h"
+  elif ((d < 604800));   then v="$((d / 86400))d"
+  elif ((d < 2592000));  then v="$((d / 604800))w"
   elif ((d < 31536000)); then v="$((d / 2592000))mo"
   else                        v="$((d / 31536000))y"
   fi
@@ -59,11 +62,23 @@ reltime() {
 }
 
 confirm() {
-  [ "$(printf 'no\nyes\n' | fzf "${fzf_theme[@]}" --height=6 --info=hidden --prompt="$1 ")" = "yes" ]
+  local ans=""
+  ans="$(printf 'no\nyes\n' | fzf "${fzf_theme[@]}" --height=6 --info=hidden --prompt="$1 ")" || return 1
+  [ "$ans" = "yes" ]
+}
+
+confirm_typed() {
+  local out=""
+  out="$(fzf "${fzf_theme[@]}" --print-query --height=6 --info=hidden \
+    --prompt="$1 " --header='type yes to confirm' </dev/null)" || return 1
+  [ "${out##*$'\n'}" = "yes" ]
+}
+
+error_code() {
+  jq -r '.error.code // empty' <<<"$1" 2>/dev/null || true
 }
 
 head_branch() {
-  # Branch from .git/HEAD (a read, no git fork). Detached → short sha.
   local ref=""
   if [ -f "$1/.git/HEAD" ] && read -r ref < "$1/.git/HEAD"; then
     case "$ref" in
@@ -71,29 +86,34 @@ head_branch() {
       ?*)                  printf '%s' "${ref:0:7}" ;;
     esac
   fi
+  return 0
 }
 
 is_dirty() {
   git -C "$1" status --porcelain=v1 2>/dev/null | awk 'BEGIN{e=1} NF{e=0; exit} END{exit e}'
 }
 
+agent_of() {
+  local id="${1:-}"
+  if [ -n "$id" ]; then printf '%s' "${agent_by_wsid[$id]:-}"; fi
+  return 0
+}
+
 # --- herdr live state -------------------------------------------------------
-# One workspace-list call. checkout_path is the open-or-not key; label is the
-# fallback for workspaces that still ship no .worktree block.
 
 declare -A wsid_by_path wsid_by_label agent_by_wsid
 focus_path=""
 focus_label=""
 
 load_workspaces() {
-  local id label status path focused
-  local json
+  local id label status path focused json
   json="$(herdr workspace list 2>/dev/null || printf '{}')"
-  while IFS=$'\t' read -r id label status path focused; do
-    [ -n "$id" ] && agent_by_wsid["$id"]="$status"
+  while IFS=$'\t' read -r id label status path focused || [ -n "${id:-}" ]; do
+    [ -n "${id:-}" ] || continue
+    agent_by_wsid["$id"]="$status"
     [ -n "$label" ] && wsid_by_label["$label"]="$id"
     [ -n "$path" ] && wsid_by_path["$path"]="$id"
-    if [ "$focused" = 1 ]; then
+    if [ "${focused:-0}" = 1 ]; then
       focus_path="$path"
       focus_label="$label"
     fi
@@ -103,8 +123,7 @@ load_workspaces() {
       .agent_status,
       (.worktree.checkout_path // ""),
       (if .focused then 1 else 0 end)
-    ] | @tsv' <<<"$json")
-  # Plain-repo workspaces sometimes omit checkout_path; labels are ~/dev basenames.
+    ] | @tsv' <<<"$json" 2>/dev/null || true)
   if [ -z "$focus_path" ]; then
     case "$focus_label" in
       ""|*"$sep"*) ;;
@@ -114,29 +133,30 @@ load_workspaces() {
 }
 
 wsid_of() {
-  local path="$1" name="$2" id
+  local path="$1" name="$2" id=""
   id="${wsid_by_path[$path]:-}"
-  [ -n "$id" ] && { printf '%s' "$id"; return; }
+  if [ -n "$id" ]; then printf '%s' "$id"; return 0; fi
   printf '%s' "${wsid_by_label[$name]:-}"
+  return 0
 }
 
 # --- visit clock ------------------------------------------------------------
-# Herdr has no last-focused timestamp. Persist one epoch per checkout and bump
-# the focused space on open so sidebar / prefix-number visits count.
+# Herdr has no last-focused timestamp. Persist on Enter only; bump the focused
+# path in memory so this popup sorts it to the top without a disk write.
 
 declare -A visited
 
 load_visited() {
   local path t
   [ -f "$visited_file" ] || return 0
-  while IFS=$'\t' read -r path t; do
-    [ -n "$path" ] && [ -n "${t:-}" ] && visited["$path"]="$t"
+  while IFS=$'\t' read -r path t || [ -n "${path:-}" ]; do
+    [ -n "${path:-}" ] && [ -n "${t:-}" ] && visited["$path"]="$t"
   done < "$visited_file"
 }
 
 save_visited() {
   local tmp path
-  ((${#visited[@]})) || return 0
+  if ((${#visited[@]} == 0)); then return 0; fi
   mkdir -p "$(dirname "$visited_file")"
   tmp="$(mktemp "$visited_file.XXXXXX")"
   for path in "${!visited[@]}"; do
@@ -146,106 +166,73 @@ save_visited() {
 }
 
 touch_visited() {
-  [ -n "$1" ] || return 0
+  [ -n "${1:-}" ] || return 0
   visited["$1"]="$EPOCHSECONDS"
   save_visited
 }
 
 # --- worktree cache ---------------------------------------------------------
-# porcelain once per repo; group sort and row emit share it. Filled in this
-# shell so the emit subshell inherits the map (a `for | sort` pipe would not).
+# herdr worktree list once per repo that actually has linked checkouts.
 
-declare -A wt_porcelain
+declare -A wt_rows
 
 cache_worktrees() {
-  local dir="$1"
-  [ -n "${wt_porcelain[$dir]+x}" ] && return 0
-  if [ -e "$dir/.git/worktrees" ]; then
-    wt_porcelain["$dir"]="$(
-      git -C "$dir" worktree list --porcelain 2>/dev/null | awk '
-        /^worktree / { p = substr($0, 10) }
-        /^branch /   { b = substr($0, 8); sub("refs/heads/", "", b); print p "\t" b }
-        /^detached/  { print p "\t(detached)" }
-      '
-    )"
-  else
-    wt_porcelain["$dir"]=""
+  local dir="$1" json=""
+  [ -n "${wt_rows[$dir]+x}" ] && return 0
+  if [ ! -e "$dir/.git/worktrees" ]; then
+    wt_rows["$dir"]=""
+    return 0
   fi
+  json="$(herdr worktree list --cwd "$dir" 2>/dev/null || printf '{}')"
+  wt_rows["$dir"]="$(
+    jq -r '
+      .result.worktrees[]? |
+      [(.path // ""), (if .is_detached then "(detached)" else (.branch // "") end)] | @tsv
+    ' <<<"$json" 2>/dev/null || true
+  )"
 }
 
-# live(0/1)  visit-epoch  dir — a group is live if any of its checkouts is open.
 group_key() {
   local dir="$1" repo="${1##*/}" live=0 visit t wpath
   visit="${visited[$dir]:-0}"
   if [ -n "$(wsid_of "$dir" "$repo")" ]; then live=1; fi
-  if [ -n "${wt_porcelain[$dir]}" ]; then
-    while IFS=$'\t' read -r wpath _; do
-      [ -n "$wpath" ] && [ "$wpath" != "$dir" ] || continue
-      [ -n "${wsid_by_path[$wpath]:-}" ] && live=1
+  if [ -n "${wt_rows[$dir]:-}" ]; then
+    while IFS=$'\t' read -r wpath _ || [ -n "${wpath:-}" ]; do
+      [ -n "${wpath:-}" ] && [ "$wpath" != "$dir" ] || continue
+      if [ -n "${wsid_by_path[$wpath]:-}" ]; then live=1; fi
       t="${visited[$wpath]:-0}"
-      [ "$t" -gt "$visit" ] && visit=$t
-    done <<< "${wt_porcelain[$dir]}"
+      if [ "$t" -gt "$visit" ]; then visit=$t; fi
+    done <<< "${wt_rows[$dir]}"
   fi
   printf '%s\t%s\t%s\n' "$live" "$visit" "$dir"
 }
 
 # --- row style & emit -------------------------------------------------------
-# Agent badges come from workspace-list (free). git status is hundreds of ms
-# on large checkouts, so dirty/ahead stay off the open path and only on D.
 
 style_space() {
-  # Sets glyph, gcol, agent, acol, here on the caller (bash dynamic scope).
   local path="$1" wsid="$2"
   glyph='○'; gcol="$C_DIM"; agent=""; acol=""; here=0
-  [ -n "$path" ] && [ "$path" = "${focus_path:-}" ] && here=1
-  [ -z "$wsid" ] && return 0
+  if [ -n "$path" ] && [ "$path" = "${focus_path:-}" ]; then here=1; fi
+  if [ -z "$wsid" ]; then return 0; fi
   glyph='●'; gcol="$C_LIVE"
-  case "${agent_by_wsid[$wsid]:-}" in
+  case "$(agent_of "$wsid")" in
     blocked) agent="blocked"; acol="$C_BLOCK"; gcol="$C_BLOCK" ;;
     working) agent="working"; acol="$C_WORK";  gcol="$C_WORK"  ;;
-    "done")  agent="done";    acol="$C_LIVE";  gcol="$C_LIVE"  ;;
+    done)    agent="done";    acol="$C_LIVE";  gcol="$C_LIVE"  ;;
   esac
-}
-
-emit_repo() {
-  local dir="$1" t="${2:-0}" repo wsid branch age namep agep cell meta
-  local glyph gcol agent acol here
-  repo="${dir##*/}"
-  wsid="$(wsid_of "$dir" "$repo")"
-  branch="$(head_branch "$dir")"
-  style_space "$dir" "$wsid"
-  if [ "$here" -eq 1 ]; then age="here"; else reltime "$t"; age="$REL"; fi
-  meta=""
-  [ -n "$agent" ] && printf -v meta '  %s%s%s' "$acol" "$agent" "$C_RST"
-  printf -v namep '%-22s' "$repo"
-  printf -v agep '%4s' "$age"
-  printf -v cell '%s%s%s  %s%s%s  %s%s%s  %s%s%s%s' \
-    "$gcol" "$glyph" "$C_RST" "$C_NAME" "$namep" "$C_RST" \
-    "$C_DIM" "$agep" "$C_RST" "$C_BR" "$branch" "$C_RST" "$meta"
-  printf '%s\trepo\t%s\t%s\t%s\t\t%s\n' "$cell" "$repo" "$dir" "$dir" "$wsid"
-
-  [ -n "${wt_porcelain[$dir]}" ] || return 0
-  printf '%s\n' "${wt_porcelain[$dir]}" \
-    | while IFS=$'\t' read -r wpath wbranch; do
-        [ "$wpath" = "$dir" ] && continue
-        emit_worktree "$dir" "$repo" "$wpath" "$wbranch"
-      done \
-    | sort -t $'\t' -k1,1nr -k2,2nr \
-    | cut -f3-
+  return 0
 }
 
 emit_worktree() {
   local dir="$1" repo="$2" wpath="$3" wbranch="$4"
-  local wsid glyph gcol agent acol here live visit cell meta
+  local wsid glyph gcol agent acol here live visit cell meta=""
   wsid="${wsid_by_path[$wpath]:-}"
   style_space "$wpath" "$wsid"
-  live=0; [ -n "$wsid" ] && live=1
+  live=0
+  if [ -n "$wsid" ]; then live=1; fi
   visit="${visited[$wpath]:-0}"
-  meta=""
-  [ "$here" -eq 1 ] && printf -v meta '  %s%s%s' "$C_DIM" "here" "$C_RST"
-  [ -n "$agent" ] && printf -v meta '%s  %s%s%s' "$meta" "$acol" "$agent" "$C_RST"
-  # Always "repo · branch" in the cell. Filtering must not inject a parent
-  # row — that would steal Enter from a unique worktree match.
+  if [ "$here" -eq 1 ]; then printf -v meta '  %s%s%s' "$C_DIM" "here" "$C_RST"; fi
+  if [ -n "$agent" ]; then printf -v meta '%s  %s%s%s' "$meta" "$acol" "$agent" "$C_RST"; fi
   printf -v cell '    %s%s%s  %s%s%s%s%s%s%s%s' \
     "$gcol" "$glyph" "$C_RST" \
     "$C_DIM" "$repo" "$sep" "$C_RST" \
@@ -254,27 +241,54 @@ emit_worktree() {
     "$live" "$visit" "$cell" "$repo" "$dir" "$wpath" "$wbranch" "$wsid"
 }
 
+emit_repo() {
+  local dir="$1" t="${2:-0}" repo wsid branch age namep agep cell meta=""
+  local glyph gcol agent acol here wpath wbranch
+  repo="${dir##*/}"
+  wsid="$(wsid_of "$dir" "$repo")"
+  branch="$(head_branch "$dir")"
+  style_space "$dir" "$wsid"
+  if [ "$here" -eq 1 ]; then age="here"; else reltime "$t"; age="$REL"; fi
+  if [ -n "$agent" ]; then printf -v meta '  %s%s%s' "$acol" "$agent" "$C_RST"; fi
+  printf -v namep '%-22s' "$repo"
+  printf -v agep '%4s' "$age"
+  printf -v cell '%s%s%s  %s%s%s  %s%s%s  %s%s%s%s' \
+    "$gcol" "$glyph" "$C_RST" "$C_NAME" "$namep" "$C_RST" \
+    "$C_DIM" "$agep" "$C_RST" "$C_BR" "$branch" "$C_RST" "$meta"
+  printf '%s\trepo\t%s\t%s\t%s\t\t%s\n' "$cell" "$repo" "$dir" "$dir" "$wsid"
+
+  if [ -z "${wt_rows[$dir]:-}" ]; then return 0; fi
+  while IFS=$'\t' read -r wpath wbranch || [ -n "${wpath:-}" ]; do
+    [ -n "${wpath:-}" ] && [ "$wpath" != "$dir" ] || continue
+    emit_worktree "$dir" "$repo" "$wpath" "$wbranch"
+  done <<< "${wt_rows[$dir]}" \
+    | sort -t $'\t' -k1,1nr -k2,2nr \
+    | cut -f3- || true
+}
+
 each_repo() {
   local dir
+  shopt -s nullglob
   for dir in "$repos"/*; do
     [ -d "$dir" ] || continue
     [ "${dir##*/}" = worktrees ] && continue
     [ -e "$dir/.git" ] || continue
     printf '%s\n' "$dir"
   done
+  shopt -u nullglob
 }
 
 # --- actions ----------------------------------------------------------------
 
 risk_prompt() {
-  local action="$1" subject="$2" keep="$3" path="$4" id="$5" hints="" st
-  [ "$path" = "${focus_path:-}" ] && hints="you're in it"
-  st="${agent_by_wsid[${id:-}]:-}"
+  local action="$1" subject="$2" keep="$3" path="$4" id="$5" check_dirty="${6:-0}" hints="" st
+  if [ "$path" = "${focus_path:-}" ]; then hints="you're in it"; fi
+  st="$(agent_of "$id")"
   case "$st" in
     blocked) hints="${hints:+$hints, }agent blocked" ;;
     working) hints="${hints:+$hints, }agent working" ;;
   esac
-  if [ -n "$path" ] && is_dirty "$path"; then
+  if [ "$check_dirty" = 1 ] && [ -n "$path" ] && is_dirty "$path"; then
     hints="${hints:+$hints, }uncommitted changes"
   fi
   if [ -n "$hints" ]; then
@@ -284,11 +298,24 @@ risk_prompt() {
   fi
 }
 
+dismiss_confirm() {
+  local id="$1" prompt="$2"
+  if [ "$(agent_of "$id")" = "working" ]; then
+    confirm_typed "$prompt"
+  else
+    confirm "$prompt"
+  fi
+}
+
 available_branches() {
-  # Local + origin/* not checked out anywhere, newest first. No fetch.
   local repo_path="$1" checked
-  checked="$(git -C "$repo_path" worktree list --porcelain 2>/dev/null \
-    | awk '/^branch /{ b=substr($0,8); sub("refs/heads/","",b); print b }')"
+  checked="$(
+    {
+      head_branch "$repo_path"
+      printf '\n'
+      awk -F '\t' '$2 != "" && $2 != "(detached)" { print $2 }' <<< "${wt_rows[$repo_path]:-}"
+    } | awk 'NF && !seen[$0]++'
+  )"
   git -C "$repo_path" for-each-ref --sort=-committerdate --format='%(refname)' \
     refs/heads refs/remotes/origin 2>/dev/null \
   | awk -v checked="$checked" '
@@ -302,15 +329,13 @@ available_branches() {
         seen[short]=1
         print short
       }
-    '
+    ' || true
 }
 
 create_worktree() {
   local repo_path="$1" repo="$2" branch="$3"
   local extra=()
-  if git -C "$repo_path" show-ref --verify --quiet "refs/heads/$branch"; then
-    :
-  elif git -C "$repo_path" show-ref --verify --quiet "refs/remotes/origin/$branch"; then
+  if git -C "$repo_path" show-ref --verify --quiet "refs/remotes/origin/$branch"; then
     extra=(--base "origin/$branch")
   fi
   herdr worktree create --cwd "$repo_path" --branch "$branch" "${extra[@]}" \
@@ -318,19 +343,24 @@ create_worktree() {
 }
 
 new_worktree() {
-  local repo_path="$1" repo="$2" query="$3" avail name rc
+  local repo_path="$1" repo="$2" query="$3" avail name="" rc=0
   local n_query=()
   avail="$(available_branches "$repo_path")"
   case "$query" in */*) n_query=(--query="$query") ;; esac
-  # fzf: 0 = picked a row; 1 = typed a new name (--print-query); 130 = Esc.
-  if name="$(
-    { [ -n "$avail" ] && printf '%s\n' "$avail"; } \
-      | fzf "${fzf_theme[@]}" --print-query --height=60% \
-          "${n_query[@]}" \
-          --prompt="worktree ❯ " \
-          --list-label=" new worktree · $repo " \
-          --header='type a new branch, or pick one — newest first'
-    )"; then rc=0; else rc=$?; fi
+  # 0 = picked a row; 1 = typed a new name (--print-query); 130 = Esc.
+  if [ -n "$avail" ]; then
+    name="$(printf '%s\n' "$avail" | fzf "${fzf_theme[@]}" --print-query --height=60% \
+      "${n_query[@]}" \
+      --prompt="worktree ❯ " \
+      --list-label=" new worktree · $repo " \
+      --header='type a new branch, or pick one — newest first')" || rc=$?
+  else
+    name="$(fzf "${fzf_theme[@]}" --print-query --height=60% \
+      "${n_query[@]}" \
+      --prompt="worktree ❯ " \
+      --list-label=" new worktree · $repo " \
+      --header='type a new branch' </dev/null)" || rc=$?
+  fi
   case $rc in 0|1) ;; *) return 0 ;; esac
   name="${name##*$'\n'}"
   [ -n "$name" ] || return 0
@@ -339,8 +369,10 @@ new_worktree() {
 
 dismiss_space() {
   local kind="$1" repo="$2" repo_path="$3" target="$4" branch="$5" wsid="$6"
+  local prompt err
   if [ "$kind" = "wt" ]; then
-    confirm "$(risk_prompt 'delete worktree' "${branch:-${target##*/}}" 'branch kept' "$target" "$wsid")" || return 0
+    prompt="$(risk_prompt 'delete worktree' "${branch:-${target##*/}}" 'branch kept' "$target" "$wsid" 0)"
+    dismiss_confirm "$wsid" "$prompt" || return 0
     if [ -n "$wsid" ]; then
       herdr worktree remove --workspace "$wsid" --force >/dev/null
     else
@@ -353,18 +385,18 @@ dismiss_space() {
     sleep 1.2
     return 0
   fi
-  confirm "$(risk_prompt 'close' "$repo" 'files kept' "$target" "$wsid")" || return 0
-  local err
+  prompt="$(risk_prompt 'close' "$repo" 'files kept' "$target" "$wsid" 1)"
+  dismiss_confirm "$wsid" "$prompt" || return 0
   if err="$(herdr workspace close "$wsid" 2>&1)"; then
     return 0
   fi
-  if [[ "${err,,}" == *group* ]]; then
+  if [ "$(error_code "$err")" = "workspace_group_close_required" ]; then
     confirm "$repo has open worktrees — close them too?" || return 0
     herdr workspace close "$wsid" --group >/dev/null
   else
     printf '%s\n' "$err"
     sleep 2
-    exit 1
+    return 1
   fi
 }
 
@@ -385,24 +417,30 @@ open_space() {
 
 load_workspaces
 load_visited
-[ -n "$focus_path" ] && visited["$focus_path"]="$now"
-save_visited
+if [ -n "$focus_path" ]; then
+  visited["$focus_path"]="$now"
+fi
 
 repo_dirs=()
-while IFS= read -r dir; do
+while IFS= read -r dir || [ -n "${dir:-}" ]; do
+  [ -n "${dir:-}" ] || continue
   repo_dirs+=("$dir")
   cache_worktrees "$dir"
 done < <(each_repo)
 
-rows="$(
-  for dir in "${repo_dirs[@]}"; do
-    group_key "$dir"
-  done \
-    | sort -t $'\t' -k1,1nr -k2,2nr -k3,3 \
-    | while IFS=$'\t' read -r _live _visit dir; do
-        emit_repo "$dir" "${visited[$dir]:-0}"
-      done
-)"
+rows=""
+if ((${#repo_dirs[@]} > 0)); then
+  rows="$(
+    for dir in "${repo_dirs[@]}"; do
+      group_key "$dir"
+    done \
+      | sort -t $'\t' -k1,1nr -k2,2nr -k3,3 \
+      | while IFS=$'\t' read -r _live _visit dir || [ -n "${dir:-}" ]; do
+          [ -n "${dir:-}" ] || continue
+          emit_repo "$dir" "${visited[$dir]:-0}"
+        done || true
+  )" || rows=""
+fi
 
 if [ -z "$rows" ]; then
   printf 'no git repos under %s\n' "$repos"
@@ -410,13 +448,12 @@ if [ -z "$rows" ]; then
   exit 0
 fi
 
-# Cursor on the previous space (tmux last-window), not the one we're in.
 start_pos=1
 if [ -n "${focus_path:-}" ]; then
   n=0 cur=0
-  while IFS=$'\t' read -r _cell _k _r _rp tgt _rest; do
+  while IFS=$'\t' read -r _cell _k _r _rp tgt _rest || [ -n "${tgt:-}" ]; do
     n=$((n + 1))
-    [ "$tgt" = "$focus_path" ] && cur=$n
+    if [ "${tgt:-}" = "$focus_path" ]; then cur=$n; fi
   done <<<"$rows"
   if [ "$cur" -gt 0 ] && [ "$n" -gt 1 ]; then
     if [ "$cur" -lt "$n" ]; then start_pos=$((cur + 1))
@@ -424,21 +461,23 @@ if [ -n "${focus_path:-}" ]; then
   fi
 fi
 
+out=""
 out="$(
   printf '%s\n' "$rows" \
     | fzf "${fzf_theme[@]}" \
         --delimiter='\t' --with-nth=1 --nth=1 --no-sort \
         --prompt='go ❯ ' \
         --list-label=' repos · worktrees ' \
-        --header='enter: open · N: new worktree · D: delete space · ● live ○ on disk' \
+        --header='enter: open · N: new worktree · D: delete · type yes if agent working' \
         --expect=N,D --print-query \
         --bind "start:pos($start_pos)"
 )" || exit 0
 
+query="" key="" sel=""
 {
-  IFS= read -r query
-  IFS= read -r key
-  IFS= read -r sel
+  IFS= read -r query || true
+  IFS= read -r key || true
+  IFS= read -r sel || true
 } <<<"$out"
 [ -n "$sel" ] || exit 0
 
