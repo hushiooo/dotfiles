@@ -6,7 +6,7 @@
   "enableInstallTelemetry": false,
   "theme": "dark",
   "quietStartup": true,
-  "hideThinkingBlock": true,
+  "hideThinkingBlock": false,
   "steeringMode": "all",
   "followUpMode": "all",
   "collapseChangelog": true,

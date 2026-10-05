@@ -143,6 +143,11 @@
       source = ./config/pi/agent/extensions/terminal-status-title.js;
       force = true;
     };
+    file.".pi/agent/extensions/quiet-tools" = {
+      source = ./config/pi/agent/extensions/quiet-tools;
+      recursive = true;
+      force = true;
+    };
     file.".pi/agent/extensions/usage-footer.js" = {
       source = ./config/pi/agent/extensions/usage-footer.js;
       force = true;
