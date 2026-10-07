@@ -5,7 +5,8 @@
     extensions = [ pkgs.gh-stack ];
 
     settings = {
-      git_protocol = "https";
+      # Matches git's url.insteadOf rewrite: all GitHub traffic goes over SSH.
+      git_protocol = "ssh";
       prompt = "enabled";
       prefer_editor_prompt = "disabled";
       color_labels = "disabled";

@@ -1,7 +1,17 @@
-{ pkgs, ... }:
 {
+  config,
+  pkgs,
+  dotfiles,
+  ...
+}:
+{
+  # Live symlink: Lua edits apply on the next nvim start, no rebuild needed.
+  xdg.configFile."nvim".source = config.lib.file.mkOutOfStoreSymlink "${dotfiles}/config/nvim";
+
   programs.neovim = {
     enable = true;
+    # init.lua is ours (config/nvim); load HM's generated Lua via the wrapper.
+    sideloadInitLua = true;
     defaultEditor = true;
     viAlias = true;
     vimAlias = true;
@@ -24,6 +34,7 @@
       telescope-fzf-native-nvim
       telescope-nvim
       tokyonight-nvim
+      vim-tmux-navigator
       yanky-nvim
       (nvim-treesitter.withPlugins (
         plugins: with plugins; [

@@ -135,14 +135,18 @@ autocmd("BufReadPost", {
     callback = function(args)
         local mark = vim.api.nvim_buf_get_mark(args.buf, '"')
         local lcount = vim.api.nvim_buf_line_count(args.buf)
-        if mark[1] > 0 and mark[1] <= lcount then pcall(vim.api.nvim_win_set_cursor, 0, mark) end
+        if mark[1] > 0 and mark[1] <= lcount then
+            pcall(vim.api.nvim_win_set_cursor, 0, mark)
+        end
     end,
     desc = "Return to last cursor position",
 })
 
 autocmd("VimResized", {
     group = general_group,
-    callback = function() vim.cmd("tabdo wincmd =") end,
+    callback = function()
+        vim.cmd("tabdo wincmd =")
+    end,
     desc = "Keep splits balanced after resize",
 })
 

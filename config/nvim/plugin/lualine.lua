@@ -26,7 +26,9 @@ require("lualine").setup({
             {
                 function()
                     local fname = vim.api.nvim_buf_get_name(0)
-                    if fname == "" then return "[No Name]" end
+                    if fname == "" then
+                        return "[No Name]"
+                    end
                     -- ":." is already cwd-relative.
                     local rel = vim.fn.fnamemodify(fname, ":.")
                     local parts = vim.split(rel, "/")
@@ -73,7 +75,9 @@ require("lualine").setup({
             {
                 "fileformat",
                 icons_enabled = false,
-                cond = function() return vim.bo.fileformat ~= "unix" end,
+                cond = function()
+                    return vim.bo.fileformat ~= "unix"
+                end,
             },
         },
         lualine_y = { "progress" },

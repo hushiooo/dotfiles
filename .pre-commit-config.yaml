@@ -1,0 +1,31 @@
+# Run by prek (installed with `prek install`). Tools come from the flake's
+# pinned nixpkgs, so nothing beyond Nix needs to be on PATH.
+repos:
+  - repo: local
+    hooks:
+      - id: gitleaks
+        name: gitleaks (secret scan)
+        entry: nix run --inputs-from . nixpkgs#gitleaks -- git --pre-commit --staged --redact --no-banner
+        language: system
+        pass_filenames: false
+      - id: treefmt
+        name: treefmt
+        entry: nix fmt -- --fail-on-change
+        language: system
+        types: [text]
+      - id: statix
+        name: statix
+        entry: nix run --inputs-from . nixpkgs#statix -- check .
+        language: system
+        files: \.nix$
+        pass_filenames: false
+      - id: deadnix
+        name: deadnix
+        entry: nix run --inputs-from . nixpkgs#deadnix -- --fail
+        language: system
+        files: \.nix$
+      - id: shellcheck
+        name: shellcheck
+        entry: nix run --inputs-from . nixpkgs#shellcheck --
+        language: system
+        files: ^setup\.sh$

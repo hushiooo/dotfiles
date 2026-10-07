@@ -85,10 +85,10 @@ local gitsigns = require("gitsigns")
 
 gitsigns.setup({
     signs = {
-        add          = { text = "▎" },
-        change       = { text = "▎" },
-        delete       = { text = "" },
-        topdelete    = { text = "" },
+        add = { text = "▎" },
+        change = { text = "▎" },
+        delete = { text = "" },
+        topdelete = { text = "" },
         changedelete = { text = "▎" },
     },
     attach_to_untracked = false,
@@ -114,9 +114,17 @@ gitsigns.setup({
 local map = vim.keymap.set
 
 -- Gitsigns
-map("n", "<leader>gb", function() gitsigns.toggle_current_line_blame() end, { desc = "Toggle git blame" })
-map("n", "<leader>gp", function() gitsigns.preview_hunk() end, { desc = "Preview git hunk" })
+map("n", "<leader>gb", function()
+    gitsigns.toggle_current_line_blame()
+end, { desc = "Toggle git blame" })
+map("n", "<leader>gp", function()
+    gitsigns.preview_hunk()
+end, { desc = "Preview git hunk" })
 
 -- ]c / [c need Option on AZERTY, so hunk movement gets leader keys.
-map("n", "<leader>gn", function() gitsigns.nav_hunk("next") end, { desc = "Git hunk: next" })
-map("n", "<leader>gN", function() gitsigns.nav_hunk("prev") end, { desc = "Git hunk: previous" })
+map("n", "<leader>gn", function()
+    gitsigns.nav_hunk("next")
+end, { desc = "Git hunk: next" })
+map("n", "<leader>gN", function()
+    gitsigns.nav_hunk("prev")
+end, { desc = "Git hunk: previous" })

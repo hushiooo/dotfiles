@@ -33,13 +33,7 @@
       bind b break-pane -d
 
 
-      ##### Pane navigation (prefix + hjkl) #####
-      bind h select-pane -L
-      bind j select-pane -D
-      bind k select-pane -U
-      bind l select-pane -R
-
-      # Pane reordering inside window
+      ##### Pane reordering inside window #####
       bind p swap-pane -U
       bind P swap-pane -D
 
@@ -106,26 +100,19 @@
       set -g pane-border-lines heavy
 
       set -g message-style "fg=#7aa2f7,bg=#24283b,bold"
+
+
+      ##### Session persistence #####
+      # continuum autosaves via a hook in status-right, so it must load after
+      # the theme above sets status-right (and after resurrect).
+      set -g @continuum-restore 'on'
+      set -g @continuum-save-interval '15'
+      run-shell ${pkgs.tmuxPlugins.continuum.rtp}
     '';
 
     plugins = with pkgs; [
-      {
-        plugin = tmuxPlugins.vim-tmux-navigator;
-        extraConfig = ''
-          # Smart pane switching with awareness of Vim splits (no prefix)
-          bind -n C-h if -F "#{@pane_is_vim}" "send-keys C-h" "select-pane -L"
-          bind -n C-j if -F "#{@pane_is_vim}" "send-keys C-j" "select-pane -D"
-          bind -n C-k if -F "#{@pane_is_vim}" "send-keys C-k" "select-pane -U"
-          bind -n C-l if -F "#{@pane_is_vim}" "send-keys C-l" "select-pane -R"
-        '';
-      }
-      {
-        plugin = tmuxPlugins.continuum;
-        extraConfig = ''
-          set -g @continuum-restore 'on'
-          set -g @continuum-save-interval '15'
-        '';
-      }
+      # Ctrl-h/j/k/l across tmux panes and nvim splits (nvim side in neovim.nix).
+      tmuxPlugins.vim-tmux-navigator
       {
         plugin = tmuxPlugins.resurrect;
         extraConfig = ''

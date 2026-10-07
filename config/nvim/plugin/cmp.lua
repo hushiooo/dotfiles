@@ -32,7 +32,9 @@ local kind_icons = {
 local function has_words_before()
     local cursor = vim.api.nvim_win_get_cursor(0)
     local line, col = cursor[1], cursor[2]
-    if col == 0 then return false end
+    if col == 0 then
+        return false
+    end
     local text = vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1] or ""
     return text:sub(col, col):match("%s") == nil
 end
@@ -47,7 +49,9 @@ cmp.setup({
         ghost_text = true,
     },
     snippet = {
-        expand = function(args) luasnip.lsp_expand(args.body) end,
+        expand = function(args)
+            luasnip.lsp_expand(args.body)
+        end,
     },
     window = {
         completion = cmp.config.window.bordered({
@@ -107,10 +111,14 @@ cmp.setup({
             end
         end, { "i", "s" }),
         ["<C-l>"] = cmp.mapping(function()
-            if luasnip.expand_or_locally_jumpable() then luasnip.expand_or_jump() end
+            if luasnip.expand_or_locally_jumpable() then
+                luasnip.expand_or_jump()
+            end
         end, { "i", "s" }),
         ["<C-h>"] = cmp.mapping(function()
-            if luasnip.locally_jumpable(-1) then luasnip.jump(-1) end
+            if luasnip.locally_jumpable(-1) then
+                luasnip.jump(-1)
+            end
         end, { "i", "s" }),
     }),
     sources = cmp.config.sources({

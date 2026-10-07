@@ -1,5 +1,15 @@
-{ ... }:
-{
+_: {
+  programs.delta = {
+    enable = true;
+    enableGitIntegration = true;
+    options = {
+      line-numbers = true;
+      navigate = true;
+      side-by-side = false;
+      syntax-theme = "tokyonight";
+    };
+  };
+
   programs.git = {
     enable = true;
     lfs.enable = true;
@@ -82,15 +92,8 @@
       core = {
         autocrlf = "input";
         editor = "nvim";
-        pager = "delta";
       };
       credential.helper = "osxkeychain";
-      delta = {
-        line-numbers = true;
-        navigate = true;
-        side-by-side = false;
-        syntax-theme = "base16";
-      };
       diff = {
         algorithm = "histogram";
         colorMoved = "default";
@@ -100,9 +103,8 @@
         pruneTags = true;
       };
       init.defaultBranch = "main";
-      interactive.diffFilter = "delta --color-only";
       merge = {
-        conflictStyle = "diff3";
+        conflictStyle = "zdiff3";
         ff = "only";
         mergiraf = {
           driver = "mergiraf merge --git %O %A %B -s %S -x %X -y %Y -p %P -l %L";

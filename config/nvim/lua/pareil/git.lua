@@ -95,23 +95,25 @@ function M.select_file(prompt, callback, opts)
     local actions = require("telescope.actions")
     local action_state = require("telescope.actions.state")
 
-    pickers.new({}, {
-        prompt_title = opts.branch and (prompt .. " [" .. opts.branch .. "]") or prompt,
-        finder = finders.new_table({ results = files }),
-        sorter = conf.generic_sorter({}),
-        attach_mappings = function(prompt_bufnr)
-            actions.select_default:replace(function()
-                local selection = action_state.get_selected_entry()
-                actions.close(prompt_bufnr)
-                if not selection or not selection[1] then
-                    vim.notify("No file selected", vim.log.levels.WARN)
-                    return
-                end
-                callback(selection[1])
-            end)
-            return true
-        end,
-    }):find()
+    pickers
+        .new({}, {
+            prompt_title = opts.branch and (prompt .. " [" .. opts.branch .. "]") or prompt,
+            finder = finders.new_table({ results = files }),
+            sorter = conf.generic_sorter({}),
+            attach_mappings = function(prompt_bufnr)
+                actions.select_default:replace(function()
+                    local selection = action_state.get_selected_entry()
+                    actions.close(prompt_bufnr)
+                    if not selection or not selection[1] then
+                        vim.notify("No file selected", vim.log.levels.WARN)
+                        return
+                    end
+                    callback(selection[1])
+                end)
+                return true
+            end,
+        })
+        :find()
 end
 
 ---@param prompt string
@@ -162,24 +164,26 @@ function M.select_branch(prompt, callback, opts)
     local actions = require("telescope.actions")
     local action_state = require("telescope.actions.state")
 
-    pickers.new({}, {
-        prompt_title = prompt,
-        finder = finders.new_table({ results = branches }),
-        sorter = conf.generic_sorter({}),
-        default_selection_index = default_index,
-        attach_mappings = function(prompt_bufnr)
-            actions.select_default:replace(function()
-                local selection = action_state.get_selected_entry()
-                actions.close(prompt_bufnr)
-                if not selection or not selection[1] then
-                    vim.notify("No branch selected", vim.log.levels.WARN)
-                    return
-                end
-                callback(selection[1])
-            end)
-            return true
-        end,
-    }):find()
+    pickers
+        .new({}, {
+            prompt_title = prompt,
+            finder = finders.new_table({ results = branches }),
+            sorter = conf.generic_sorter({}),
+            default_selection_index = default_index,
+            attach_mappings = function(prompt_bufnr)
+                actions.select_default:replace(function()
+                    local selection = action_state.get_selected_entry()
+                    actions.close(prompt_bufnr)
+                    if not selection or not selection[1] then
+                        vim.notify("No branch selected", vim.log.levels.WARN)
+                        return
+                    end
+                    callback(selection[1])
+                end)
+                return true
+            end,
+        })
+        :find()
 end
 
 ---@param file1 string

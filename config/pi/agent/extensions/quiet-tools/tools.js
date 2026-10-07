@@ -43,7 +43,9 @@ const TOOLS = [
 ];
 
 /** Names of the tools this extension hides completely, for use by the turn summary. */
-export const HIDDEN_TOOL_NAMES = new Set(TOOLS.filter((tool) => !tool.headline).map((tool) => tool.name));
+export const HIDDEN_TOOL_NAMES = new Set(
+  TOOLS.filter((tool) => !tool.headline).map((tool) => tool.name),
+);
 
 export function registerQuietTools(pi) {
   // Built-in definitions are bound to a cwd; build them lazily per session cwd.
@@ -59,7 +61,13 @@ export function registerQuietTools(pi) {
       ...tool.create(process.cwd()),
       ...createRenderers(tool.name, tool.headline),
       execute: (toolCallId, params, signal, onUpdate, ctx) =>
-        definitionFor(tool, ctx?.cwd ?? process.cwd()).execute(toolCallId, params, signal, onUpdate, ctx),
+        definitionFor(tool, ctx?.cwd ?? process.cwd()).execute(
+          toolCallId,
+          params,
+          signal,
+          onUpdate,
+          ctx,
+        ),
     });
   }
 }

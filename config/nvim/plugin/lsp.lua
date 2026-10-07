@@ -64,15 +64,18 @@ setup("jsonls", {
     settings = { json = { format = { enable = true } } },
 })
 
--- Nix
+-- Nix: resolve nixpkgs and Home Manager options from the dotfiles flake
+-- (there is no NIX_PATH channel to fall back on).
+local dotfiles_flake = string.format('(builtins.getFlake "%s")', vim.fn.expand("~/dev/dotfiles"))
 setup("nixd", {
     settings = {
-    nixd = {
-        formatting = { command = { "nixfmt" } },
-        nixpkgs = {
-            expr = "import <nixpkgs> { }",
+        nixd = {
+            formatting = { command = { "nixfmt" } },
+            nixpkgs = { expr = "import " .. dotfiles_flake .. ".inputs.nixpkgs { }" },
+            options = {
+                home_manager = { expr = dotfiles_flake .. '.homeConfigurations."joad".options' },
+            },
         },
-    },
     },
 })
 
@@ -131,15 +134,15 @@ vim.diagnostic.config({
     signs = {
         text = {
             [sev.ERROR] = " ",
-            [sev.WARN]  = " ",
-            [sev.HINT]  = "󰌵 ",
-            [sev.INFO]  = " ",
+            [sev.WARN] = " ",
+            [sev.HINT] = "󰌵 ",
+            [sev.INFO] = " ",
         },
         numhl = {
             [sev.ERROR] = "DiagnosticSignError",
-            [sev.WARN]  = "DiagnosticSignWarn",
-            [sev.HINT]  = "DiagnosticSignHint",
-            [sev.INFO]  = "DiagnosticSignInfo",
+            [sev.WARN] = "DiagnosticSignWarn",
+            [sev.HINT] = "DiagnosticSignHint",
+            [sev.INFO] = "DiagnosticSignInfo",
         },
     },
     underline = false,
@@ -156,7 +159,9 @@ vim.api.nvim_create_autocmd("LspAttach", {
         -- gd is not a default; <C-k> gives normal-mode signature help (default is i<C-s>).
         map("n", "gd", vim.lsp.buf.definition, opts)
         map("n", "<C-k>", vim.lsp.buf.signature_help, opts)
-        map("n", "<leader>cf", function() vim.lsp.buf.format({ async = true }) end, opts)
+        map("n", "<leader>cf", function()
+            vim.lsp.buf.format({ async = true })
+        end, opts)
         map("n", "<leader>cs", vim.lsp.buf.workspace_symbol, opts)
         map("n", "<leader>cd", vim.diagnostic.open_float, { buffer = ev.buf, desc = "Show diagnostics", silent = true })
         map("n", "<leader>ci", function()

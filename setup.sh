@@ -1,66 +1,27 @@
 #!/bin/bash
 #
-# macOS Setup Script
-# Installs prerequisites, Homebrew packages, and applies system defaults.
+# macOS bootstrap: from a fresh Mac to a fully applied config in one command.
 #
-# Most CLI tools and language toolchains are managed via Nix (home.nix).
-# This script handles things Nix can't (or shouldn't) do on macOS:
-#   - GUI apps  -> CASKS array below
-#   - Formulae that fail to build in nixpkgs on macOS, or have unfree
-#     licenses we'd rather not pin in Nix -> FORMULAE array below
+#   bash <(curl -fsSL https://raw.githubusercontent.com/hushiooo/dotfiles/main/setup.sh)
 #
-# To add a new package: just append a line to the relevant array.
+# Installs Xcode CLI tools and Rosetta, clones this repo (if run from outside a
+# checkout), installs Nix and Homebrew, applies the Brewfile, then activates the
+# Home Manager configuration (which also applies macOS defaults). Safe to re-run.
 #
 # Usage:
 #   ./setup.sh          # Full setup
-#   ./setup.sh defaults # Apply macOS defaults only
 #   ./setup.sh brew     # Install Homebrew packages only
 #
 
 set -euo pipefail
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Homebrew packages (edit these arrays to add/remove packages)
-# ──────────────────────────────────────────────────────────────────────────────
-
-CASKS=(
-    "ghostty"
-    "google-chrome"
-    "gcloud-cli"
-    "linear"
-    "notion"
-    "obsidian"
-    "orbstack"
-    "postico"
-    "raycast"
-    "session-manager-plugin"
-    "slack"
-    "tailscale-app"
-    "temurin"
-)
-
-# Formulae kept in Brew on purpose. Reason in comment next to each.
-FORMULAE=(
-    "checkov"                       # nixpkgs build OOMs on macOS (heavy py deps)
-    "pi-coding-agent"               # AI CLI; releases far faster than nixpkgs
-)
-
-# Formulae installed from HEAD (built from source, latest commit).
-# Use for taps with broken/missing bottles.
-HEAD_FORMULAE=(
-    "earthbuild/tap/earth"          # bottle 404s; --HEAD builds from source
-)
-
-# Third-party taps required by FORMULAE / HEAD_FORMULAE.
-REQUIRED_TAPS=(
-    "earthbuild/tap"
-)
+REPO_URL="https://github.com/hushiooo/dotfiles.git"
+DOTFILES="${DOTFILES:-$HOME/dev/dotfiles}"
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Colors & Helpers
 # ──────────────────────────────────────────────────────────────────────────────
 
-RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
@@ -69,7 +30,6 @@ NC='\033[0m'
 info() { echo -e "${BLUE}ℹ${NC}  $1"; }
 success() { echo -e "${GREEN}✓${NC}  $1"; }
 warn() { echo -e "${YELLOW}⚠${NC}  $1"; }
-error() { echo -e "${RED}✗${NC}  $1"; exit 1; }
 
 if [[ "$(id -u)" -eq 0 ]]; then
     echo "Do not run this script with sudo."
@@ -107,6 +67,50 @@ install_prerequisites() {
     fi
 }
 
+# Re-runs this script from a checkout at $DOTFILES when invoked from elsewhere
+# (e.g. via curl), since the Brewfile and flake must be on disk.
+ensure_checkout() {
+    local here
+    here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    if [[ -f "$here/flake.nix" ]]; then
+        DOTFILES="$here"
+        return
+    fi
+    if [[ ! -d "$DOTFILES/.git" ]]; then
+        info "Cloning $REPO_URL into $DOTFILES..."
+        git clone "$REPO_URL" "$DOTFILES"
+    fi
+    exec "$DOTFILES/setup.sh" "$@"
+}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Nix
+# ──────────────────────────────────────────────────────────────────────────────
+
+install_nix() {
+    if [[ ! -x /nix/var/nix/profiles/default/bin/nix ]]; then
+        info "Installing Nix (Determinate Systems installer)..."
+        curl -fsSL https://install.determinate.systems/nix | sh -s -- install --no-confirm
+        success "Nix installed"
+    else
+        success "Nix already installed"
+    fi
+    if ! command -v nix &>/dev/null; then
+        # shellcheck source=/dev/null
+        . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+    fi
+}
+
+switch_home() {
+    info "Activating the Home Manager configuration..."
+    # -b: move pre-existing dotfiles aside instead of failing on them.
+    nix run --inputs-from "$DOTFILES" home-manager -- switch --flake "$DOTFILES" -b hm-backup
+    success "Home Manager configuration active"
+
+    info "Installing git hooks..."
+    (cd "$DOTFILES" && "$HOME/.nix-profile/bin/prek" install)
+}
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Homebrew
 # ──────────────────────────────────────────────────────────────────────────────
@@ -122,174 +126,46 @@ install_homebrew() {
     fi
 }
 
-trust_required_taps() {
-    local tap
-    for tap in "${REQUIRED_TAPS[@]}"; do
-        if ! brew tap | grep -qx "$tap"; then
-            info "Tapping $tap..."
-            brew tap "$tap"
-        fi
-        brew trust --tap "$tap" &>/dev/null || true
+# Homebrew refuses to load third-party taps and formulae until they are trusted.
+trust_third_party() {
+    local name
+    awk -F'"' '/^tap /{print $2}' "$DOTFILES/Brewfile" | while read -r name; do
+        brew tap "$name"
+        brew trust --tap "$name" &>/dev/null || true
     done
-
-    brew trust --formula earthbuild/tap/earth &>/dev/null || true
-}
-
-install_formula() {
-    local name="$1"
-    local short="${name##*/}"
-
-    if brew list "$short" &>/dev/null; then
-        success "$short already installed"
-    else
-        info "Installing $name..."
-        brew install "$name"
-    fi
-}
-
-install_head_formula() {
-    local name="$1"
-    local short="${name##*/}"
-
-    if brew list "$short" &>/dev/null; then
-        success "$short already installed (HEAD)"
-    else
-        info "Installing $name (--HEAD)..."
-        brew install --HEAD "$name"
-    fi
-}
-
-install_cask() {
-    local name="$1"
-    local short="${name##*/}"
-
-    if brew list --cask --versions "$short" &>/dev/null; then
-        success "$short already installed"
-        return
-    fi
-
-    info "Installing $name..."
-    if ! brew install --cask --adopt "$name"; then
-        if brew list --cask --versions "$short" &>/dev/null; then
-            success "$short already installed"
-            return
-        fi
-        error "Failed to install $name"
-    fi
+    awk -F'"' '/^brew "[^"\/]+\/[^"\/]+\/[^"]+"/{print $2}' "$DOTFILES/Brewfile" | while read -r name; do
+        brew trust --formula "$name" &>/dev/null || true
+    done
 }
 
 install_packages() {
-    trust_required_taps
-
-    info "Installing Homebrew formulae..."
-    echo ""
-    for formula in "${FORMULAE[@]}"; do
-        install_formula "$formula"
-    done
-    for formula in "${HEAD_FORMULAE[@]}"; do
-        install_head_formula "$formula"
-    done
-
-    echo ""
-    info "Installing Homebrew casks..."
-    echo ""
-    for cask in "${CASKS[@]}"; do
-        install_cask "$cask"
-    done
-
-    echo ""
+    trust_third_party
+    info "Installing Homebrew packages from $DOTFILES/Brewfile..."
+    brew bundle --file="$DOTFILES/Brewfile"
     success "All Homebrew packages installed"
-}
-
-# ──────────────────────────────────────────────────────────────────────────────
-# macOS Defaults
-# ──────────────────────────────────────────────────────────────────────────────
-
-apply_defaults() {
-    info "Applying macOS defaults..."
-
-    defaults write com.apple.dock autohide -bool true
-    defaults write com.apple.dock autohide-delay -float 0
-    defaults write com.apple.dock autohide-time-modifier -float 0.3
-    defaults write com.apple.dock mru-spaces -bool false
-    defaults write com.apple.dock launchanim -bool false
-    defaults write com.apple.dock minimize-to-application -bool true
-    defaults write com.apple.dock orientation -string "left"
-    defaults write com.apple.dock show-process-indicators -bool false
-    defaults write com.apple.dock show-recents -bool false
-    defaults write com.apple.dock tilesize -int 32
-    defaults write com.apple.dock persistent-apps -array
-    defaults write com.apple.dock wvous-tl-corner -int 0
-    defaults write com.apple.dock wvous-tr-corner -int 0
-    defaults write com.apple.dock wvous-bl-corner -int 0
-    defaults write com.apple.dock wvous-br-corner -int 0
-
-    defaults write com.apple.finder FXPreferredViewStyle -string "clmv"
-    defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
-    defaults write com.apple.finder NewWindowTarget -string "PfHm"
-    defaults write com.apple.finder QuitMenuItem -bool true
-    defaults write com.apple.finder ShowPathbar -bool true
-    defaults write com.apple.finder ShowStatusBar -bool true
-    defaults write com.apple.finder _FXSortFoldersFirst -bool true
-    defaults write com.apple.finder CreateDesktop -bool false
-    defaults write com.apple.finder AppleShowAllFiles -bool true
-    defaults write com.apple.finder AppleShowAllExtensions -bool true
-    defaults write com.apple.finder FXDefaultSearchScope -string "SCcf"
-    defaults write com.apple.finder _FXShowPosixPathInTitle -bool true
-    defaults write com.apple.finder ShowRecentTags -bool false
-
-    defaults write NSGlobalDomain AppleInterfaceStyle -string "Dark"
-    defaults write NSGlobalDomain KeyRepeat -int 2
-    defaults write NSGlobalDomain InitialKeyRepeat -int 12
-    defaults write NSGlobalDomain NSAutomaticWindowAnimationsEnabled -bool false
-    defaults write NSGlobalDomain AppleICUForce24HourTime -bool true
-    defaults write NSGlobalDomain AppleMeasurementUnits -string "Centimeters"
-    defaults write NSGlobalDomain AppleTemperatureUnit -string "Celsius"
-    defaults write NSGlobalDomain AppleMetricUnits -int 1
-    defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
-    defaults write NSGlobalDomain NSAutomaticCapitalizationEnabled -bool false
-    defaults write NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -bool false
-    defaults write NSGlobalDomain NSAutomaticDashSubstitutionEnabled -bool false
-    defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
-    defaults write NSGlobalDomain NSDocumentSaveNewDocumentsToCloud -bool false
-    defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
-    defaults write NSGlobalDomain AppleReduceDesktopTinting -bool true
-    defaults write NSGlobalDomain NSWindowResizeTime -float 0.001
-
-    defaults write com.apple.AppleMultitouchTrackpad TrackpadThreeFingerDrag -bool true
-    defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadThreeFingerDrag -bool true
-
-    defaults write com.apple.screencapture location -string "$HOME/Desktop"
-    defaults write com.apple.screencapture type -string "png"
-    defaults write com.apple.screencapture disable-shadow -bool true
-    defaults write com.apple.screencapture show-thumbnail -bool false
-
-    defaults write com.apple.ActivityMonitor ShowCategory -int 0
-    defaults write com.apple.ActivityMonitor SortColumn -string "CPUUsage"
-    defaults write com.apple.ActivityMonitor SortDirection -int 0
-
-    defaults write com.apple.TextEdit RichText -bool false
-    defaults write com.apple.TextEdit PlainTextEncoding -int 4
-    defaults write com.apple.TextEdit PlainTextEncodingForWrite -int 4
-
-    defaults write com.apple.LaunchServices LSQuarantine -bool false
-
-    defaults write com.apple.CrashReporter DialogType -string "none"
-
-    defaults write com.apple.TimeMachine DoNotOfferNewDisksForBackup -bool true
-
-    info "Restarting Dock and Finder..."
-    killall Dock 2>/dev/null || true
-    killall Finder 2>/dev/null || true
-
-    success "macOS defaults applied"
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Main
 # ──────────────────────────────────────────────────────────────────────────────
 
+usage() {
+    echo "Usage: $0 [full|brew]"
+}
+
 main() {
+    case "${1:-full}" in
+        full | brew) ;;
+        -h | --help)
+            usage
+            exit 0
+            ;;
+        *)
+            usage >&2
+            exit 1
+            ;;
+    esac
+
     echo ""
     echo "╔════════════════════════════════════════╗"
     echo "║      macOS Setup Script                ║"
@@ -297,19 +173,18 @@ main() {
     echo ""
 
     case "${1:-full}" in
-        defaults)
-            apply_defaults
-            ;;
         brew)
+            ensure_checkout "$@"
             install_homebrew
             install_packages
             ;;
-        full|*)
+        full)
             install_prerequisites
+            ensure_checkout "$@"
+            install_nix
             install_homebrew
             install_packages
-            echo ""
-            apply_defaults
+            switch_home
             ;;
     esac
 
@@ -322,8 +197,7 @@ main() {
     echo "  1. Remap Caps Lock → Escape:"
     echo "     System Settings → Keyboard → Keyboard Shortcuts → Modifier Keys"
     echo ""
-    echo "  2. Apply Home Manager configuration:"
-    echo "     nix run home-manager -- switch --flake ~/dev/dotfiles"
+    echo "  2. Open a new terminal. From now on, rebuild with: hms"
     echo ""
 }
 

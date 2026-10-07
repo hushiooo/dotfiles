@@ -30,7 +30,9 @@ function formatCwd(cwd, home) {
   const relativeToHome = relative(resolve(home), resolve(cwd));
   const insideHome =
     relativeToHome === "" ||
-    (relativeToHome !== ".." && !relativeToHome.startsWith(`..${sep}`) && !isAbsolute(relativeToHome));
+    (relativeToHome !== ".." &&
+      !relativeToHome.startsWith(`..${sep}`) &&
+      !isAbsolute(relativeToHome));
   if (!insideHome) return cwd;
   return relativeToHome === "" ? "~" : `~${sep}${relativeToHome}`;
 }
@@ -50,7 +52,14 @@ function usageFromEntry(entry) {
 }
 
 function usageTotals(ctx) {
-  const totals = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0, cacheHitRate: undefined };
+  const totals = {
+    input: 0,
+    output: 0,
+    cacheRead: 0,
+    cacheWrite: 0,
+    cost: 0,
+    cacheHitRate: undefined,
+  };
   const entries = ctx.sessionManager.getBranch?.() ?? [];
 
   for (const entry of entries) {
@@ -86,7 +95,9 @@ function formatContext(ctx, theme) {
   const window = usage?.contextWindow ?? ctx.model?.contextWindow ?? 0;
   const percent = usage?.percent;
   const label =
-    percent == null ? `? / ${formatTokens(window)}` : `${percent.toFixed(1)}% / ${formatTokens(window)}`;
+    percent == null
+      ? `? / ${formatTokens(window)}`
+      : `${percent.toFixed(1)}% / ${formatTokens(window)}`;
 
   if (percent > CONTEXT_ERROR_PERCENT) return theme.fg("error", label);
   if (percent > CONTEXT_WARN_PERCENT) return theme.fg("warning", label);
