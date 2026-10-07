@@ -31,6 +31,14 @@ _: {
         desc = "Search files by name via fd";
       }
       {
+        on = [
+          "g"
+          "n"
+        ];
+        run = "cd ~/dev/notes/notes";
+        desc = "Go to notes";
+      }
+      {
         on = [ "e" ];
         run = "open";
         desc = "Open file";

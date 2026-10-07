@@ -15,6 +15,7 @@ _: {
     ./home/macos.nix
     ./home/neovim.nix
     ./home/nix.nix
+    ./home/notes.nix
     ./home/oh-my-posh.nix
     ./home/packages.nix
     ./home/pi.nix
