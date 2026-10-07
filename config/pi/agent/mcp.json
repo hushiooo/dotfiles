@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "unified-mcp": {
+      "url": "https://mcp.prod.data.cyber.stoik.tools/mcp"
+    }
+  }
+}

@@ -257,7 +257,7 @@ Skills are picked up automatically from `~/.agents/skills/` and per-project
 ├── flake.lock
 ├── home.nix        # Core settings; imports every module in home/
 ├── home/           # One Home Manager module per concern (programs, macos, nix, sops, packages)
-├── config/         # Raw config files (nvim, ghostty, herdr, pi, zsh, mcp)
+├── config/         # Raw config files (nvim, ghostty, herdr, pi, zsh)
 ├── skills/         # Agent skills, linked into ~/.agents/skills
 ├── Brewfile        # Homebrew casks and the few brew-only formulae
 ├── setup.sh        # One-command macOS bootstrap

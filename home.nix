@@ -34,13 +34,7 @@ _: {
 
   manual.manpages.enable = false;
 
-  xdg = {
-    enable = true;
-    configFile."mcp/mcp.json" = {
-      source = ./config/mcp/mcp.json;
-      force = true;
-    };
-  };
+  xdg.enable = true;
 
   home = {
     username = "joad";

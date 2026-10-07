@@ -11,6 +11,10 @@ in
 {
   home.file = {
     ".pi/agent/AGENTS.md".source = link "AGENTS.md";
+    ".pi/agent/mcp.json" = {
+      source = link "mcp.json";
+      force = true;
+    };
     ".pi/agent/extensions/terminal-status-title.js" = {
       source = link "extensions/terminal-status-title.js";
       force = true;

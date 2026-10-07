@@ -19,6 +19,12 @@
 - Never commit unless I ask. Stage explicit paths, never `git add -A`.
 - Never force-push to main, amend pushed commits, or skip hooks.
 - Never commit secrets.
+- Worktrees go in `~/dev/worktrees/<repo>/<branch-slug>`, never next to the repo in `~/dev`. Inside Herdr (`HERDR_ENV=1`), create them with `herdr worktree create --cwd <repo> --branch <name> --no-focus` so a workspace is attached; otherwise use `git worktree add ~/dev/worktrees/<repo>/<branch-slug>`. Remove only worktrees you created.
+
+## Delegation
+
+- To hand work to another agent, spawn a real agent in a new Herdr pane using the `herdr` skill (requires `HERDR_ENV=1`). Do not use in-process subagents.
+- Only delegate when I ask for it or the task clearly splits into independent parallel work.
 
 ## Communication
 

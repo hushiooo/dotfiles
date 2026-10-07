@@ -16,10 +16,5 @@
   "terminal": {
     "showImages": false
   },
-  "packages": [
-    "npm:@gotgenes/pi-anthropic-auth",
-    "npm:pi-mcp-adapter",
-    "npm:pi-web-access",
-    "npm:pi-subagents"
-  ]
+  "packages": ["npm:@gotgenes/pi-anthropic-auth", "npm:pi-web-access"]
 }

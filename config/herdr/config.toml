@@ -119,12 +119,12 @@ next_agent = ""
 previous_agent = ""
 
 # The command palette: navigate every ~/dev repo and its worktrees, create new
-# worktrees (N), and tear spaces down (D) -- all from one popup.
+# worktrees (N), rename spaces (R), and tear them down (D) -- all from one popup.
 [[keys.command]]
 key = "prefix+space"
 type = "popup"
 command = "$HOME/.nix-profile/bin/herdr-go"
-description = "repos + worktrees: open · N new · D delete"
+description = "repos + worktrees: open · N new · R rename · D delete"
 width = "52%"
 height = "55%"
 

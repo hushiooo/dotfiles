@@ -21,7 +21,8 @@ let
   };
 
   # The command palette (prefix+space): one popup to navigate every ~/dev repo
-  # and its worktrees, spin up new named worktrees (N), and tear spaces down (D).
+  # and its worktrees, spin up new named worktrees (N), rename spaces (R), and
+  # tear them down (D).
   goNav = pkgs.writeShellApplication {
     name = "herdr-go";
     runtimeInputs = [
