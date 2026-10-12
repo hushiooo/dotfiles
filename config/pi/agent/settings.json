@@ -1,8 +1,16 @@
 {
   "defaultProvider": "anthropic",
-  "defaultModel": "claude-opus-5",
+  "defaultModel": "claude-opus-5-5",
   "defaultThinkingLevel": "high",
-  "enabledModels": ["claude-opus-5", "claude-sonnet-5", "claude-haiku-4-5"],
+  "enabledModels": [
+    "claude-opus-5-5",
+    "claude-opus-5",
+    "claude-sonnet-5-5",
+    "claude-sonnet-5",
+    "claude-haiku-5-5",
+    "claude-haiku-4-5",
+    "claude-fable-5-1"
+  ],
   "enableInstallTelemetry": false,
   "theme": "dark",
   "quietStartup": true,

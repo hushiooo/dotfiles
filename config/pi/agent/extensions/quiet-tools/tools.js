@@ -42,12 +42,22 @@ const TOOLS = [
   },
 ];
 
+/**
+ * `codemode` comes from a built-in extension that exports no definition factory to wrap,
+ * so it is hidden through a renderer resolver rather than re-registered.
+ */
+const CODEMODE = "codemode";
+
 /** Names of the tools this extension hides completely, for use by the turn summary. */
-export const HIDDEN_TOOL_NAMES = new Set(
-  TOOLS.filter((tool) => !tool.headline).map((tool) => tool.name),
-);
+export const HIDDEN_TOOL_NAMES = new Set([
+  ...TOOLS.filter((tool) => !tool.headline).map((tool) => tool.name),
+  CODEMODE,
+]);
 
 export function registerQuietTools(pi) {
+  const codemodeRenderers = createRenderers(CODEMODE);
+  pi.registerToolRenderer((toolName, next) => (toolName === CODEMODE ? codemodeRenderers : next()));
+
   // Built-in definitions are bound to a cwd; build them lazily per session cwd.
   const definitions = new Map();
   const definitionFor = ({ name, create }, cwd) => {

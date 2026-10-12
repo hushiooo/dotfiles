@@ -35,6 +35,8 @@ export function describeCall(toolName, args = {}) {
   switch (toolName) {
     case "bash":
       return `$ ${firstLine(args.command ?? "")}`;
+    case "codemode":
+      return `codemode ${truncate(firstLine(args.code ?? ""), MAX_LABEL_LENGTH)}`.trim();
     case "grep":
     case "find":
       return `${toolName} ${target}`.trim();

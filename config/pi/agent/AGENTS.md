@@ -37,3 +37,13 @@
 
 - macOS on Apple Silicon, zsh, Neovim.
 - Dotfiles are Nix + Home Manager in `~/dev/dotfiles`; `hms` rebuilds.
+
+## Pull requests
+
+The description is for human reviewers: concise, to the point, not verbose. Three sections:
+
+1. **Why**: the motivation or problem, in a few lines.
+2. **Main changes**: what was changed and where to focus the review.
+3. **Other notes**: anything else worth knowing (follow-ups, risks, rollout, testing).
+
+Images or screenshots are welcome when they help the reviewer understand.
