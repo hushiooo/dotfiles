@@ -11,6 +11,7 @@ in
 {
   home.file = {
     ".pi/agent/AGENTS.md".source = link "AGENTS.md";
+    ".pi/agent/prompts/schedule.md".source = link "prompts/schedule.md";
     ".pi/agent/mcp.json" = {
       source = link "mcp.json";
       force = true;

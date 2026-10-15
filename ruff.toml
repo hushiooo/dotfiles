@@ -1,0 +1,3 @@
+[lint.per-file-ignores]
+# pi-schedule uses naive local datetimes on purpose: schedules are wall-clock times.
+"config/pi/schedule/*" = ["DTZ"]

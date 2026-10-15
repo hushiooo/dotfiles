@@ -19,6 +19,7 @@ _: {
     ./home/oh-my-posh.nix
     ./home/packages.nix
     ./home/pi.nix
+    ./home/pi-schedule.nix
     ./home/ripgrep.nix
     ./home/skills.nix
     ./home/sops.nix

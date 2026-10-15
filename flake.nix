@@ -48,6 +48,7 @@
         runtimeInputs = with pkgs; [
           biome
           nixfmt
+          ruff
           stylua
         ];
         settings = {
@@ -68,6 +69,11 @@
             nixfmt = {
               command = "nixfmt";
               includes = [ "*.nix" ];
+            };
+            ruff = {
+              command = "ruff";
+              options = [ "format" ];
+              includes = [ "*.py" ];
             };
             stylua = {
               command = "stylua";
@@ -99,6 +105,7 @@
             {
               nativeBuildInputs = with pkgs; [
                 deadnix
+                ruff
                 shellcheck
                 statix
               ];
@@ -108,6 +115,18 @@
               statix check .
               deadnix --fail .
               shellcheck setup.sh
+              ruff check --no-cache .
+              touch $out
+            '';
+        pi-schedule =
+          pkgs.runCommandLocal "pi-schedule-tests"
+            {
+              nativeBuildInputs = [ pkgs.python3 ];
+              PYTHONDONTWRITEBYTECODE = 1;
+            }
+            ''
+              cd ${self}/config/pi/schedule
+              python3 -m unittest -q test_pi_schedule
               touch $out
             '';
       };

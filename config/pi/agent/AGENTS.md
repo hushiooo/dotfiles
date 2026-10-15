@@ -17,7 +17,7 @@
 ## Git
 
 - Never commit unless I ask. Stage explicit paths, never `git add -A`.
-- Never force-push to main, amend pushed commits, or skip hooks.
+- Never force-push to main
 - Never commit secrets.
 - Worktrees go in `~/dev/worktrees/<repo>/<branch-slug>`, never next to the repo in `~/dev`. Inside Herdr (`HERDR_ENV=1`), create them with `herdr worktree create --cwd <repo> --branch <name> --no-focus` so a workspace is attached; otherwise use `git worktree add ~/dev/worktrees/<repo>/<branch-slug>`. Remove only worktrees you created.
 
