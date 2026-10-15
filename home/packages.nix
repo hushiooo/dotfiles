@@ -54,6 +54,6 @@
     hexyl
     lazydocker
     mergiraf
-    postgresql_16
+    postgresql_18
   ];
 }

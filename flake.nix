@@ -10,7 +10,7 @@
     # herdr ships releases well ahead of nixpkgs, so build the pinned tag from
     # its own flake. Bump the tag here, then `nix flake update herdr`.
     herdr = {
-      url = "github:herdrdev/herdr/v0.9.0";
+      url = "github:herdrdev/herdr/v0.9.5";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     # Prebuilt nix-index database, for comma and command-not-found.

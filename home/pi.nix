@@ -1,12 +1,22 @@
 {
   config,
   lib,
+  pkgs,
   dotfiles,
   ...
 }:
 let
   # Live symlinks into the checkout: edits apply without a rebuild.
   link = path: config.lib.file.mkOutOfStoreSymlink "${dotfiles}/config/pi/agent/${path}";
+
+  # Herdr's official pi integration reports agent state from lifecycle hooks.
+  # Without it Herdr scrapes the screen for "Working", which quiet-tools replaces
+  # with the running tool, so every tool call looked like a finished agent.
+  # Generated from pkgs.herdr so it tracks the installed Herdr version.
+  herdrPiIntegration = pkgs.runCommand "herdr-pi-integration" { } ''
+    mkdir -p $out/.pi/agent/extensions
+    HOME=$out ${pkgs.herdr}/bin/herdr integration install pi
+  '';
 in
 {
   home.file = {
@@ -28,6 +38,8 @@ in
       source = link "extensions/usage-footer.js";
       force = true;
     };
+    ".pi/agent/extensions/herdr-agent-state.ts".source =
+      "${herdrPiIntegration}/.pi/agent/extensions/herdr-agent-state.ts";
   };
 
   # Pi rewrites settings.json itself (model switches, /settings), so it is
