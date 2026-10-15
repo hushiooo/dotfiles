@@ -5,10 +5,12 @@
 # cancelled fzf must not abort the process, or the popup just vanishes.
 #
 #   enter  focus a live workspace, or open one (never duplicates)
-#   N      herdr worktree create for that row's repo, labelled "repo · branch"
+#   N      fetch origin, then herdr worktree create for that row's repo,
+#          labelled "repo · branch"; new branches start from origin/HEAD
 #   R      rename the row's live workspace
-#   D      live worktree: herdr worktree remove (branch kept)
+#   D      live worktree: herdr worktree remove
 #          closed or missing worktree: git worktree remove (prunes it)
+#          branch kept, unless its upstream is gone and it landed upstream
 #          repo: herdr workspace close (files kept)
 #          agent working → type yes
 #
@@ -33,6 +35,7 @@ C_BR=$'\033[38;2;122;162;247m'
 C_LIVE=$'\033[38;2;158;206;154m'
 C_WORK=$'\033[38;2;224;175;104m'
 C_BLOCK=$'\033[38;2;247;118;142m'
+C_GONE=$'\033[38;2;187;154;247m'
 C_RST=$'\033[0m'
 
 # Herdr's server inherits the login shell. FZF_DEFAULT_OPTS (--height 50%,
@@ -114,6 +117,22 @@ head_branch() {
     esac
   fi
   return 0
+}
+
+default_base() {
+  git -C "$1" symbolic-ref -q --short refs/remotes/origin/HEAD 2>/dev/null || true
+}
+
+# Squash merges leave no ancestry, so squash the branch onto its fork point
+# and look for an equivalent patch upstream.
+is_merged() {
+  local dir="$1" branch="$2" base="$3" fork tree squash
+  if git -C "$dir" merge-base --is-ancestor "$branch" "$base" 2>/dev/null; then return 0; fi
+  fork="$(git -C "$dir" merge-base "$base" "$branch" 2>/dev/null)" || return 1
+  tree="$(git -C "$dir" rev-parse "$branch^{tree}" 2>/dev/null)" || return 1
+  squash="$(git -C "$dir" commit-tree "$tree" -p "$fork" -m squash 2>/dev/null)" || return 1
+  case "$(git -C "$dir" cherry "$base" "$squash" 2>/dev/null)" in -*) return 0 ;; esac
+  return 1
 }
 
 is_dirty() {
@@ -206,7 +225,7 @@ touch_visited() {
 # Herdr's open_workspace_id is authoritative; plain git is the fallback when
 # Herdr can't answer (untrusted repo, server hiccup).
 
-declare -A wt_rows
+declare -A wt_rows gone_wt
 
 git_worktrees() {
   git -C "$1" worktree list --porcelain 2>/dev/null | awk -v us="$us" '
@@ -245,6 +264,11 @@ cache_worktrees() {
     out+="$wpath$us$wbranch$us$wsid$us${stale:-0}"$'\n'
   done <<< "$raw"
   wt_rows["$dir"]="$out"
+  while IFS= read -r wbranch || [ -n "${wbranch:-}" ]; do
+    if [ -n "${wbranch:-}" ]; then gone_wt["$dir$us$wbranch"]=1; fi
+  done < <(git -C "$dir" for-each-ref \
+    --format='%(if:equals=[gone])%(upstream:track)%(then)%(refname:lstrip=2)%(end)' \
+    refs/heads 2>/dev/null || true)
 }
 
 # Workspaces opened as "repo · branch" go stale when the checkout switches
@@ -303,6 +327,9 @@ emit_worktree() {
   if [ "$stale" = 1 ]; then
     glyph='✗'; gcol="$C_BLOCK"
     printf -v meta '  %s%s%s' "$C_BLOCK" "missing" "$C_RST"
+  fi
+  if [ -n "${gone_wt[$dir$us$wbranch]:-}" ]; then
+    printf -v meta '%s  %s%s%s' "$meta" "$C_GONE" "gone" "$C_RST"
   fi
   live=0
   if [ -n "$wsid" ]; then live=1; fi
@@ -382,63 +409,77 @@ dismiss_confirm() {
   fi
 }
 
+# Git alone (no Herdr state) so the N picker can re-run it via --branches
+# once the fetch lands. A remote ref can sort ahead of the local branch that
+# marks it checked out, hence the two passes.
 available_branches() {
-  local repo_path="$1" checked
-  checked="$(
-    {
-      head_branch "$repo_path"
-      printf '\n'
-      awk -F "$us" '$2 != "" && $2 != "(detached)" { print $2 }' <<< "${wt_rows[$repo_path]:-}"
-    } | awk 'NF && !seen[$0]++'
-  )"
-  git -C "$repo_path" for-each-ref --sort=-committerdate --format='%(refname)' \
+  git -C "$1" for-each-ref --sort=-committerdate --format="%(refname)$us%(worktreepath)" \
     refs/heads refs/remotes/origin 2>/dev/null \
-  | awk -v checked="$checked" '
-      BEGIN { n=split(checked, a, "\n"); for (i=1;i<=n;i++) if (a[i]!="") skip[a[i]]=1 }
-      $0=="refs/remotes/origin/HEAD" { next }
+  | awk -F "$us" '
+      $1=="refs/remotes/origin/HEAD" { next }
       {
-        short=$0
+        short=$1
         sub(/^refs\/heads\//, "", short)
         sub(/^refs\/remotes\/origin\//, "", short)
-        if (short=="" || short in seen || short in skip) next
-        seen[short]=1
-        print short
+        if (short=="") next
+        if ($2!="") busy[short]=1
+        if (!(short in seen)) { seen[short]=1; order[++n]=short }
       }
+      END { for (i=1; i<=n; i++) if (!(order[i] in busy)) print order[i] }
     ' || true
 }
 
 create_worktree() {
   local repo_path="$1" repo="$2" branch="$3"
-  local extra=()
+  local extra=() base
   if git -C "$repo_path" show-ref --verify --quiet "refs/remotes/origin/$branch"; then
     extra=(--base "origin/$branch")
+  else
+    # Herdr would branch from the checkout's HEAD, often a stale local main.
+    base="$(default_base "$repo_path")"
+    if [ -n "$base" ]; then extra=(--base "$base"); fi
   fi
   herdr_do worktree create --cwd "$repo_path" --branch "$branch" "${extra[@]}" \
     --label "$repo$sep$branch" --focus
 }
 
 new_worktree() {
-  local repo_path="$1" repo="$2" query="$3" avail name="" rc=0
+  local repo_path="$1" repo="$2" query="$3" avail name="" rc=0 header fetch_pid reload
   local n_query=()
   avail="$(available_branches "$repo_path")"
   case "$query" in */*) n_query=(--query="$query") ;; esac
+  header='type a new branch, or pick one — newest first'
+  if [ -z "$avail" ]; then header='type a new branch'; fi
+
+  # The picker opens on local refs and swaps in the fetched list when it
+  # lands. A marker file, not the pid: an unreaped zombie still passes kill -0.
+  # The EXIT trap drops the dir, so a fetch outliving an Esc writes nowhere.
+  fetch_dir="$(mktemp -d "${TMPDIR:-/tmp}/herdr-go.XXXXXX")"
+  trap 'rm -rf "$fetch_dir"' EXIT
+  {
+    GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND="${GIT_SSH_COMMAND:-ssh -o BatchMode=yes}" \
+      timeout 20 git -C "$repo_path" fetch --quiet origin </dev/null >/dev/null 2>&1 || true
+    : > "$fetch_dir/done" 2>/dev/null || true
+  } &
+  fetch_pid=$!
+  printf -v reload 'while [ ! -e %q ]; do sleep 0.2; done; %q --branches %q' \
+    "$fetch_dir/done" "$0" "$repo_path"
+
   # 0 = picked a row; 1 = typed a new name (--print-query); 130 = Esc.
-  if [ -n "$avail" ]; then
-    name="$(printf '%s\n' "$avail" | fzf "${fzf_theme[@]}" --print-query --height=60% \
-      "${n_query[@]}" \
-      --prompt="worktree ❯ " \
-      --list-label=" new worktree · $repo " \
-      --header='type a new branch, or pick one — newest first')" || rc=$?
-  else
-    name="$(fzf "${fzf_theme[@]}" --print-query --height=60% \
-      "${n_query[@]}" \
-      --prompt="worktree ❯ " \
-      --list-label=" new worktree · $repo " \
-      --header='type a new branch' </dev/null)" || rc=$?
-  fi
+  name="$({ [ -z "$avail" ] || printf '%s\n' "$avail"; } | fzf "${fzf_theme[@]}" \
+    --print-query --height=60% \
+    "${n_query[@]}" \
+    --prompt="worktree ❯ " \
+    --list-label=" new worktree · $repo " \
+    --header="$header" \
+    --bind "load:unbind(load)+reload-sync:$reload")" || rc=$?
   case $rc in 0|1) ;; *) return 0 ;; esac
   name="${name##*$'\n'}"
   [ -n "$name" ] || return 0
+  if [ ! -e "$fetch_dir/done" ]; then
+    printf '%sfetching origin…%s\n' "$C_DIM" "$C_RST"
+  fi
+  wait "$fetch_pid" || true
   create_worktree "$repo_path" "$repo" "$name"
 }
 
@@ -460,14 +501,28 @@ rename_space() {
 
 dismiss_space() {
   local kind="$1" repo="$2" repo_path="$3" target="$4" branch="$5" wsid="$6" stale="$7"
-  local prompt err keep='branch kept'
+  local prompt err keep='branch kept' drop=0 base
   if [ "$kind" = "wt" ]; then
-    if [ "$stale" = 1 ]; then keep='checkout already gone, branch kept'; fi
-    prompt="$(risk_prompt 'delete worktree' "${branch:-${target##*/}}" "$keep" "$target" "$wsid" 0)"
+    if [ -n "${gone_wt[$repo_path$us$branch]:-}" ]; then
+      base="$(default_base "$repo_path")"
+      if [ -n "$base" ] && is_merged "$repo_path" "$branch" "$base"; then
+        drop=1
+        keep='merged branch deleted'
+      else
+        keep='branch gone upstream but unmerged, kept'
+      fi
+    fi
+    if [ "$stale" = 1 ]; then keep="checkout already gone, $keep"; fi
+    prompt="$(risk_prompt 'delete worktree' "${branch:-${target##*/}}" "$keep" "$target" "$wsid" 1)"
     dismiss_confirm "$wsid" "$prompt" || return 0
     if [ -n "$wsid" ]; then
-      herdr_do worktree remove --workspace "$wsid" --force
+      herdr_do worktree remove --workspace "$wsid" --force || return 1
     elif ! err="$(git -C "$repo_path" worktree remove --force "$target" 2>&1)"; then
+      fail "$err"
+      return 1
+    fi
+    case "${target%/*}" in */worktrees/"$repo") rmdir "${target%/*}" 2>/dev/null || true ;; esac
+    if [ "$drop" = 1 ] && ! err="$(git -C "$repo_path" branch -D "$branch" 2>&1)"; then
       fail "$err"
       return 1
     fi
@@ -509,6 +564,11 @@ open_space() {
 }
 
 # --- main -------------------------------------------------------------------
+
+if [ "${1:-}" = "--branches" ]; then
+  available_branches "$2"
+  exit 0
+fi
 
 load_workspaces
 load_visited

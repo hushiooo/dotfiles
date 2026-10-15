@@ -21,7 +21,7 @@
     go
     lua
     nodejs
-    python314
+    python315
     rustc
     rustfmt
     zig
@@ -54,6 +54,6 @@
     hexyl
     lazydocker
     mergiraf
-    postgresql_16
+    postgresql_18
   ];
 }
