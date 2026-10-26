@@ -19,7 +19,7 @@
 - Never commit unless I ask. Stage explicit paths, never `git add -A`.
 - Never force-push to main
 - Never commit secrets.
-- Worktrees go in `~/dev/worktrees/<repo>/<branch-slug>`, never next to the repo in `~/dev`. Inside Herdr (`HERDR_ENV=1`), create them with `herdr worktree create --cwd <repo> --branch <name> --no-focus` so a workspace is attached; otherwise use `git worktree add ~/dev/worktrees/<repo>/<branch-slug>`. Remove only worktrees you created.
+- Worktrees go in `~/dev/worktrees/<repo>/<branch-slug>`, never next to the repo in `~/dev`. Inside Herdr (`HERDR_ENV=1`), create them with `herdr-worktree <branch> --cwd <repo>`: it prints the checkout path and opens an independent workspace on it without stealing focus. Do your work in that path; stay in your own pane. Never use `herdr worktree create/open`, which groups workspaces. Otherwise use `git worktree add ~/dev/worktrees/<repo>/<branch-slug>`. Remove only worktrees you created.
 
 ## Delegation
 

@@ -77,12 +77,13 @@ marks the current one). Live rows show agent state (`working` / `blocked` /
 | `Enter`        | open — or focus, if already live — the highlighted space                                                  |
 | `N`            | **new worktree** for that row's repo: fetches origin in the background, then pick a local or remote branch (newest first) or type a new name. New branches start from `origin/HEAD`; branches already checked out are hidden |
 | `R`            | **rename** the row's live workspace                                                                        |
-| `D`            | **delete** the space (defaults to no; type `yes` if an agent is working). Live worktree: `herdr worktree remove --force`. Closed worktree: `git worktree remove`. The branch is kept, unless its upstream is gone (`gone` tag) and it landed upstream (merge or squash), in which case it is deleted too. Repo: `herdr workspace close` (files kept). |
+| `D`            | **delete** the space (defaults to no; type `yes` if an agent is working). Worktree: closes its workspace if open, then `git worktree remove --force`. The branch is kept, unless its upstream is gone (`gone` tag) and it landed upstream (merge or squash), in which case it is deleted too. Repo: `herdr workspace close` (files kept). |
 
-A **worktree is just a workspace**: it sits indented under its parent repo in
-both the palette and the sidebar, and you can also jump to it with `Shift+1…9`.
-From a shell, `hwt <branch>` is the scriptable twin of `N` (same `repo · branch`
-label). There is deliberately **one** way to create a worktree — the native
+A **worktree is just a workspace**, independent of the repo's: closing one never
+closes another, and the sidebar lists them flat. Only the palette nests
+worktrees under their repo, so `N` knows which repo to branch. Jump with
+`Shift+1…9`. From a shell, `hwt <branch>` (or `herdr-worktree`, which agents
+use) is the scriptable twin of `N` (same `repo · branch` label). There is deliberately **one** way to create a worktree — the native
 `Ctrl+A Shift+G` is unbound.
 
 | Action                      | Key / command |

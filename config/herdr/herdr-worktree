@@ -1,0 +1,75 @@
+# shellcheck shell=bash
+# Create (or reopen) a git worktree and open it as its own Herdr workspace.
+#
+#   herdr-worktree <branch> [--cwd DIR] [--focus] [--no-fetch]
+#
+# Deliberately not `herdr worktree create`: that groups the checkout under the
+# repo's workspace, and closing the repo workspace then closes every worktree
+# with it. Here the checkout is plain git and the workspace a plain one, so
+# each workspace stands alone.
+#
+# Checkout goes to $HERDR_REPOS/worktrees/<repo>/<branch-slug>. An existing
+# local branch is checked out as is, origin/<branch> is tracked, anything else
+# is a new branch from origin/HEAD. A branch that already has a worktree is
+# reopened, never duplicated. Prints the checkout path on stdout.
+
+set -euo pipefail
+
+usage() {
+  echo "usage: herdr-worktree <branch> [--cwd DIR] [--focus] [--no-fetch]" >&2
+  exit 2
+}
+
+branch="" cwd="$PWD" focus=--no-focus fetch=1
+while (($#)); do
+  case "$1" in
+    --cwd)      [ $# -ge 2 ] || usage; cwd="$2"; shift 2 ;;
+    --focus)    focus=--focus; shift ;;
+    --no-fetch) fetch=0; shift ;;
+    -*)         usage ;;
+    *)          [ -z "$branch" ] || usage; branch="$1"; shift ;;
+  esac
+done
+[ -n "$branch" ] || usage
+
+common="$(git -C "$cwd" rev-parse --path-format=absolute --git-common-dir)"
+repo_path="${common%/.git}"
+repo="${repo_path##*/}"
+
+if [ "$fetch" = 1 ]; then
+  GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND="${GIT_SSH_COMMAND:-ssh -o BatchMode=yes}" \
+    timeout 20 git -C "$repo_path" fetch --quiet origin </dev/null \
+    || echo "herdr-worktree: fetch failed, using local refs" >&2
+fi
+
+path="$(git -C "$repo_path" worktree list --porcelain | awk -v ref="branch refs/heads/$branch" '
+  /^worktree / { p = substr($0, 10) }
+  $0 == ref    { print p; exit }
+')"
+if [ "$path" = "$repo_path" ]; then
+  echo "herdr-worktree: $branch is checked out in the main checkout ($repo_path)" >&2
+  exit 1
+fi
+
+if [ -z "$path" ]; then
+  path="${HERDR_REPOS:-$HOME/dev}/worktrees/$repo/${branch//\//-}"
+  if git -C "$repo_path" show-ref --verify --quiet "refs/heads/$branch"; then
+    git -C "$repo_path" worktree add --quiet "$path" "$branch"
+  elif git -C "$repo_path" show-ref --verify --quiet "refs/remotes/origin/$branch"; then
+    git -C "$repo_path" worktree add --quiet --track -b "$branch" "$path" "origin/$branch"
+  else
+    # Not the checkout's HEAD: the main checkout is often a stale local main.
+    # --no-track so the new branch does not adopt origin/HEAD as its upstream.
+    base="$(git -C "$repo_path" symbolic-ref -q --short refs/remotes/origin/HEAD || echo HEAD)"
+    git -C "$repo_path" worktree add --quiet --no-track -b "$branch" "$path" "$base"
+  fi
+fi
+
+wsid="$({ herdr worktree list --cwd "$repo_path" 2>/dev/null || true; } | jq -r --arg p "$path" \
+  '.result.worktrees[]? | select(.path == $p) | .open_workspace_id // empty')"
+if [ -z "$wsid" ]; then
+  herdr workspace create --cwd "$path" --label "$repo · $branch" "$focus" >/dev/null
+elif [ "$focus" = --focus ]; then
+  herdr workspace focus "$wsid" >/dev/null
+fi
+printf '%s\n' "$path"

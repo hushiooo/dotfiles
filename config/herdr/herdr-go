@@ -5,14 +5,16 @@
 # cancelled fzf must not abort the process, or the popup just vanishes.
 #
 #   enter  focus a live workspace, or open one (never duplicates)
-#   N      fetch origin, then herdr worktree create for that row's repo,
-#          labelled "repo · branch"; new branches start from origin/HEAD
+#   N      fetch origin, then herdr-worktree for that row's repo: a git
+#          worktree in its own workspace, labelled "repo · branch"
 #   R      rename the row's live workspace
-#   D      live worktree: herdr worktree remove
-#          closed or missing worktree: git worktree remove (prunes it)
+#   D      worktree: close its workspace, then git worktree remove
 #          branch kept, unless its upstream is gone and it landed upstream
 #          repo: herdr workspace close (files kept)
 #          agent working → type yes
+#
+# Every workspace is a plain one: no `herdr worktree create/open`, which
+# would group worktrees under the repo workspace and close them with it.
 #
 # N/R/D are Shift so they never collide with the lowercase filter query.
 #
@@ -91,10 +93,6 @@ fail() {
   read -rsn1 -t 6 || true
 }
 
-error_code() {
-  jq -r '.error.code // empty' <<<"$1" 2>/dev/null || true
-}
-
 error_message() {
   local msg=""
   msg="$(jq -r '.error.message // empty' <<<"$1" 2>/dev/null || true)"
@@ -150,27 +148,30 @@ agent_of() {
 declare -A wsid_by_path wsid_by_label agent_by_wsid label_by_wsid
 focus_path=""
 focus_label=""
+focus_wsid=""
 
 load_workspaces() {
   local id label status path focused json
   json="$(herdr workspace list 2>/dev/null || printf '{}')"
-  while IFS=$'\t' read -r id label status path focused || [ -n "${id:-}" ]; do
+  while IFS="$us" read -r id label status path focused || [ -n "${id:-}" ]; do
     [ -n "${id:-}" ] || continue
     agent_by_wsid["$id"]="$status"
     label_by_wsid["$id"]="$label"
     [ -n "$label" ] && wsid_by_label["$label"]="$id"
     [ -n "$path" ] && wsid_by_path["$path"]="$id"
     if [ "${focused:-0}" = 1 ]; then
+      focus_wsid="$id"
       focus_path="$path"
       focus_label="$label"
     fi
-  done < <(jq -r '.result.workspaces[]? | [
+  done < <(jq -r --arg us "$us" '.result.workspaces[]? | [
       .workspace_id,
       .label,
       .agent_status,
       (.worktree.checkout_path // ""),
-      (if .focused then 1 else 0 end)
-    ] | @tsv' <<<"$json" 2>/dev/null || true)
+      (if .focused then "1" else "0" end)
+    ] | join($us)' <<<"$json" 2>/dev/null || true)
+  # Plain workspaces carry no checkout path; cache_worktrees may still find it.
   if [ -z "$focus_path" ]; then
     case "$focus_label" in
       ""|*"$sep"*) ;;
@@ -222,8 +223,9 @@ touch_visited() {
 # One list per repo that actually has linked checkouts, as US-separated rows
 # (tab would collapse empty fields in read): path, branch, wsid, stale.
 # The main checkout is dropped by flag, not path: git reports resolved paths.
-# Herdr's open_workspace_id is authoritative; plain git is the fallback when
-# Herdr can't answer (untrusted repo, server hiccup).
+# Herdr's open_workspace_id is authoritative (it also matches plain, ungrouped
+# workspaces); plain git is the fallback when Herdr can't answer (untrusted
+# repo, server hiccup).
 
 declare -A wt_rows gone_wt
 
@@ -239,7 +241,7 @@ git_worktrees() {
 }
 
 cache_worktrees() {
-  local dir="$1" json="" raw="" out="" wpath wbranch wsid stale
+  local dir="$1" json="" raw="" out="" wpath wbranch wsid stale linked
   [ -n "${wt_rows[$dir]+x}" ] && return 0
   if [ ! -d "$dir/.git/worktrees" ]; then
     wt_rows["$dir"]=""
@@ -248,19 +250,26 @@ cache_worktrees() {
   json="$(herdr worktree list --cwd "$dir" 2>/dev/null || printf '{}')"
   if jq -e '.result.worktrees | type == "array"' <<<"$json" >/dev/null 2>&1; then
     raw="$(jq -r --arg us "$us" '
-      .result.worktrees[] | select(.is_linked_worktree) | [
+      .result.worktrees[] | [
         (.path // ""),
         (if .is_detached then "(detached)" else (.branch // "") end),
         (.open_workspace_id // ""),
-        (if .is_prunable then "1" else "0" end)
+        (if .is_prunable then "1" else "0" end),
+        (if .is_linked_worktree then "1" else "0" end)
       ] | join($us)
     ' <<<"$json" 2>/dev/null || true)"
   else
     raw="$(git_worktrees "$dir")"
   fi
-  while IFS="$us" read -r wpath wbranch wsid stale || [ -n "${wpath:-}" ]; do
-    [ -n "${wpath:-}" ] && [ "$wpath" != "$dir" ] || continue
+  while IFS="$us" read -r wpath wbranch wsid stale linked || [ -n "${wpath:-}" ]; do
+    [ -n "${wpath:-}" ] || continue
+    if [ "${linked:-1}" = 0 ] || [ "$wpath" = "$dir" ]; then
+      if [ -n "$wsid" ] && [ -z "${wsid_by_path[$dir]:-}" ]; then wsid_by_path["$dir"]="$wsid"; fi
+      if [ -n "$wsid" ] && [ "$wsid" = "$focus_wsid" ]; then focus_path="$dir"; fi
+      continue
+    fi
     [ -n "$wsid" ] || wsid="${wsid_by_path[$wpath]:-}"
+    if [ -n "$wsid" ] && [ "$wsid" = "$focus_wsid" ]; then focus_path="$wpath"; fi
     out+="$wpath$us$wbranch$us$wsid$us${stale:-0}"$'\n'
   done <<< "$raw"
   wt_rows["$dir"]="$out"
@@ -429,20 +438,6 @@ available_branches() {
     ' || true
 }
 
-create_worktree() {
-  local repo_path="$1" repo="$2" branch="$3"
-  local extra=() base
-  if git -C "$repo_path" show-ref --verify --quiet "refs/remotes/origin/$branch"; then
-    extra=(--base "origin/$branch")
-  else
-    # Herdr would branch from the checkout's HEAD, often a stale local main.
-    base="$(default_base "$repo_path")"
-    if [ -n "$base" ]; then extra=(--base "$base"); fi
-  fi
-  herdr_do worktree create --cwd "$repo_path" --branch "$branch" "${extra[@]}" \
-    --label "$repo$sep$branch" --focus
-}
-
 new_worktree() {
   local repo_path="$1" repo="$2" query="$3" avail name="" rc=0 header fetch_pid reload
   local n_query=()
@@ -480,7 +475,10 @@ new_worktree() {
     printf '%sfetching origin…%s\n' "$C_DIM" "$C_RST"
   fi
   wait "$fetch_pid" || true
-  create_worktree "$repo_path" "$repo" "$name"
+  local out=""
+  if ! out="$(herdr-worktree "$name" --cwd "$repo_path" --focus --no-fetch 2>&1)"; then
+    fail "$(error_message "$out")"
+  fi
 }
 
 rename_space() {
@@ -516,8 +514,9 @@ dismiss_space() {
     prompt="$(risk_prompt 'delete worktree' "${branch:-${target##*/}}" "$keep" "$target" "$wsid" 1)"
     dismiss_confirm "$wsid" "$prompt" || return 0
     if [ -n "$wsid" ]; then
-      herdr_do worktree remove --workspace "$wsid" --force || return 1
-    elif ! err="$(git -C "$repo_path" worktree remove --force "$target" 2>&1)"; then
+      herdr_do workspace close "$wsid" || return 1
+    fi
+    if ! err="$(git -C "$repo_path" worktree remove --force "$target" 2>&1)"; then
       fail "$err"
       return 1
     fi
@@ -534,16 +533,7 @@ dismiss_space() {
   fi
   prompt="$(risk_prompt 'close' "$repo" 'files kept' "$target" "$wsid" 1)"
   dismiss_confirm "$wsid" "$prompt" || return 0
-  if err="$(herdr workspace close "$wsid" 2>&1)"; then
-    return 0
-  fi
-  if [ "$(error_code "$err")" = "workspace_group_close_required" ]; then
-    confirm "$repo has open worktrees — close them too?" || return 0
-    herdr_do workspace close "$wsid" --group
-  else
-    fail "$(error_message "$err")"
-    return 1
-  fi
+  herdr_do workspace close "$wsid"
 }
 
 open_space() {
@@ -556,8 +546,7 @@ open_space() {
   if [ -n "$wsid" ]; then
     herdr_do workspace focus "$wsid"
   elif [ "$kind" = "wt" ]; then
-    herdr_do worktree open --cwd "$repo_path" --path "$target" \
-      --label "$repo$sep$branch" --focus
+    herdr_do workspace create --cwd "$target" --label "$repo$sep$branch" --focus
   else
     herdr_do workspace create --cwd "$repo_path" --label "$repo" --focus
   fi
@@ -572,9 +561,6 @@ fi
 
 load_workspaces
 load_visited
-if [ -n "$focus_path" ]; then
-  visited["$focus_path"]="$now"
-fi
 
 repo_dirs=()
 while IFS= read -r dir || [ -n "${dir:-}" ]; do
@@ -582,6 +568,10 @@ while IFS= read -r dir || [ -n "${dir:-}" ]; do
   repo_dirs+=("$dir")
   cache_worktrees "$dir"
 done < <(each_repo)
+
+if [ -n "$focus_path" ]; then
+  visited["$focus_path"]="$now"
+fi
 
 if ((${#repo_dirs[@]} > 0)); then
   sync_labels

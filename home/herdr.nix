@@ -20,12 +20,27 @@ let
     text = builtins.readFile ../config/herdr/herdr-tab-focus;
   };
 
+  # One git worktree, one independent workspace (never herdr's grouped
+  # worktrees). Used by the palette's N, `hwt`, and agents.
+  worktreeCmd = pkgs.writeShellApplication {
+    name = "herdr-worktree";
+    runtimeInputs = [
+      pkgs.herdr
+      pkgs.jq
+      pkgs.git
+      pkgs.gawk
+      pkgs.coreutils
+    ];
+    text = builtins.readFile ../config/herdr/herdr-worktree;
+  };
+
   # The command palette (prefix+space): one popup to navigate every ~/dev repo
   # and its worktrees, spin up new named worktrees (N), rename spaces (R), and
   # tear them down (D).
   goNav = pkgs.writeShellApplication {
     name = "herdr-go";
     runtimeInputs = [
+      worktreeCmd
       pkgs.herdr
       pkgs.jq
       pkgs.fzf
@@ -52,6 +67,7 @@ in
 
   home.packages = [
     tabFocus
+    worktreeCmd
     goNav
   ];
 }

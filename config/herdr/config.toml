@@ -108,7 +108,8 @@ toggle_sidebar = "prefix+shift+b"
 
 # Worktree lifecycle lives entirely in the prefix+space palette (herdr-go: N
 # creates, D removes), so the native create binding is retired -- one way to do
-# a thing. open/remove were already unset.
+# a thing, and native worktrees group under the repo workspace, which then
+# closes them with it. open/remove were already unset.
 new_worktree = ""
 
 # prefix+ctrl+a can't be used (double-tapping the prefix sends a literal ctrl+a
