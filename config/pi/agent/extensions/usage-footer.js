@@ -128,15 +128,29 @@ function shortModel(id) {
   return id.replace(/^claude-/, "");
 }
 
-function formatModel(ctx, footerData, statsWidth, width, theme) {
-  const model = shortModel(ctx.model?.id || "no-model");
-  const parts = [theme.fg("muted", model)];
+function lastAssistant(ctx) {
+  const entries = ctx.sessionManager.getBranch?.() ?? [];
+  for (let i = entries.length - 1; i >= 0; i--) {
+    const message = entries[i].type === "message" ? entries[i].message : undefined;
+    if (message?.role === "assistant" && message.model) return message;
+  }
+  return undefined;
+}
 
-  if (ctx.model?.reasoning) {
-    const thinking = ctx.thinkingLevel || "off";
-    if (thinking !== "off") {
-      parts.push(theme.fg(THINKING_COLOR[thinking] || "dim", thinking));
-    }
+function formatModel(ctx, footerData, statsWidth, width, theme) {
+  // A virtual model (router/auto) answers through physical models: show the one that answered last.
+  const routed = ctx.model?.api === "pi-virtual" ? lastAssistant(ctx) : undefined;
+  let label = theme.fg("muted", shortModel(routed?.model || ctx.model?.id || "no-model"));
+  if (routed) label = `${theme.fg("dim", `${ctx.model.id} →`)} ${label}`;
+  const parts = [label];
+
+  const thinking = routed
+    ? routed.thinkingLevel
+    : ctx.model?.reasoning
+      ? ctx.thinkingLevel || "off"
+      : undefined;
+  if (thinking && thinking !== "off") {
+    parts.push(theme.fg(THINKING_COLOR[thinking] || "dim", thinking));
   }
 
   const providerCount = footerData.getAvailableProviderCount?.() ?? 0;

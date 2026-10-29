@@ -64,6 +64,7 @@
               includes = [
                 "*.js"
                 "*.json"
+                "*.ts"
               ];
             };
             nixfmt = {
@@ -129,6 +130,11 @@
               python3 -m unittest -q test_pi_schedule
               touch $out
             '';
+        auto-router = pkgs.runCommandLocal "auto-router-tests" { nativeBuildInputs = [ pkgs.nodejs ]; } ''
+          cd ${self}/config/pi/agent/extensions/auto-router
+          node --test policy.test.ts
+          touch $out
+        '';
       };
 
       devShells.${system}.default = pkgs.mkShell {
@@ -138,6 +144,7 @@
           shellcheck
           statix
           treefmt
+          typescript
         ];
       };
     };

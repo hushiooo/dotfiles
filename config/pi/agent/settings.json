@@ -1,8 +1,9 @@
 {
-  "defaultProvider": "anthropic",
-  "defaultModel": "claude-opus-5-5",
+  "defaultProvider": "router",
+  "defaultModel": "auto",
   "defaultThinkingLevel": "high",
   "enabledModels": [
+    "router/auto",
     "claude-opus-5-5",
     "claude-opus-5",
     "claude-sonnet-5-5",

@@ -1,0 +1,185 @@
+[
+  {
+    "name": "new: git question",
+    "currentTier": null,
+    "userMessage": "what's the difference between git rebase and git merge?",
+    "expect": "haiku"
+  },
+  {
+    "name": "new: commit message",
+    "currentTier": null,
+    "userMessage": "write a commit message for the staged changes",
+    "expect": "haiku"
+  },
+  {
+    "name": "new: explain regex",
+    "currentTier": null,
+    "userMessage": "explain what this regex matches: ^(?=.*\\d)(?=.*[a-z]).{8,}$",
+    "expect": "haiku"
+  },
+  {
+    "name": "new: rename symbol",
+    "currentTier": null,
+    "userMessage": "rename getUserById to findUserById across the repo",
+    "expect": ["haiku", "sonnet"]
+  },
+  {
+    "name": "new: small script flag",
+    "currentTier": null,
+    "userMessage": "add a --verbose flag to scripts/build.sh that echoes each step before running it",
+    "expect": ["haiku", "sonnet"]
+  },
+  {
+    "name": "new: specified endpoint change",
+    "currentTier": null,
+    "userMessage": "implement cursor-based pagination on GET /invoices, following how GET /payments already does it, with tests",
+    "expect": "sonnet"
+  },
+  {
+    "name": "new: CI workflow",
+    "currentTier": null,
+    "userMessage": "set up a GitHub Actions workflow that runs pytest and ruff on pull requests",
+    "expect": "sonnet"
+  },
+  {
+    "name": "new: failing test",
+    "currentTier": null,
+    "userMessage": "tests/test_dates.py::test_week_start fails since yesterday, fix it",
+    "expect": ["sonnet"]
+  },
+  {
+    "name": "new: PR review",
+    "currentTier": null,
+    "userMessage": "review PR https://github.com/acme/api/pull/412",
+    "expect": "opus"
+  },
+  {
+    "name": "new: concurrency bug",
+    "currentTier": null,
+    "userMessage": "our background jobs sometimes process the same message twice under load, but never locally. Figure out why.",
+    "expect": "opus"
+  },
+  {
+    "name": "new: migration plan",
+    "currentTier": null,
+    "userMessage": "I want to plan the migration of our public API from REST to GraphQL. Don't write code yet, propose a plan.",
+    "expect": "opus"
+  },
+  {
+    "name": "new: permission design",
+    "currentTier": null,
+    "userMessage": "design the permission model for sharing documents between organisations, including guests and revocation",
+    "expect": "opus"
+  },
+  {
+    "name": "plan approved",
+    "currentTier": "opus",
+    "userTurns": 3,
+    "previousAssistantMessage": "**Plan**\n1. Add a `tenant_id` column and backfill it from the owning account.\n2. Enforce it in the repository layer with a scoped query helper.\n3. Add tests for cross-tenant access on every endpoint.\n\nShall I start with step 1?",
+    "userMessage": "yes go",
+    "expect": "sonnet",
+    "contextTokens": 80000
+  },
+  {
+    "name": "review findings approved, publish",
+    "currentTier": "opus",
+    "userTurns": 2,
+    "skillsUsed": ["pr-review"],
+    "previousAssistantMessage": "### 2. Unbounded query in `list_exports` — Should fix\n- **Location:** `api/exports.py:88`, inline\n- **Comment:**\n  > [agent] **Should fix:** This loads every export of the tenant. Could it take the page size like `list_invoices` does?\n\n**Checked and left out:** the retry in `sync_job` is idempotent.\n\nShall I publish these 4 comments?",
+    "userMessage": "looks good, publish them",
+    "expect": "sonnet",
+    "contextTokens": 90000
+  },
+  {
+    "name": "author-mode fixes approved",
+    "currentTier": "opus",
+    "userTurns": 2,
+    "skillsUsed": ["pr-review"],
+    "previousAssistantMessage": "### 3. Duplicate tenant check — Should fix\n- **Change:** move the check into `TenantScope.require()` and call it from both routes; touches `api/routes.py` and `core/scope.py`.\n\nApprove and I'll apply the 3 changes, run the tests and push.",
+    "userMessage": "approved, apply them and push",
+    "expect": "sonnet",
+    "contextTokens": 90000
+  },
+  {
+    "name": "challenge a finding",
+    "currentTier": "opus",
+    "userTurns": 2,
+    "skillsUsed": ["pr-review"],
+    "previousAssistantMessage": "### 1. Missing index on `events.account_id` — Should fix\n- **Why:** the new query filters on it for every webhook.\n\nShall I publish these comments?",
+    "userMessage": "for #1, are you sure? I think there's already a composite index starting with account_id, check again",
+    "expect": "keep",
+    "contextTokens": 90000
+  },
+  {
+    "name": "revise the plan",
+    "currentTier": "opus",
+    "userTurns": 3,
+    "previousAssistantMessage": "**Plan**\n1. Nightly cron job exports the ledger.\n2. Upload to S3 with a signed URL.\n3. Email the link.\n\nWant me to start?",
+    "userMessage": "change step 1 to use the job queue instead of cron, and think about retries; show me the updated plan",
+    "expect": "keep",
+    "contextTokens": 60000
+  },
+  {
+    "name": "continue implementing",
+    "currentTier": "sonnet",
+    "userTurns": 5,
+    "previousAssistantMessage": "I updated the handler and the serializer. Next I'll add the tests for the empty and paginated cases. Continue?",
+    "userMessage": "continue",
+    "expect": "keep",
+    "contextTokens": 120000
+  },
+  {
+    "name": "commit after implementing",
+    "currentTier": "sonnet",
+    "userTurns": 6,
+    "previousAssistantMessage": "Done: pagination is implemented and the 14 tests pass.",
+    "userMessage": "great, write the commit message and push",
+    "expect": "keep",
+    "contextTokens": 150000
+  },
+  {
+    "name": "quick question mid-session",
+    "currentTier": "sonnet",
+    "userTurns": 4,
+    "previousAssistantMessage": "I rebased the branch on main; there were no conflicts.",
+    "userMessage": "what does --force-with-lease do exactly?",
+    "expect": "keep",
+    "contextTokens": 120000
+  },
+  {
+    "name": "thanks after quick answer",
+    "currentTier": "haiku",
+    "userTurns": 2,
+    "previousAssistantMessage": "`git reset --soft HEAD~1` undoes the commit and keeps your changes staged.",
+    "userMessage": "thanks",
+    "expect": "keep",
+    "contextTokens": 3000
+  },
+  {
+    "name": "new hard problem after quick start",
+    "currentTier": "haiku",
+    "userTurns": 2,
+    "previousAssistantMessage": "`git reset --soft HEAD~1` undoes the commit and keeps your changes staged.",
+    "userMessage": "ok now let's design how we'd add SAML single sign-on to the app, with just-in-time provisioning",
+    "expect": "opus",
+    "contextTokens": 3000
+  },
+  {
+    "name": "new hard bug after implementing",
+    "currentTier": "sonnet",
+    "userTurns": 8,
+    "previousAssistantMessage": "Implemented and pushed; CI is green except the known flaky job.",
+    "userMessage": "about that flaky job: it's an intermittent deadlock in the worker pool, only on CI. Dig into it properly.",
+    "expect": "opus",
+    "contextTokens": 140000
+  },
+  {
+    "name": "implementation task after quick start",
+    "currentTier": "haiku",
+    "userTurns": 2,
+    "previousAssistantMessage": "The config lives in `settings/base.py`; the feature flag is `ENABLE_EXPORTS`.",
+    "userMessage": "ok, now add an /exports/{id}/retry endpoint that re-enqueues a failed export, with tests",
+    "expect": "sonnet",
+    "contextTokens": 4000
+  }
+]

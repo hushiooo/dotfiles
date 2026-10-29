@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "es2023",
+    "lib": ["es2024"],
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "strict": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "types": ["node"],
+    "typeRoots": [
+      "/opt/homebrew/opt/pi-coding-agent/libexec/lib/node_modules/@earendil-works/pi-coding-agent/node_modules/@types"
+    ],
+    "paths": {
+      "@earendil-works/pi-coding-agent": [
+        "/opt/homebrew/opt/pi-coding-agent/libexec/lib/node_modules/@earendil-works/pi-coding-agent"
+      ],
+      "@earendil-works/*": [
+        "/opt/homebrew/opt/pi-coding-agent/libexec/lib/node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/*"
+      ]
+    }
+  },
+  "include": ["*.ts"]
+}

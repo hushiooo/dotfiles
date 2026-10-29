@@ -34,6 +34,10 @@ in
       source = link "extensions/quiet-tools";
       force = true;
     };
+    ".pi/agent/extensions/auto-router" = {
+      source = link "extensions/auto-router";
+      force = true;
+    };
     ".pi/agent/extensions/usage-footer.js" = {
       source = link "extensions/usage-footer.js";
       force = true;

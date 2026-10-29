@@ -1,0 +1,37 @@
+{
+  "tiers": [
+    {
+      "name": "haiku",
+      "model": "anthropic/claude-haiku-5-5",
+      "thinking": "medium",
+      "use": "Quick questions, lookups, explaining a snippet, trivial edits, commit messages, small shell tasks."
+    },
+    {
+      "name": "sonnet",
+      "model": "anthropic/claude-sonnet-5-5",
+      "thinking": "high",
+      "use": "Carrying out an agreed plan, well-specified features and fixes, publishing approved review comments, applying approved fixes, routine coding."
+    },
+    {
+      "name": "opus",
+      "model": "anthropic/claude-opus-5-5",
+      "thinking": "high",
+      "use": "Planning or designing a feature, reviewing a large change or PR, hard debugging, ambiguous or cross-cutting problems."
+    }
+  ],
+  "defaultTier": "sonnet",
+  "compactionTier": "sonnet",
+  "judge": {
+    "model": "anthropic/claude-haiku-5-5",
+    "timeoutMs": 4000
+  },
+  "minConfidence": {
+    "down": 0.7,
+    "up": 0.8
+  },
+  "cooldownMessages": 1,
+  "workRequests": {
+    "small": 2,
+    "large": 15
+  }
+}
