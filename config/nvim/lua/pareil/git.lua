@@ -1,230 +1,105 @@
 local M = {}
 
-local function notify_error(msg)
-    vim.notify(msg, vim.log.levels.ERROR)
-end
-
+---Callbacks always run on the main loop, never synchronously.
 ---@param args string[]
----@param opts { root?: string, allow_nonzero?: boolean }|nil
----@return table|nil result
----@return string|nil err
-local function run_git(args, opts)
-    opts = opts or {}
-    local root = opts.root or M.get_repo_root()
-    if not root or root == "" then
-        return nil, "Not inside a Git repository."
-    end
-
+---@param cwd string
+---@param callback fun(stdout: string|nil, err: string|nil)
+local function run(args, cwd, callback)
     local cmd = vim.list_extend({ "git" }, args)
-    local result = vim.system(cmd, { text = true, cwd = root }):wait()
-    if not result then
-        return nil, "Failed to spawn git process."
-    end
-
-    if result.code ~= 0 and not opts.allow_nonzero then
-        local stderr = vim.trim(result.stderr or "")
-        if stderr == "" then
-            stderr = string.format("git %s exited with code %d", table.concat(args, " "), result.code)
-        end
-        return nil, stderr
-    end
-
-    return result, nil
-end
-
----@return string|nil
-function M.get_repo_root()
-    local start = vim.api.nvim_buf_get_name(0)
-    if start ~= "" then
-        start = vim.fn.fnamemodify(start, ":p:h")
-    else
-        start = vim.fn.getcwd()
-    end
-
-    local result = vim.system({ "git", "-C", start, "rev-parse", "--show-toplevel" }, { text = true }):wait()
-    if result and result.code == 0 and result.stdout then
-        local root = vim.trim(result.stdout)
-        if root ~= "" then
-            return vim.fs.normalize(root)
-        end
-    end
-
-    return nil
-end
-
----@param branch string|nil
----@param root string
----@return string[]
-local function list_files(branch, root)
-    local args
-    if branch and branch ~= "" then
-        args = { "ls-tree", "-r", "--name-only", branch }
-    else
-        args = { "ls-files" }
-    end
-
-    local result, err = run_git(args, { root = root })
-    if not result then
-        notify_error("Failed to list files from Git.\n" .. err)
-        return {}
-    end
-
-    return vim.split(result.stdout or "", "\n", { trimempty = true })
-end
-
----@param prompt string
----@param callback fun(file: string)
----@param opts { branch?: string, root: string }
-function M.select_file(prompt, callback, opts)
-    opts = opts or {}
-    local root = opts.root or M.get_repo_root()
-    if not root then
-        notify_error("Not inside a Git repository.")
-        return
-    end
-
-    local files = list_files(opts.branch, root)
-    if #files == 0 then
-        notify_error("No files available to select.")
-        return
-    end
-
-    local pickers = require("telescope.pickers")
-    local finders = require("telescope.finders")
-    local conf = require("telescope.config").values
-    local actions = require("telescope.actions")
-    local action_state = require("telescope.actions.state")
-
-    pickers
-        .new({}, {
-            prompt_title = opts.branch and (prompt .. " [" .. opts.branch .. "]") or prompt,
-            finder = finders.new_table({ results = files }),
-            sorter = conf.generic_sorter({}),
-            attach_mappings = function(prompt_bufnr)
-                actions.select_default:replace(function()
-                    local selection = action_state.get_selected_entry()
-                    actions.close(prompt_bufnr)
-                    if not selection or not selection[1] then
-                        vim.notify("No file selected", vim.log.levels.WARN)
-                        return
-                    end
-                    callback(selection[1])
-                end)
-                return true
-            end,
-        })
-        :find()
-end
-
----@param prompt string
----@param callback fun(branch: string)
----@param opts? { root?: string }
-function M.select_branch(prompt, callback, opts)
-    opts = opts or {}
-    local root = opts.root or M.get_repo_root()
-    if not root then
-        notify_error("Not inside a Git repository.")
-        return
-    end
-
-    local result, err = run_git({ "for-each-ref", "--format=%(refname:short)", "refs/heads/" }, { root = root })
-    if not result then
-        notify_error("Failed to list branches.\n" .. err)
-        return
-    end
-
-    local branches = vim.split(result.stdout or "", "\n", { trimempty = true })
-    if #branches == 0 then
-        notify_error("No local branches found.")
-        return
-    end
-
-    local current_branch
-    local head_result = run_git({ "branch", "--show-current" }, { root = root })
-    if head_result and head_result.stdout then
-        local trimmed = vim.trim(head_result.stdout)
-        if trimmed ~= "" then
-            current_branch = trimmed
-        end
-    end
-
-    local default_index
-    if current_branch then
-        for idx, branch in ipairs(branches) do
-            if branch == current_branch then
-                default_index = idx
-                break
+    local ok, spawn_err = pcall(vim.system, cmd, { text = true, cwd = cwd }, function(res)
+        vim.schedule(function()
+            if res.code == 0 then
+                callback(res.stdout or "", nil)
+                return
             end
+            local stderr = vim.trim(res.stderr or "")
+            if stderr == "" then
+                stderr = ("git %s exited with code %d"):format(args[1], res.code)
+            end
+            callback(nil, stderr)
+        end)
+    end)
+    if not ok then
+        vim.schedule(function()
+            callback(nil, tostring(spawn_err))
+        end)
+    end
+end
+
+---Resolves from the current file's directory, or the cwd for terminal, oil, fugitive and other non-file buffers.
+---@param callback fun(root: string|nil, err: string|nil)
+function M.repo_root(callback)
+    local dir = vim.fn.getcwd()
+    local name = vim.api.nvim_buf_get_name(0)
+    if vim.bo.buftype == "" and name ~= "" then
+        local parent = vim.fs.dirname(name)
+        if vim.fn.isdirectory(parent) == 1 then
+            dir = parent
         end
     end
 
-    local pickers = require("telescope.pickers")
-    local finders = require("telescope.finders")
-    local conf = require("telescope.config").values
-    local actions = require("telescope.actions")
-    local action_state = require("telescope.actions.state")
-
-    pickers
-        .new({}, {
-            prompt_title = prompt,
-            finder = finders.new_table({ results = branches }),
-            sorter = conf.generic_sorter({}),
-            default_selection_index = default_index,
-            attach_mappings = function(prompt_bufnr)
-                actions.select_default:replace(function()
-                    local selection = action_state.get_selected_entry()
-                    actions.close(prompt_bufnr)
-                    if not selection or not selection[1] then
-                        vim.notify("No branch selected", vim.log.levels.WARN)
-                        return
-                    end
-                    callback(selection[1])
-                end)
-                return true
-            end,
-        })
-        :find()
+    run({ "rev-parse", "--show-toplevel" }, dir, function(stdout)
+        if not stdout then
+            callback(nil, "Not inside a Git repository.")
+            return
+        end
+        callback(vim.fs.normalize(vim.trim(stdout)), nil)
+    end)
 end
 
----@param file1 string
----@param file2 string
----@param branch1 string
----@param branch2 string
----@param callback fun(content1: string, content2: string)
+---Local branches, then remote branches, then tags, with the current branch first.
 ---@param root string
-function M.extract_files(file1, file2, branch1, branch2, callback, root)
-    root = root or M.get_repo_root()
-    if not root then
-        notify_error("Unable to determine Git repository root.")
-        return
-    end
-
-    -- No existence pre-check: both paths came out of `ls-tree` for their branch,
-    -- and a bad revision surfaces as git's own error below anyway.
-    local revpath1 = string.format("%s:%s", branch1, file1)
-    local revpath2 = string.format("%s:%s", branch2, file2)
-
-    vim.system({ "git", "show", revpath1 }, { text = true, cwd = root }, function(res1)
-        if res1.code ~= 0 then
-            vim.schedule(function()
-                notify_error(("Failed to extract %s:\n%s"):format(revpath1, res1.stderr or "Unknown error"))
-            end)
+---@param callback fun(refs: string[]|nil, err: string|nil)
+function M.list_refs(root, callback)
+    local args = {
+        "for-each-ref",
+        "--format=%(HEAD)\t%(refname:short)\t%(symref)",
+        "refs/heads",
+        "refs/remotes",
+        "refs/tags",
+    }
+    run(args, root, function(stdout, err)
+        if not stdout then
+            callback(nil, err)
             return
         end
 
-        vim.system({ "git", "show", revpath2 }, { text = true, cwd = root }, function(res2)
-            if res2.code ~= 0 then
-                vim.schedule(function()
-                    notify_error(("Failed to extract %s:\n%s"):format(revpath2, res2.stderr or "Unknown error"))
-                end)
-                return
+        local refs = {}
+        for _, line in ipairs(vim.split(stdout, "\n", { trimempty = true })) do
+            local head, name, symref = unpack(vim.split(line, "\t", { plain = true }))
+            -- Symbolic refs such as origin/HEAD duplicate the branch they point to.
+            if symref == "" then
+                if head == "*" then
+                    table.insert(refs, 1, name)
+                else
+                    refs[#refs + 1] = name
+                end
             end
-
-            vim.schedule(function()
-                callback(res1.stdout or "", res2.stdout or "")
-            end)
-        end)
+        end
+        callback(refs, nil)
     end)
+end
+
+---@param ref string
+---@param root string
+---@param callback fun(files: string[]|nil, err: string|nil)
+function M.list_files(ref, root, callback)
+    -- -z keeps paths unquoted; without it git escapes non-ASCII names.
+    run({ "ls-tree", "-r", "-z", "--name-only", ref }, root, function(stdout, err)
+        if not stdout then
+            callback(nil, err)
+            return
+        end
+        callback(vim.split(stdout, "\0", { plain = true, trimempty = true }), nil)
+    end)
+end
+
+---@param ref string
+---@param path string
+---@param root string
+---@param callback fun(content: string|nil, err: string|nil)
+function M.show(ref, path, root, callback)
+    run({ "show", ref .. ":" .. path }, root, callback)
 end
 
 return M

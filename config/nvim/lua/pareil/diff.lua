@@ -1,25 +1,42 @@
 local ui = require("pareil.ui")
 
-local DEFAULT_DIFF_OPTS = {
-    result_type = "unified",
-    ctxlen = 3,
-}
+local M = {}
 
----@param content1 string
----@param content2 string
+---@class pareil.Side
+---@field name string
+---@field content string
+
+---@param a pareil.Side
+---@param b pareil.Side
+---@return boolean
+local function is_binary(a, b)
+    return a.content:find("\0", 1, true) ~= nil or b.content:find("\0", 1, true) ~= nil
+end
+
+---@param a pareil.Side
+---@param b pareil.Side
 ---@param config table
-local function show(content1, content2, config)
-    local diff_opts = vim.tbl_deep_extend("force", {}, DEFAULT_DIFF_OPTS, (config and config.diff) or {})
-    local diff_lines = vim.text.diff(content1, content2, diff_opts)
-
-    if not diff_lines or diff_lines == "" then
+function M.show(a, b, config)
+    if a.content == b.content then
         vim.notify("No differences found.", vim.log.levels.INFO)
         return
     end
 
-    ui.show_popup(vim.split(diff_lines, "\n", { plain = true }), config)
+    if is_binary(a, b) then
+        vim.notify(("Binary files %s and %s differ."):format(a.name, b.name), vim.log.levels.INFO)
+        return
+    end
+
+    local opts = vim.tbl_extend("force", config.diff, { result_type = "unified" })
+    local hunks = vim.text.diff(a.content, b.content, opts)
+    if hunks == "" then
+        vim.notify("No differences found.", vim.log.levels.INFO)
+        return
+    end
+
+    local lines = { "--- " .. a.name, "+++ " .. b.name }
+    vim.list_extend(lines, vim.split(hunks, "\n", { plain = true, trimempty = true }))
+    ui.show_popup(lines, config.popup)
 end
 
-return {
-    show = show,
-}
+return M

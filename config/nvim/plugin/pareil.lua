@@ -4,6 +4,6 @@ vim.keymap.set("n", "<leader>pd", function()
     require("pareil").open()
 end, { desc = "Pareil diff (popup)", silent = true })
 
-vim.api.nvim_create_user_command("PareilsDiff", function()
+vim.api.nvim_create_user_command("PareilDiff", function()
     require("pareil").open()
-end, {})
+end, { desc = "Diff a file across two Git refs" })
