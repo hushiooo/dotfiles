@@ -54,7 +54,7 @@ asp() {
     return 1
   fi
 
-  local -a profile_list rm_profiles
+  local -a profile_list
   profile_list=("${(@f)profiles_raw}")
 
   case "$1" in
@@ -63,17 +63,13 @@ asp() {
         "Usage:" \
         "  asp                 Select AWS profile interactively" \
         "  asp <profile>       Switch to a specific profile" \
-        "  asp rm              Select a risk-management profile only" \
-        "  asp rm <env> [role] Shortcut for stoik-risk-management-<env>-<role>" \
         "  asp --list          List known profiles" \
         "  asp --current       Show current profile and identity status" \
         "  asp --login         Run aws sso login for current profile" \
         "  asp -               Clear profile from current shell" \
         "" \
         "Examples:" \
-        "  asp rm" \
-        "  asp rm staging admin" \
-        "  task build-deploy TG_ENV=staging ROLE=admin"
+        "  asp my-profile"
       return 0
       ;;
     --list|-l)
@@ -99,31 +95,11 @@ asp() {
   esac
 
   local selected
-  if [[ "$1" == "rm" ]]; then
-    shift
-    if [[ -n "$1" || -n "$2" ]]; then
-      local env="${1:-staging}"
-      local role="${2:-admin}"
-      selected="stoik-risk-management-$env-$role"
-    else
-      rm_profiles=("${(@M)profile_list:#stoik-risk-management-*}")
-      if (( ${#rm_profiles[@]} == 0 )); then
-        echo "No stoik risk-management profiles found" >&2
-        return 1
-      fi
-      selected="$(printf '%s\n' "${rm_profiles[@]}" | fzf \
-        --prompt="RM AWS profile ❯ " \
-        --header="Current: $current | shortcut: asp rm staging admin" \
-        --preview="aws configure list --profile {}" \
-        --preview-window=down:4:wrap)"
-    fi
-  else
-    selected="${1:-$(printf '%s\n' "${profile_list[@]}" | fzf \
-      --prompt="AWS profile ❯ " \
-      --header="Current: $current" \
-      --preview="aws configure list --profile {}" \
-      --preview-window=down:4:wrap)}"
-  fi
+  selected="${1:-$(printf '%s\n' "${profile_list[@]}" | fzf \
+    --prompt="AWS profile ❯ " \
+    --header="Current: $current" \
+    --preview="aws configure list --profile {}" \
+    --preview-window=down:4:wrap)}"
 
   if [[ -z "$selected" ]]; then
     return 0

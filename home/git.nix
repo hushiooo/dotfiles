@@ -15,7 +15,7 @@ _: {
     lfs.enable = true;
 
     signing = {
-      key = "joad.goutal@stoik.io";
+      key = "hushio@proton.me";
       signByDefault = true;
     };
 
@@ -55,7 +55,7 @@ _: {
     settings = {
       user = {
         name = "hushiooo";
-        email = "joad.goutal@stoik.io";
+        email = "hushio@proton.me";
       };
 
       alias = {

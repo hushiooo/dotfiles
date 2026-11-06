@@ -35,12 +35,6 @@ _: {
         User = "git";
         PreferredAuthentications = "publickey";
       };
-      "chipwise" = {
-        HostName = "i-008a178ab4fcdb62b";
-        User = "ubuntu";
-        IdentityFile = [ "~/.ssh/chipwise-backend-key-pair.pem" ];
-        ProxyCommand = "sh -c 'aws --profile chipwise ssm start-session --target %h --document-name AWS-StartSSHSession --parameters portNumber=%p --region eu-west-3'";
-      };
     };
   };
 }
